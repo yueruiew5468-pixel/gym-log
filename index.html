@@ -706,8 +706,889 @@ const DB_MUSCLE = {abdominals:['abs'], abductors:['abd'], adductors:['add'], bic
 const DB_EQUIP = {barbell:'槓鈴', dumbbell:'啞鈴', machine:'器械', cable:'繩索', 'body only':'徒手', kettlebells:'壺鈴',
   bands:'彈力帶', 'e-z curl bar':'槓鈴'};
 const DB_CAT = {strength:'肌力', stretching:'伸展', plyometrics:'增強式', powerlifting:'健力', 'olympic weightlifting':'舉重', strongman:'大力士', cardio:'有氧'};
+// 完整資料庫動作的中文名稱（圖庫 ID|中文）
+const DB_ZH = new Map(`
+3_4_Sit-Up|3/4 仰臥起坐
+90_90_Hamstring|90/90 腿後伸展
+Adductor|內收肌伸展
+Adductor_Groin|鼠蹊部伸展
+Advanced_Kettlebell_Windmill|進階壺鈴風車
+All_Fours_Quad_Stretch|跪姿股四頭伸展
+Alternate_Hammer_Curl|交替錘式彎舉
+Alternate_Heel_Touchers|交替觸踝捲腹
+Alternate_Incline_Dumbbell_Curl|交替上斜啞鈴彎舉
+Alternate_Leg_Diagonal_Bound|交替斜向跨跳
+Alternating_Cable_Shoulder_Press|交替繩索肩推
+Alternating_Deltoid_Raise|交替三角肌平舉
+Alternating_Floor_Press|交替地板臥推
+Alternating_Hang_Clean|交替懸垂上膊
+Alternating_Kettlebell_Press|交替壺鈴推舉
+Alternating_Kettlebell_Row|交替壺鈴划船
+Alternating_Renegade_Row|交替叛逆者划船
+Ankle_Circles|腳踝繞環
+Ankle_On_The_Knee|翹腳臀部伸展
+Anterior_Tibialis-SMR|脛前肌滾筒放鬆
+Anti-Gravity_Press|反重力推舉
+Arm_Circles|手臂繞環
+Around_The_Worlds|繞世界啞鈴飛鳥
+Atlas_Stone_Trainer|阿特拉斯石球訓練
+Atlas_Stones|阿特拉斯石球
+Axle_Deadlift|粗槓硬舉
+Back_Flyes_-_With_Bands|彈力帶反向飛鳥
+Backward_Drag|倒退拖拉
+Backward_Medicine_Ball_Throw|藥球向後拋
+Balance_Board|平衡板
+Ball_Leg_Curl|抗力球腿彎舉
+Band_Good_Morning|彈力帶早安式
+Band_Good_Morning_Pull_Through|彈力帶穿腿早安式
+Band_Hip_Adductions|彈力帶髖內收
+Band_Skull_Crusher|彈力帶仰臥臂屈伸
+Barbell_Ab_Rollout|槓鈴站姿滾輪
+Barbell_Curls_Lying_Against_An_Incline|上斜俯臥槓鈴彎舉
+Barbell_Guillotine_Bench_Press|斷頭台臥推
+Barbell_Incline_Shoulder_Raise|上斜槓鈴肩胛前推
+Barbell_Rear_Delt_Row|槓鈴後三角划船
+Barbell_Rollout_from_Bench|跪凳槓鈴滾輪
+Barbell_Seated_Calf_Raise|槓鈴坐姿提踵
+Barbell_Shoulder_Press|坐姿槓鈴肩推（器械架）
+Barbell_Shrug_Behind_The_Back|槓鈴背後聳肩
+Barbell_Side_Bend|槓鈴側彎
+Barbell_Side_Split_Squat|槓鈴側向分腿蹲
+Barbell_Squat|槓鈴背蹲舉
+Barbell_Squat_To_A_Bench|槓鈴坐凳深蹲
+Barbell_Step_Ups|槓鈴登階
+Bear_Crawl_Sled_Drags|熊爬雪橇拖拉
+Behind_Head_Chest_Stretch|抱頭胸部伸展
+Bench_Jump|跳凳
+Bench_Press_-_Powerlifting|健力臥推
+Bench_Press_-_With_Bands|彈力帶臥推
+Bench_Press_with_Chains|鐵鍊臥推
+Bench_Sprint|板凳衝刺
+Bent-Arm_Dumbbell_Pullover|屈臂啞鈴仰臥拉舉
+Bent-Knee_Hip_Raise|屈膝抬臀
+Bent_Over_Dumbbell_Rear_Delt_Raise_With_Head_On_Bench|頭靠凳啞鈴後三角平舉
+Bent_Over_Low-Pulley_Side_Lateral|俯身低位繩索側平舉
+Bent_Over_One-Arm_Long_Bar_Row|俯身單臂長槓划船
+Bent_Over_Two-Arm_Long_Bar_Row|俯身雙臂長槓划船
+Bent_Over_Two-Dumbbell_Row_With_Palms_In|對握雙啞鈴划船
+Bent_Press|側屈推舉
+Bicycling|騎自行車
+Bicycling_Stationary|飛輪腳踏車
+Board_Press|木板臥推
+Body-Up|撐體上推
+Body_Tricep_Press|徒手三頭推撐
+Bodyweight_Flyes|徒手飛鳥
+Bodyweight_Mid_Row|徒手中背划船
+Bodyweight_Walking_Lunge|徒手行走弓箭步
+Bosu_Ball_Cable_Crunch_With_Side_Bends|Bosu 球繩索捲腹側彎
+Bottoms-Up_Clean_From_The_Hang_Position|倒立壺鈴懸垂上膊
+Bottoms_Up|倒立舉腿
+Box_Jump_Multiple_Response|連續跳箱
+Box_Skip|跳箱單腳跳
+Box_Squat_with_Bands|彈力帶箱上深蹲
+Box_Squat_with_Chains|鐵鍊箱上深蹲
+Brachialis-SMR|肱肌滾筒放鬆
+Bradford_Rocky_Presses|布拉德福推舉
+Butt-Ups|撅臀撐起
+Butt_Lift_Bridge|臀橋
+Cable_Deadlifts|繩索硬舉
+Cable_Incline_Pushdown|上斜繩索下壓
+Cable_Incline_Triceps_Extension|上斜繩索三頭伸展
+Cable_Internal_Rotation|繩索內旋
+Cable_Iron_Cross|繩索鐵十字
+Cable_Judo_Flip|繩索柔道翻摔
+Cable_Lying_Triceps_Extension|仰臥繩索三頭伸展
+Cable_Reverse_Crunch|繩索反向捲腹
+Cable_Rope_Overhead_Triceps_Extension|過頭繩索三頭伸展
+Cable_Rope_Rear-Delt_Rows|繩索後三角划船
+Cable_Russian_Twists|繩索俄羅斯轉體
+Cable_Seated_Crunch|坐姿繩索捲腹
+Cable_Seated_Lateral_Raise|坐姿繩索側平舉
+Cable_Shrugs|繩索聳肩
+Cable_Wrist_Curl|繩索腕彎舉
+Calf-Machine_Shoulder_Shrug|提踵機聳肩
+Calf_Press|器械推蹬提踵
+Calf_Raise_On_A_Dumbbell|啞鈴墊高提踵
+Calf_Raises_-_With_Bands|彈力帶提踵
+Calf_Stretch_Elbows_Against_Wall|手肘撐牆小腿伸展
+Calf_Stretch_Hands_Against_Wall|手掌撐牆小腿伸展
+Calves-SMR|小腿滾筒放鬆
+Car_Deadlift|汽車硬舉
+Car_Drivers|槓片方向盤
+Carioca_Quick_Step|交叉步快速移動
+Cat_Stretch|貓式伸展
+Catch_and_Overhead_Throw|接球過頭拋
+Chain_Handle_Extension|鐵鍊握把三頭伸展
+Chain_Press|鐵鍊推舉
+Chair_Leg_Extended_Stretch|坐椅伸腿伸展
+Chair_Lower_Back_Stretch|坐椅下背伸展
+Chair_Squat|坐椅深蹲
+Chair_Upper_Body_Stretch|坐椅上半身伸展
+Chest_And_Front_Of_Shoulder_Stretch|胸部與前肩伸展
+Chest_Push_from_3_point_stance|三點支撐胸推
+Chest_Push_multiple_response|連續胸推
+Chest_Push_single_response|單次胸推
+Chest_Push_with_Run_Release|胸推衝刺
+Chest_Stretch_on_Stability_Ball|抗力球胸部伸展
+Childs_Pose|嬰兒式
+Chin_To_Chest_Stretch|低頭頸部伸展
+Circus_Bell|馬戲團啞鈴
+Clean|上膊（全蹲）
+Clean_Deadlift|上膊硬舉
+Clean_Pull|上膊拉
+Clean_Shrug|上膊聳肩
+Clean_and_Press|上膊推舉
+Clean_from_Blocks|架上上膊
+Clock_Push-Up|時鐘伏地挺身
+Close-Grip_Dumbbell_Press|窄握啞鈴臥推
+Close-Grip_EZ-Bar_Curl_with_Band|彈力帶窄握 EZ 槓彎舉
+Close-Grip_EZ-Bar_Press|窄握 EZ 槓臥推
+Close-Grip_Push-Up_off_of_a_Dumbbell|撐啞鈴窄握伏地挺身
+Close-Grip_Standing_Barbell_Curl|窄握站姿槓鈴彎舉
+Cocoons|繭式捲腹
+Conans_Wheel|柯南之輪
+Cross-Body_Crunch|對角捲腹
+Cross_Over_-_With_Bands|彈力帶夾胸
+Crossover_Reverse_Lunge|交叉後跨弓箭步
+Crucifix|十字支撐
+Crunch_-_Hands_Overhead|雙手過頭捲腹
+Crunch_-_Legs_On_Exercise_Ball|腿放抗力球捲腹
+Cuban_Press|古巴推舉
+Dancers_Stretch|舞者式伸展
+Deadlift_with_Bands|彈力帶硬舉
+Deadlift_with_Chains|鐵鍊硬舉
+Decline_Close-Grip_Bench_To_Skull_Crusher|下斜窄握臥推接仰臥臂屈伸
+Decline_Dumbbell_Flyes|下斜啞鈴飛鳥
+Decline_Dumbbell_Triceps_Extension|下斜啞鈴三頭伸展
+Decline_EZ_Bar_Triceps_Extension|下斜 EZ 槓三頭伸展
+Decline_Oblique_Crunch|下斜腹斜肌捲腹
+Decline_Push-Up|下斜伏地挺身
+Decline_Reverse_Crunch|下斜反向捲腹
+Decline_Smith_Press|史密斯下斜臥推
+Deficit_Deadlift|墊高硬舉
+Depth_Jump_Leap|跳深遠跳
+Donkey_Calf_Raises|驢式提踵
+Double_Kettlebell_Alternating_Hang_Clean|雙壺鈴交替懸垂上膊
+Double_Kettlebell_Jerk|雙壺鈴挺舉
+Double_Kettlebell_Push_Press|雙壺鈴借力推
+Double_Kettlebell_Snatch|雙壺鈴抓舉
+Double_Kettlebell_Windmill|雙壺鈴風車
+Double_Leg_Butt_Kick|雙腳後踢跳
+Downward_Facing_Balance|俯身平衡
+Drop_Push|落下伏地挺身
+Dumbbell_Clean|啞鈴上膊
+Dumbbell_Floor_Press|啞鈴地板臥推
+Dumbbell_Incline_Shoulder_Raise|上斜啞鈴肩胛前推
+Dumbbell_Lying_One-Arm_Rear_Lateral_Raise|側臥單臂啞鈴後三角平舉
+Dumbbell_Lying_Pronation|仰臥啞鈴旋前
+Dumbbell_Lying_Supination|仰臥啞鈴旋後
+Dumbbell_One-Arm_Shoulder_Press|單臂啞鈴肩推
+Dumbbell_One-Arm_Triceps_Extension|單臂啞鈴三頭伸展
+Dumbbell_One-Arm_Upright_Row|單臂啞鈴直立划船
+Dumbbell_Prone_Incline_Curl|俯臥上斜啞鈴彎舉
+Dumbbell_Raise|啞鈴前舉
+Dumbbell_Scaption|啞鈴肩胛面平舉
+Dumbbell_Seated_Box_Jump|啞鈴坐姿跳箱
+Dumbbell_Squat|啞鈴深蹲
+Dumbbell_Squat_To_A_Bench|啞鈴坐凳深蹲
+Dumbbell_Tricep_Extension_-Pronated_Grip|正握啞鈴三頭伸展
+Dynamic_Back_Stretch|動態背部伸展
+Dynamic_Chest_Stretch|動態胸部伸展
+Elbow_Circles|手肘繞環
+Elbow_to_Knee|肘碰膝捲腹
+Elbows_Back|手肘後拉伸展
+Elevated_Back_Lunge|墊高後跨弓箭步
+Elevated_Cable_Rows|墊高繩索划船
+Elliptical_Trainer|橢圓機
+Exercise_Ball_Pull-In|抗力球收腿
+Extended_Range_One-Arm_Kettlebell_Floor_Press|延伸幅度單臂壺鈴地板臥推
+External_Rotation|外旋
+External_Rotation_with_Band|彈力帶外旋
+Fast_Skipping|快速跳步
+Finger_Curls|手指彎舉
+Flat_Bench_Cable_Flyes|平板繩索飛鳥
+Flat_Bench_Leg_Pull-In|平板收腿
+Flexor_Incline_Dumbbell_Curls|上斜啞鈴屈肌彎舉
+Floor_Glute-Ham_Raise|地板臀腿抬升
+Floor_Press_with_Chains|鐵鍊地板臥推
+Flutter_Kicks|上下踢腿
+Foot-SMR|足底滾筒放鬆
+Forward_Drag_with_Press|向前拖拉接推舉
+Frankenstein_Squat|科學怪人深蹲
+Freehand_Jump_Squat|徒手跳躍深蹲
+Frog_Hops|青蛙跳
+Frog_Sit-Ups|青蛙式仰臥起坐
+Front_Barbell_Squat_To_A_Bench|前蹲坐凳
+Front_Cone_Hops_or_hurdle_hops|向前跨欄跳
+Front_Incline_Dumbbell_Raise|上斜俯臥啞鈴前平舉
+Front_Leg_Raises|前踢腿
+Front_Raise_And_Pullover|前平舉接仰臥拉舉
+Front_Squat_Clean_Grip|上膊握法前蹲舉
+Front_Squats_With_Two_Kettlebells|雙壺鈴前蹲舉
+Front_Two-Dumbbell_Raise|雙啞鈴前平舉
+Full_Range-Of-Motion_Lat_Pulldown|全幅度滾輪下拉
+Gironda_Sternum_Chins|吉隆達胸骨引體向上
+Glute_Kickback|跪姿後踢腿
+Good_Morning_off_Pins|架上早安式
+Gorilla_Chin_Crunch|大猩猩引體捲腹
+Groin_and_Back_Stretch|鼠蹊與背部伸展
+Groiners|爬行開髖
+Hammer_Grip_Incline_DB_Bench_Press|對握上斜啞鈴臥推
+Hamstring-SMR|腿後肌滾筒放鬆
+Hamstring_Stretch|腿後伸展
+Hang_Clean_-_Below_the_Knees|膝下懸垂上膊
+Hang_Snatch|懸垂抓舉
+Hang_Snatch_-_Below_Knees|膝下懸垂抓舉
+Hanging_Bar_Good_Morning|吊槓早安式
+Hanging_Pike|懸垂屈體舉腿
+Heaving_Snatch_Balance|推式抓舉平衡
+Heavy_Bag_Thrust|沙袋推擊
+Hip_Circles_prone|俯臥髖繞環
+Hip_Extension_with_Bands|彈力帶髖伸展
+Hip_Flexion_with_Band|彈力帶髖屈曲
+Hip_Lift_with_Band|彈力帶抬臀
+Hug_A_Ball|抱球伸展
+Hug_Knees_To_Chest|抱膝至胸
+Hurdle_Hops|跨欄跳
+Hyperextensions_With_No_Hyperextension_Bench|無器材背部伸展
+IT_Band_and_Glute_Stretch|髂脛束與臀部伸展
+Iliotibial_Tract-SMR|髂脛束滾筒放鬆
+Inchworm|尺蠖爬
+Incline_Barbell_Triceps_Extension|上斜槓鈴三頭伸展
+Incline_Bench_Pull|上斜俯臥槓鈴划船
+Incline_Cable_Chest_Press|上斜繩索推胸
+Incline_Dumbbell_Bench_With_Palms_Facing_In|對握上斜啞鈴臥推
+Incline_Dumbbell_Flyes_-_With_A_Twist|上斜啞鈴旋轉飛鳥
+Incline_Hammer_Curls|上斜錘式彎舉
+Incline_Inner_Biceps_Curl|上斜內側二頭彎舉
+Incline_Push-Up_Close-Grip|上斜窄距伏地挺身
+Incline_Push-Up_Depth_Jump|上斜伏地挺身跳深
+Incline_Push-Up_Medium|上斜中距伏地挺身
+Incline_Push-Up_Reverse_Grip|上斜反手伏地挺身
+Incline_Push-Up_Wide|上斜寬距伏地挺身
+Intermediate_Groin_Stretch|中階鼠蹊伸展
+Intermediate_Hip_Flexor_and_Quad_Stretch|中階髖屈肌與股四頭伸展
+Internal_Rotation_with_Band|彈力帶內旋
+Inverted_Row_with_Straps|吊帶反式划船
+Iron_Cross|鐵十字啞鈴平舉
+Iron_Crosses_stretch|鐵十字伸展
+Isometric_Chest_Squeezes|等長夾胸
+Isometric_Neck_Exercise_-_Front_And_Back|頸部等長前後
+Isometric_Neck_Exercise_-_Sides|頸部等長側邊
+Isometric_Wipers|等長雨刷擺腿
+Janda_Sit-Up|揚達仰臥起坐
+Jefferson_Squats|傑佛遜深蹲
+Jerk_Balance|挺舉平衡
+Jerk_Dip_Squat|挺舉下蹲
+Jogging_Treadmill|跑步機慢跑
+Keg_Load|啤酒桶上舉
+Kettlebell_Arnold_Press|壺鈴阿諾推舉
+Kettlebell_Dead_Clean|壺鈴死上膊
+Kettlebell_Figure_8|壺鈴 8 字繞腿
+Kettlebell_Halo|壺鈴繞頭
+Kettlebell_Halo_With_Overhead_Extension|壺鈴繞頭接過頭伸展
+Kettlebell_Hang_Clean|壺鈴懸垂上膊
+Kettlebell_Overhead_Triceps_Extension|壺鈴過頭三頭伸展
+Kettlebell_Pass_Between_The_Legs|壺鈴胯下傳遞
+Kettlebell_Pirate_Ships|壺鈴海盜船
+Kettlebell_Pistol_Squat|壺鈴手槍蹲
+Kettlebell_Seated_Press|坐姿壺鈴推舉
+Kettlebell_Seesaw_Press|壺鈴蹺蹺板推舉
+Kettlebell_Turkish_Get-Up_Lunge_style|壺鈴土耳其起立（弓步式）
+Kettlebell_Windmill|壺鈴風車
+Kipping_Muscle_Up|擺盪式雙力臂
+Knee_Across_The_Body|膝蓋跨身伸展
+Knee_Circles|膝蓋繞環
+Knee_Tuck_Jump|抱膝跳
+Kneeling_Arm_Drill|跪姿手臂擺動
+Kneeling_Cable_Crunch_With_Alternating_Oblique_Twists|跪姿繩索捲腹交替轉體
+Kneeling_Cable_Triceps_Extension|跪姿繩索三頭伸展
+Kneeling_Forearm_Stretch|跪姿前臂伸展
+Kneeling_High_Pulley_Row|跪姿高位繩索划船
+Kneeling_Hip_Flexor|跪姿髖屈肌伸展
+Kneeling_Jump_Squat|跪姿跳起深蹲
+Kneeling_Single-Arm_High_Pulley_Row|跪姿單臂高位繩索划船
+Kneeling_Squat|跪姿深蹲
+Landmine_180s|地雷管 180 度轉體
+Landmine_Linear_Jammer|地雷管推撞
+Lateral_Bound|側向跨跳
+Lateral_Box_Jump|側向跳箱
+Lateral_Cone_Hops|側向跨錐跳
+Lateral_Raise_-_With_Bands|彈力帶側平舉
+Latissimus_Dorsi-SMR|背闊肌滾筒放鬆
+Leg-Over_Floor_Press|跨腿地板臥推
+Leg-Up_Hamstring_Stretch|抬腿腿後伸展
+Leg_Lift|抬腿
+Leg_Pull-In|收腿
+Leverage_Chest_Press|槓桿式推胸機
+Leverage_Deadlift|槓桿式硬舉機
+Leverage_Shoulder_Press|槓桿式肩推機
+Leverage_Shrug|槓桿式聳肩機
+Linear_3-Part_Start_Technique|三段式起跑技術
+Linear_Acceleration_Wall_Drill|扶牆加速訓練
+Linear_Depth_Jump|直線跳深
+Log_Lift|圓木上舉
+London_Bridges|倫敦橋
+Looking_At_Ceiling|仰頭頸部伸展
+Low_Cable_Triceps_Extension|低位繩索三頭伸展
+Low_Pulley_Row_To_Neck|低位繩索划船至頸
+Lower_Back-SMR|下背滾筒放鬆
+Lower_Back_Curl|下背捲曲
+Lunge_Pass_Through|弓箭步傳球
+Lunge_Sprint|弓箭步衝刺
+Lying_Bent_Leg_Groin|仰臥屈腿鼠蹊伸展
+Lying_Cable_Curl|仰臥繩索彎舉
+Lying_Cambered_Barbell_Row|仰臥彎槓划船
+Lying_Close-Grip_Bar_Curl_On_High_Pulley|仰臥高位繩索窄握彎舉
+Lying_Close-Grip_Barbell_Triceps_Extension_Behind_The_Head|仰臥窄握槓鈴頭後三頭伸展
+Lying_Close-Grip_Barbell_Triceps_Press_To_Chin|仰臥窄握槓鈴三頭推至下巴
+Lying_Crossover|仰臥交叉轉體伸展
+Lying_Face_Down_Plate_Neck_Resistance|俯臥槓片頸部阻力
+Lying_Face_Up_Plate_Neck_Resistance|仰臥槓片頸部阻力
+Lying_Glute|仰臥臀部伸展
+Lying_Hamstring|仰臥腿後伸展
+Lying_High_Bench_Barbell_Curl|俯臥高凳槓鈴彎舉
+Lying_Machine_Squat|仰臥深蹲機
+Lying_Prone_Quadriceps|俯臥股四頭伸展
+Lying_Rear_Delt_Raise|俯臥後三角平舉
+Lying_Supine_Dumbbell_Curl|仰臥啞鈴彎舉
+Lying_T-Bar_Row|俯臥 T 槓划船
+Lying_Triceps_Press|仰臥三頭推舉
+Machine_Bicep_Curl|器械二頭彎舉
+Medicine_Ball_Chest_Pass|藥球胸前傳球
+Medicine_Ball_Full_Twist|藥球全轉體
+Medicine_Ball_Scoop_Throw|藥球鏟拋
+Middle_Back_Shrug|中背聳肩
+Middle_Back_Stretch|中背伸展
+Mixed_Grip_Chin|正反握引體向上
+Monster_Walk|怪獸走路
+Moving_Claw_Series|移動爪式訓練
+Muscle_Snatch|力量抓舉（不下蹲）
+Muscle_Up|雙力臂
+Narrow_Stance_Hack_Squats|窄站距哈克深蹲
+Narrow_Stance_Squats|窄站距深蹲
+Neck-SMR|頸部滾筒放鬆
+Neck_Press|頸前臥推
+Oblique_Crunches|腹斜肌捲腹（屈膝）
+Olympic_Squat|奧舉式深蹲
+On-Your-Back_Quad_Stretch|仰臥股四頭伸展
+On_Your_Side_Quad_Stretch|側臥股四頭伸展
+One-Arm_Flat_Bench_Dumbbell_Flye|單臂平板啞鈴飛鳥
+One-Arm_High-Pulley_Cable_Side_Bends|單臂高位繩索側彎
+One-Arm_Incline_Lateral_Raise|單臂上斜側平舉
+One-Arm_Kettlebell_Clean|單臂壺鈴上膊
+One-Arm_Kettlebell_Clean_and_Jerk|單臂壺鈴上膊挺舉
+One-Arm_Kettlebell_Floor_Press|單臂壺鈴地板臥推
+One-Arm_Kettlebell_Jerk|單臂壺鈴挺舉
+One-Arm_Kettlebell_Military_Press_To_The_Side|單臂壺鈴側向推舉
+One-Arm_Kettlebell_Para_Press|單臂壺鈴帕拉推舉
+One-Arm_Kettlebell_Push_Press|單臂壺鈴借力推
+One-Arm_Kettlebell_Row|單臂壺鈴划船
+One-Arm_Kettlebell_Snatch|單臂壺鈴抓舉
+One-Arm_Kettlebell_Split_Jerk|單臂壺鈴分腿挺舉
+One-Arm_Kettlebell_Split_Snatch|單臂壺鈴分腿抓舉
+One-Arm_Medicine_Ball_Slam|單臂藥球砸地
+One-Arm_Open_Palm_Kettlebell_Clean|單臂開掌壺鈴上膊
+One-Arm_Overhead_Kettlebell_Squats|單臂過頭壺鈴深蹲
+One-Arm_Side_Deadlift|單臂側提硬舉
+One-Arm_Side_Laterals|單臂側平舉
+One_Arm_Against_Wall|單臂扶牆胸部伸展
+One_Arm_Chin-Up|單臂引體向上
+One_Arm_Dumbbell_Bench_Press|單臂啞鈴臥推
+One_Arm_Floor_Press|單臂地板臥推
+One_Arm_Pronated_Dumbbell_Triceps_Extension|單臂正握啞鈴三頭伸展
+One_Arm_Supinated_Dumbbell_Triceps_Extension|單臂反握啞鈴三頭伸展
+One_Half_Locust|半蝗蟲式
+One_Handed_Hang|單手懸吊
+One_Knee_To_Chest|單膝抱胸
+One_Leg_Barbell_Squat|單腿槓鈴深蹲
+Open_Palm_Kettlebell_Clean|開掌壺鈴上膊
+Otis-Up|奧蒂斯捲腹
+Overhead_Cable_Curl|過頭繩索彎舉
+Overhead_Lat|過頭背闊肌伸展
+Overhead_Stretch|過頭伸展
+Overhead_Triceps|過頭三頭伸展
+Pallof_Press_With_Rotation|抗旋轉推接轉體
+Palms-Down_Dumbbell_Wrist_Curl_Over_A_Bench|正握啞鈴腕彎舉（跨凳）
+Palms-Up_Dumbbell_Wrist_Curl_Over_A_Bench|反握啞鈴腕彎舉（跨凳）
+Parallel_Bar_Dip|雙槓撐體（直臂架）
+Pelvic_Tilt_Into_Bridge|骨盆後傾接臀橋
+Peroneals-SMR|腓骨肌滾筒放鬆
+Peroneals_Stretch|腓骨肌伸展
+Physioball_Hip_Bridge|抗力球臀橋
+Pin_Presses|架上臥推（停頓）
+Piriformis-SMR|梨狀肌滾筒放鬆
+Plate_Twist|槓片轉體
+Platform_Hamstring_Slides|踏板腿後滑行
+Plyo_Kettlebell_Pushups|壺鈴增強式伏地挺身
+Plyo_Push-up|增強式伏地挺身
+Posterior_Tibialis_Stretch|脛後肌伸展
+Power_Clean_from_Blocks|架上力量上膊
+Power_Jerk|力量挺舉
+Power_Partials|部分行程推舉
+Power_Snatch|力量抓舉
+Power_Snatch_from_Blocks|架上力量抓舉
+Power_Stairs|力量階梯
+Preacher_Hammer_Dumbbell_Curl|牧師椅錘式彎舉
+Press_Sit-Up|推舉仰臥起坐
+Prone_Manual_Hamstring|俯臥徒手腿後彎舉
+Prowler_Sprint|推雪橇衝刺
+Push-Ups_With_Feet_On_An_Exercise_Ball|腳放抗力球伏地挺身
+Push_Press_-_Behind_the_Neck|頸後借力推
+Push_Up_to_Side_Plank|伏地挺身接側棒式
+Pushups_Close_and_Wide_Hand_Positions|窄距與寬距伏地挺身
+Pyramid|金字塔伸展
+Quad_Stretch|股四頭伸展
+Quadriceps-SMR|股四頭滾筒放鬆
+Quick_Leap|快速跨跳
+Rack_Delivery|架上上膊接球
+Rack_Pull_with_Bands|彈力帶架上拉
+Rear_Leg_Raises|後踢腿
+Recumbent_Bike|臥式腳踏車
+Return_Push_from_Stance|起跑姿勢回推
+Reverse_Band_Bench_Press|反向彈力帶臥推
+Reverse_Band_Box_Squat|反向彈力帶箱上深蹲
+Reverse_Band_Deadlift|反向彈力帶硬舉
+Reverse_Band_Power_Squat|反向彈力帶力量深蹲
+Reverse_Band_Sumo_Deadlift|反向彈力帶相撲硬舉
+Reverse_Barbell_Preacher_Curls|反握槓鈴牧師椅彎舉
+Reverse_Cable_Curl|反握繩索彎舉
+Reverse_Flyes|反向飛鳥（俯身）
+Reverse_Flyes_With_External_Rotation|外旋反向飛鳥
+Reverse_Hyperextension|反向背部伸展
+Reverse_Plate_Curls|槓片反握彎舉
+Reverse_Triceps_Bench_Press|反握三頭臥推
+Rhomboids-SMR|菱形肌滾筒放鬆
+Rickshaw_Carry|人力車搬運
+Rickshaw_Deadlift|人力車硬舉
+Ring_Dips|吊環撐體
+Rocket_Jump|火箭跳
+Rocking_Standing_Calf_Raise|搖擺站姿提踵
+Rocky_Pull-Ups_Pulldowns|洛基引體向上／下拉
+Romanian_Deadlift_from_Deficit|墊高羅馬尼亞硬舉
+Rope_Climb|爬繩
+Rope_Crunch|跪姿繩索捲腹
+Rope_Jumping|跳繩
+Round_The_World_Shoulder_Stretch|繞環肩部伸展
+Rowing_Stationary|划船機
+Runners_Stretch|跑者伸展
+Running_Treadmill|跑步機跑步
+Sandbag_Load|沙袋上舉
+Scapular_Pull-Up|肩胛引體向上
+Scissor_Kick|剪刀踢腿
+Scissors_Jump|剪刀跳
+Seated_Band_Hamstring_Curl|坐姿彈力帶腿彎舉
+Seated_Barbell_Twist|坐姿槓鈴轉體
+Seated_Bent-Over_One-Arm_Dumbbell_Triceps_Extension|坐姿俯身單臂啞鈴三頭伸展
+Seated_Bent-Over_Two-Arm_Dumbbell_Triceps_Extension|坐姿俯身雙臂啞鈴三頭伸展
+Seated_Biceps|坐姿二頭伸展
+Seated_Cable_Shoulder_Press|坐姿繩索肩推
+Seated_Calf_Stretch|坐姿小腿伸展
+Seated_Close-Grip_Concentration_Barbell_Curl|坐姿窄握槓鈴專注彎舉
+Seated_Dumbbell_Curl|坐姿啞鈴彎舉
+Seated_Dumbbell_Inner_Biceps_Curl|坐姿啞鈴內側二頭彎舉
+Seated_Dumbbell_Palms-Down_Wrist_Curl|坐姿啞鈴正握腕彎舉
+Seated_Dumbbell_Press|坐姿啞鈴推舉
+Seated_Flat_Bench_Leg_Pull-In|坐姿平板收腿
+Seated_Floor_Hamstring_Stretch|坐姿地板腿後伸展
+Seated_Front_Deltoid|坐姿前三角伸展
+Seated_Glute|坐姿臀部伸展
+Seated_Good_Mornings|坐姿早安式
+Seated_Hamstring|坐姿腿後伸展
+Seated_Hamstring_and_Calf_Stretch|坐姿腿後與小腿伸展
+Seated_Head_Harness_Neck_Resistance|坐姿頭帶頸部阻力
+Seated_Leg_Tucks|坐姿收腿
+Seated_One-Arm_Dumbbell_Palms-Down_Wrist_Curl|坐姿單臂啞鈴正握腕彎舉
+Seated_One-Arm_Dumbbell_Palms-Up_Wrist_Curl|坐姿單臂啞鈴反握腕彎舉
+Seated_Overhead_Stretch|坐姿過頭伸展
+Seated_Palm-Up_Barbell_Wrist_Curl|坐姿槓鈴反握腕彎舉
+Seated_Palms-Down_Barbell_Wrist_Curl|坐姿槓鈴正握腕彎舉
+Seated_Two-Arm_Palms-Up_Low-Pulley_Wrist_Curl|坐姿低位繩索反握腕彎舉
+See-Saw_Press_Alternating_Side_Press|蹺蹺板交替側推
+Shotgun_Row|散彈槍划船
+Shoulder_Circles|肩膀繞環
+Shoulder_Press_-_With_Bands|彈力帶肩推
+Shoulder_Raise|聳肩上提
+Shoulder_Stretch|肩部伸展
+Side-Lying_Floor_Stretch|側臥地板伸展
+Side_Hop-Sprint|側跳接衝刺
+Side_Jackknife|側臥折刀
+Side_Laterals_to_Front_Raise|側平舉接前平舉
+Side_Leg_Raises|側抬腿
+Side_Lying_Groin_Stretch|側臥鼠蹊伸展
+Side_Neck_Stretch|頸部側邊伸展
+Side_Standing_Long_Jump|側向立定跳遠
+Side_To_Side_Chins|左右移動引體向上
+Side_Wrist_Pull|側拉手腕伸展
+Side_to_Side_Box_Shuffle|跳箱左右換腳
+Single-Arm_Cable_Crossover|單臂繩索夾胸
+Single-Arm_Linear_Jammer|單臂地雷管推撞
+Single-Arm_Push-Up|單臂伏地挺身
+Single-Cone_Sprint_Drill|單錐衝刺訓練
+Single-Leg_High_Box_Squat|單腿高箱深蹲
+Single-Leg_Hop_Progression|單腿跳進階
+Single-Leg_Lateral_Hop|單腿側向跳
+Single-Leg_Leg_Extension|單腿腿伸屈
+Single-Leg_Stride_Jump|單腿跨步跳
+Single_Dumbbell_Raise|單啞鈴前平舉
+Single_Leg_Butt_Kick|單腿後踢跳
+Single_Leg_Push-off|單腿蹬牆推
+Sit_Squats|坐姿深蹲
+Skating|滑冰
+Sled_Drag_-_Harness|背帶拖雪橇
+Sled_Overhead_Backward_Walk|雪橇過頭倒退走
+Sled_Overhead_Triceps_Extension|雪橇過頭三頭伸展
+Sled_Reverse_Flye|雪橇反向飛鳥
+Sled_Row|雪橇划船
+Sledgehammer_Swings|大鎚揮擊
+Smith_Incline_Shoulder_Raise|史密斯上斜肩胛前推
+Smith_Machine_Close-Grip_Bench_Press|史密斯窄握臥推
+Smith_Machine_Decline_Press|史密斯下斜推
+Smith_Machine_Hang_Power_Clean|史密斯懸垂力量上膊
+Smith_Machine_Hip_Raise|史密斯抬臀
+Smith_Machine_Leg_Press|史密斯腿推
+Smith_Machine_One-Arm_Upright_Row|史密斯單臂直立划船
+Smith_Machine_Pistol_Squat|史密斯手槍蹲
+Smith_Machine_Reverse_Calf_Raises|史密斯反向提踵
+Smith_Machine_Stiff-Legged_Deadlift|史密斯直腿硬舉
+Smith_Machine_Upright_Row|史密斯直立划船
+Snatch_Balance|抓舉平衡
+Snatch_Deadlift|抓舉硬舉
+Snatch_Pull|抓舉拉
+Snatch_Shrug|抓舉聳肩
+Snatch_from_Blocks|架上抓舉
+Speed_Band_Overhead_Triceps|彈力帶快速過頭三頭伸展
+Speed_Box_Squat|快速箱上深蹲
+Speed_Squats|快速深蹲
+Spell_Caster|施法者轉體
+Spider_Crawl|蜘蛛爬
+Spinal_Stretch|脊椎伸展
+Split_Clean|分腿上膊
+Split_Jerk|分腿挺舉
+Split_Jump|分腿跳
+Split_Snatch|分腿抓舉
+Split_Squats|分腿蹲
+Squat_Jerk|深蹲挺舉
+Squat_with_Bands|彈力帶深蹲
+Squat_with_Chains|鐵鍊深蹲
+Squat_with_Plate_Movers|槓片移動深蹲
+Squats_-_With_Bands|彈力帶深蹲（站姿）
+Stairmaster|階梯機
+Standing_Alternating_Dumbbell_Press|站姿交替啞鈴推舉
+Standing_Barbell_Calf_Raise|站姿槓鈴提踵
+Standing_Barbell_Press_Behind_Neck|站姿頸後推舉
+Standing_Bent-Over_One-Arm_Dumbbell_Triceps_Extension|站姿俯身單臂啞鈴三頭伸展
+Standing_Bent-Over_Two-Arm_Dumbbell_Triceps_Extension|站姿俯身雙臂啞鈴三頭伸展
+Standing_Biceps_Stretch|站姿二頭伸展
+Standing_Bradford_Press|站姿布拉德福推舉
+Standing_Cable_Chest_Press|站姿繩索推胸
+Standing_Cable_Lift|站姿繩索上拉
+Standing_Concentration_Curl|站姿專注彎舉
+Standing_Dumbbell_Calf_Raise|站姿啞鈴提踵
+Standing_Dumbbell_Reverse_Curl|站姿啞鈴反握彎舉
+Standing_Dumbbell_Straight-Arm_Front_Delt_Raise_Above_Head|站姿啞鈴直臂過頭前平舉
+Standing_Dumbbell_Upright_Row|站姿啞鈴直立划船
+Standing_Elevated_Quad_Stretch|站姿墊高股四頭伸展
+Standing_Front_Barbell_Raise_Over_Head|站姿槓鈴過頭前平舉
+Standing_Gastrocnemius_Calf_Stretch|站姿腓腸肌伸展
+Standing_Hamstring_and_Calf_Stretch|站姿腿後與小腿伸展
+Standing_Hip_Circles|站姿髖繞環
+Standing_Hip_Flexors|站姿髖屈肌伸展
+Standing_Inner-Biceps_Curl|站姿內側二頭彎舉
+Standing_Lateral_Stretch|站姿側身伸展
+Standing_Long_Jump|立定跳遠
+Standing_Low-Pulley_One-Arm_Triceps_Extension|站姿低位繩索單臂三頭伸展
+Standing_Olympic_Plate_Hand_Squeeze|站姿槓片握力夾
+Standing_One-Arm_Cable_Curl|站姿單臂繩索彎舉
+Standing_One-Arm_Dumbbell_Curl_Over_Incline_Bench|站姿單臂啞鈴斜凳彎舉
+Standing_One-Arm_Dumbbell_Triceps_Extension|站姿單臂啞鈴三頭伸展
+Standing_Overhead_Barbell_Triceps_Extension|站姿過頭槓鈴三頭伸展
+Standing_Palm-In_One-Arm_Dumbbell_Press|站姿對握單臂啞鈴推舉
+Standing_Palms-In_Dumbbell_Press|站姿對握啞鈴推舉
+Standing_Pelvic_Tilt|站姿骨盆傾斜
+Standing_Soleus_And_Achilles_Stretch|站姿比目魚肌與跟腱伸展
+Standing_Toe_Touches|站姿體前彎
+Standing_Towel_Triceps_Extension|站姿毛巾三頭伸展
+Standing_Two-Arm_Overhead_Throw|站姿雙手過頭拋
+Star_Jump|星形跳
+Step-up_with_Knee_Raise|登階抬膝
+Step_Mill|階梯機（循環）
+Stiff_Leg_Barbell_Good_Morning|直腿槓鈴早安式
+Stomach_Vacuum|腹部真空
+Straight_Bar_Bench_Mid_Rows|直槓臥凳中背划船
+Straight_Raises_on_Incline_Bench|上斜凳直臂上舉
+Stride_Jump_Crossover|跨步交叉跳
+Sumo_Deadlift_with_Bands|彈力帶相撲硬舉
+Sumo_Deadlift_with_Chains|鐵鍊相撲硬舉
+Superman|超人式
+Supine_Chest_Throw|仰臥胸前拋球
+Supine_One-Arm_Overhead_Throw|仰臥單臂過頭拋
+Supine_Two-Arm_Overhead_Throw|仰臥雙臂過頭拋
+Suspended_Fallout|懸吊前傾
+Suspended_Push-Up|懸吊伏地挺身
+Suspended_Reverse_Crunch|懸吊反向捲腹
+Suspended_Row|懸吊划船
+Suspended_Split_Squat|懸吊分腿蹲
+Tate_Press|泰特推舉
+The_Straddle|跨坐伸展
+Tire_Flip|翻輪胎
+Toe_Touchers|觸腳捲腹
+Torso_Rotation|軀幹轉體
+Trail_Running_Walking|越野跑／健走
+Tricep_Side_Stretch|三頭側邊伸展
+Triceps_Stretch|三頭伸展
+Tuck_Crunch|抱膝捲腹
+Two-Arm_Dumbbell_Preacher_Curl|雙臂啞鈴牧師椅彎舉
+Two-Arm_Kettlebell_Clean|雙手壺鈴上膊
+Two-Arm_Kettlebell_Jerk|雙手壺鈴挺舉
+Two-Arm_Kettlebell_Row|雙手壺鈴划船
+Upper_Back-Leg_Grab|抱腿上背伸展
+Upper_Back_Stretch|上背伸展
+Upright_Row_-_With_Bands|彈力帶直立划船
+Upward_Stretch|向上伸展
+V-Bar_Pullup|V 把引體向上
+Vertical_Swing|垂直擺盪
+Walking_Treadmill|跑步機健走
+Weighted_Ball_Hyperextension|抗力球背部伸展
+Weighted_Ball_Side_Bend|負重球側彎
+Weighted_Bench_Dip|負重板凳撐體
+Weighted_Jump_Squat|負重跳躍深蹲
+Weighted_Sissy_Squat|負重西斯深蹲
+Weighted_Sit-Ups_-_With_Bands|彈力帶負重仰臥起坐
+Weighted_Squat|負重深蹲
+Wide-Grip_Decline_Barbell_Bench_Press|寬握下斜槓鈴臥推
+Wide-Grip_Decline_Barbell_Pullover|寬握下斜槓鈴仰臥拉舉
+Wide-Grip_Pulldown_Behind_The_Neck|寬握頸後下拉
+Wide-Grip_Rear_Pull-Up|寬握頸後引體向上
+Wide-Grip_Standing_Barbell_Curl|寬握站姿槓鈴彎舉
+Wide_Stance_Stiff_Legs|寬站距直腿硬舉
+Wind_Sprints|衝刺跑
+Windmills|風車轉體
+Worlds_Greatest_Stretch|世界最棒伸展
+Wrist_Circles|手腕繞環
+Wrist_Rotations_with_Straight_Bar|直槓手腕旋轉
+Yoke_Walk|扛軛行走
+Zercher_Squats|澤奇深蹲
+Zottman_Preacher_Curl|佐特曼牧師椅彎舉
+Barbell_Bench_Press_-_Medium_Grip|槓鈴臥推
+Barbell_Incline_Bench_Press_-_Medium_Grip|上斜槓鈴臥推
+Decline_Barbell_Bench_Press|下斜槓鈴臥推
+Wide-Grip_Barbell_Bench_Press|寬握槓鈴臥推
+Floor_Press|地板臥推
+Dumbbell_Bench_Press|啞鈴臥推
+Incline_Dumbbell_Press|上斜啞鈴臥推
+Decline_Dumbbell_Bench_Press|下斜啞鈴臥推
+Dumbbell_Bench_Press_with_Neutral_Grip|對握啞鈴臥推
+Dumbbell_Flyes|啞鈴飛鳥
+Incline_Dumbbell_Flyes|上斜啞鈴飛鳥
+Straight-Arm_Dumbbell_Pullover|啞鈴仰臥拉舉
+Cable_Crossover|繩索夾胸
+Low_Cable_Crossover|低位繩索夾胸
+Incline_Cable_Flye|上斜繩索飛鳥
+Cable_Chest_Press|繩索推胸
+Butterfly|蝴蝶機夾胸
+Machine_Bench_Press|器械推胸
+Leverage_Incline_Chest_Press|上斜器械推胸
+Leverage_Decline_Chest_Press|下斜器械推胸
+Smith_Machine_Bench_Press|史密斯臥推
+Smith_Machine_Incline_Bench_Press|史密斯上斜臥推
+Dips_-_Chest_Version|雙槓撐體
+Pushups|伏地挺身
+Push-Up_Wide|寬距伏地挺身
+Push-Ups_With_Feet_Elevated|下斜伏地挺身
+Incline_Push-Up|上斜伏地挺身
+Svend_Press|夾片推胸
+Pullups|引體向上
+Chin-Up|反手引體向上
+Weighted_Pull_Ups|負重引體向上
+Band_Assisted_Pull-Up|彈力帶輔助引體向上
+Wide-Grip_Lat_Pulldown|滑輪下拉
+Close-Grip_Front_Lat_Pulldown|窄握滑輪下拉
+V-Bar_Pulldown|V 把下拉
+Underhand_Cable_Pulldowns|反握滑輪下拉
+One_Arm_Lat_Pulldown|單臂滑輪下拉
+Straight-Arm_Pulldown|直臂下拉
+Rope_Straight-Arm_Pulldown|繩索直臂下拉
+Bent_Over_Barbell_Row|槓鈴划船
+Reverse_Grip_Bent-Over_Rows|反手槓鈴划船
+T-Bar_Row_with_Handle|T 槓划船
+One-Arm_Long_Bar_Row|單臂地雷管划船
+One-Arm_Dumbbell_Row|單臂啞鈴划船
+Bent_Over_Two-Dumbbell_Row|雙啞鈴划船
+Dumbbell_Incline_Row|上斜俯臥啞鈴划船
+Seated_Cable_Rows|坐姿繩索划船
+Seated_One-arm_Cable_Pulley_Rows|單臂繩索划船
+Leverage_Iso_Row|器械划船
+Leverage_High_Row|高位器械划船
+Smith_Machine_Bent_Over_Row|史密斯划船
+Inverted_Row|反式划船
+Barbell_Deadlift|硬舉
+Sumo_Deadlift|相撲硬舉
+Trap_Bar_Deadlift|六角槓硬舉
+Rack_Pulls|架上拉
+Hyperextensions_Back_Extensions|山羊挺身
+Good_Morning|早安式
+Bent-Arm_Barbell_Pullover|槓鈴仰臥拉舉
+Standing_Military_Press|槓鈴肩推
+Seated_Barbell_Military_Press|坐姿槓鈴肩推
+Push_Press|借力推
+Dumbbell_Shoulder_Press|啞鈴肩推
+Standing_Dumbbell_Press|站姿啞鈴肩推
+Arnold_Dumbbell_Press|阿諾推舉
+Machine_Shoulder_Military_Press|器械肩推
+Smith_Machine_Overhead_Shoulder_Press|史密斯肩推
+Cable_Shoulder_Press|繩索肩推
+Side_Lateral_Raise|啞鈴側平舉
+Seated_Side_Lateral_Raise|坐姿啞鈴側平舉
+Lying_One-Arm_Lateral_Raise|側臥單臂側平舉
+Standing_Low-Pulley_Deltoid_Raise|繩索側平舉
+Front_Dumbbell_Raise|啞鈴前平舉
+Front_Plate_Raise|槓片前平舉
+Front_Cable_Raise|繩索前平舉
+Seated_Bent-Over_Rear_Delt_Raise|反向飛鳥
+Dumbbell_Lying_Rear_Lateral_Raise|俯臥反向飛鳥
+Reverse_Machine_Flyes|器械反向飛鳥
+Cable_Rear_Delt_Fly|繩索反向飛鳥
+Band_Pull_Apart|彈力帶拉開
+Face_Pull|臉拉
+Upright_Barbell_Row|槓鈴直立划船
+Upright_Cable_Row|繩索直立划船
+Barbell_Shrug|槓鈴聳肩
+Dumbbell_Shrug|啞鈴聳肩
+Smith_Machine_Behind_the_Back_Shrug|史密斯背後聳肩
+External_Rotation_with_Cable|繩索外旋
+Handstand_Push-Ups|倒立推
+Barbell_Full_Squat|槓鈴深蹲
+Front_Barbell_Squat|前蹲舉
+Box_Squat|箱上深蹲
+Wide_Stance_Barbell_Squat|寬站距深蹲
+Overhead_Squat|過頭深蹲
+Goblet_Squat|高腳杯深蹲
+Plie_Dumbbell_Squat|相撲啞鈴深蹲
+Smith_Machine_Squat|史密斯深蹲
+Bodyweight_Squat|徒手深蹲
+Leg_Press|腿推機
+Narrow_Stance_Leg_Press|窄站距腿推
+Hack_Squat|哈克深蹲
+Barbell_Hack_Squat|槓鈴哈克深蹲
+Split_Squat_with_Dumbbells|保加利亞分腿蹲
+Smith_Single-Leg_Split_Squat|史密斯分腿蹲
+Dumbbell_Lunges|弓箭步
+Dumbbell_Rear_Lunge|後跨弓箭步
+Barbell_Lunge|槓鈴弓箭步
+Barbell_Walking_Lunge|行走弓箭步
+Dumbbell_Step_Ups|啞鈴登階
+Romanian_Deadlift|羅馬尼亞硬舉
+Stiff-Legged_Barbell_Deadlift|直腿硬舉
+Stiff-Legged_Dumbbell_Deadlift|啞鈴羅馬尼亞硬舉
+Kettlebell_One-Legged_Deadlift|單腿壺鈴硬舉
+Leg_Extensions|腿伸屈
+Lying_Leg_Curls|腿彎舉
+Seated_Leg_Curl|坐姿腿彎舉
+Standing_Leg_Curl|站姿腿彎舉
+Natural_Glute_Ham_Raise|北歐腿彎舉
+Glute_Ham_Raise|臀腿抬升
+Barbell_Hip_Thrust|臀推
+Barbell_Glute_Bridge|槓鈴臀橋
+Single_Leg_Glute_Bridge|單腿臀橋
+One-Legged_Cable_Kickback|繩索後踢腿
+Pull_Through|繩索穿腿拉
+Thigh_Abductor|髖外展機
+Thigh_Adductor|髖內收機
+Cable_Hip_Adduction|繩索髖內收
+Standing_Calf_Raises|站姿提踵
+Seated_Calf_Raise|坐姿提踵
+Calf_Press_On_The_Leg_Press_Machine|腿推機提踵
+Smith_Machine_Calf_Raise|史密斯提踵
+Dumbbell_Seated_One-Leg_Calf_Raise|坐姿啞鈴單腿提踵
+Front_Box_Jump|跳箱
+Barbell_Curl|槓鈴彎舉
+EZ-Bar_Curl|EZ 槓彎舉
+Close-Grip_EZ_Bar_Curl|窄握 EZ 槓彎舉
+Reverse_Barbell_Curl|反握槓鈴彎舉
+Drag_Curl|拖曳彎舉
+Dumbbell_Bicep_Curl|啞鈴彎舉
+Dumbbell_Alternate_Bicep_Curl|交替啞鈴彎舉
+Hammer_Curls|錘式彎舉
+Cross_Body_Hammer_Curl|交叉錘式彎舉
+Incline_Dumbbell_Curl|上斜啞鈴彎舉
+Concentration_Curls|專注彎舉
+Spider_Curl|蜘蛛彎舉
+Zottman_Curl|佐特曼彎舉
+Preacher_Curl|牧師椅彎舉
+One_Arm_Dumbbell_Preacher_Curl|單臂啞鈴牧師椅彎舉
+Machine_Preacher_Curls|器械彎舉
+Standing_Biceps_Cable_Curl|繩索彎舉
+Cable_Hammer_Curls_-_Rope_Attachment|繩索錘式彎舉
+High_Cable_Curls|高位繩索彎舉
+Cable_Preacher_Curl|繩索牧師椅彎舉
+Triceps_Pushdown_-_Rope_Attachment|繩索下壓
+Triceps_Pushdown|直槓下壓
+Triceps_Pushdown_-_V-Bar_Attachment|V 把下壓
+Reverse_Grip_Triceps_Pushdown|反握下壓
+Cable_One_Arm_Tricep_Extension|單臂繩索下壓
+Triceps_Overhead_Extension_with_Rope|過頭繩索臂屈伸
+EZ-Bar_Skullcrusher|仰臥臂屈伸
+Lying_Dumbbell_Tricep_Extension|啞鈴仰臥臂屈伸
+Standing_Dumbbell_Triceps_Extension|過頭啞鈴臂屈伸
+Seated_Triceps_Press|坐姿過頭槓鈴臂屈伸
+Close-Grip_Barbell_Bench_Press|窄握臥推
+JM_Press|JM 推舉
+Tricep_Dumbbell_Kickback|啞鈴後踢
+Dips_-_Triceps_Version|三頭雙槓撐體
+Bench_Dips|板凳撐體
+Push-Ups_-_Close_Triceps_Position|鑽石伏地挺身
+Machine_Triceps_Extension|器械三頭伸展
+Dip_Machine|撐體機
+Palms-Up_Barbell_Wrist_Curl_Over_A_Bench|槓鈴腕彎舉
+Palms-Down_Wrist_Curl_Over_A_Bench|槓鈴反握腕彎舉
+Seated_Dumbbell_Palms-Up_Wrist_Curl|啞鈴腕彎舉
+Standing_Palms-Up_Barbell_Behind_The_Back_Wrist_Curl|背後腕彎舉
+Wrist_Roller|捲腕器
+Plate_Pinch|槓片捏握
+Farmers_Walk|農夫走路
+Crunches|捲腹
+Sit-Up|仰臥起坐
+Weighted_Crunches|負重捲腹
+Decline_Crunch|下斜捲腹
+Reverse_Crunch|反向捲腹
+Oblique_Crunches_-_On_The_Floor|腹斜肌捲腹
+Air_Bike|腳踏車捲腹
+Jackknife_Sit-Up|V 字起坐
+Hanging_Leg_Raise|懸垂舉腿
+Knee_Hip_Raise_On_Parallel_Bars|雙槓屈膝舉腿
+Flat_Bench_Lying_Leg_Raise|仰臥舉腿
+Plank|平板支撐
+Side_Bridge|側棒式
+Dead_Bug|死蟲式
+Mountain_Climbers|登山者
+Cable_Crunch|繩索捲腹
+Standing_Rope_Crunch|站姿繩索捲腹
+Ab_Crunch_Machine|器械捲腹
+Ab_Roller|健腹輪
+Barbell_Ab_Rollout_-_On_Knees|槓鈴滾輪
+Russian_Twist|俄羅斯轉體
+Standing_Cable_Wood_Chop|繩索伐木
+Pallof_Press|抗旋轉推
+Dumbbell_Side_Bend|啞鈴側彎
+Exercise_Ball_Crunch|抗力球捲腹
+Power_Clean|上膊
+Hang_Clean|懸垂上膊
+Snatch|抓舉
+Clean_and_Jerk|挺舉
+One-Arm_Kettlebell_Swings|壺鈴擺盪
+Kettlebell_Turkish_Get-Up_Squat_style|壺鈴土耳其起立
+Two-Arm_Kettlebell_Military_Press|壺鈴推舉
+Kettlebell_Sumo_High_Pull|壺鈴相撲高拉
+Kettlebell_Thruster|壺鈴火箭推
+Sled_Push|雪橇推
+Battling_Ropes|戰繩
+Overhead_Slam|藥球砸地
+`.trim().split('\n').map(l => l.split('|')));
 const PART_OF = {ch:'胸', lat:'背', mb:'背', lb:'背', dfr:'肩', dsi:'肩', dre:'肩', trap:'肩', neck:'肩', quad:'腿', ham:'腿', glu:'腿',
   calf:'腿', add:'腿', abd:'腿', bi:'二頭', tri:'三頭', fa:'前臂', abs:'核心', obl:'核心'};
+const COMMON_DB = new Set(BUILTIN.map(e => e.db));
+const CAT_RANK = {strength: 1, powerlifting: 1, 'olympic weightlifting': 2, plyometrics: 2, strongman: 2, cardio: 3, stretching: 4};
 let DB = null, DBMAP = new Map(), DBP = null;
 function loadDB() {
   if (DBP) return DBP;
@@ -715,9 +1596,12 @@ function loadDB() {
     DB = list.map(x => {
       const pm = [...new Set(x.primaryMuscles.flatMap(m => DB_MUSCLE[m] || []))];
       const sm = [...new Set(x.secondaryMuscles.flatMap(m => DB_MUSCLE[m] || []))].filter(m => !pm.includes(m));
-      return {db: x.id, name: x.name, pm, sm, equip: DB_EQUIP[x.equipment] || '其他', part: PART_OF[pm[0]] || '全身',
-        cat: DB_CAT[x.category] || x.category, steps: x.instructions || [], imgs: x.images || []};
+      return {db: x.id, name: DB_ZH.get(x.id) || x.name, en: x.name, pm, sm, equip: DB_EQUIP[x.equipment] || '其他', part: PART_OF[pm[0]] || '全身',
+        cat: DB_CAT[x.category] || x.category, steps: x.instructions || [], imgs: x.images || [],
+        rank: COMMON_DB.has(x.id) ? 0 : CAT_RANK[x.category] ?? 2};
     });
+    // 常見健身房動作在前，伸展、有氧在後
+    DB.sort((a, b) => a.rank - b.rank || a.en.localeCompare(b.en));
     DBMAP = new Map(DB.map(x => [x.db, x]));
     return DB;
   }).catch(e => { DBP = null; throw e; });
@@ -868,6 +1752,16 @@ function load() {
   if (!STORE_OK) return defaults();
   try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && (s.custom || s.exercises)) return normalize(s); } catch (e) {}
   return defaults();
+}
+// 請瀏覽器把資料標記為「持久保存」，不要在空間不足或久未使用時自動清除
+let PERSIST = null;   // true 已開啟、false 尚未同意、null 不支援
+async function askPersist(manual) {
+  try {
+    if (navigator.storage && navigator.storage.persist)
+      PERSIST = (await navigator.storage.persisted()) || (await navigator.storage.persist());
+  } catch (e) {}
+  if (manual) toast(PERSIST ? '資料保護已開啟' : '瀏覽器還沒同意，加入主畫面後再試');
+  if (tab === 'set') renderSet();
 }
 let saveWarned = false;
 function save() {
@@ -1157,13 +2051,17 @@ function renderSheet() {
   }
   const ql = q.trim().toLowerCase();
   const have = new Set(EXS.map(e => e.db).filter(Boolean));
-  const list = DB.filter(x => (!shPart || x.part === shPart) && (!ql || x.name.toLowerCase().includes(ql) || x.equip.includes(ql)
-    || x.cat.includes(ql) || [...x.pm, ...x.sm].some(m => MUSCLES[m].includes(ql))));
+  // 自己做過的動作排最前面
+  const u = usage(), used = {};
+  for (const e of EXS) if (e.db && u[e.id]) used[e.db] = (used[e.db] || 0) + u[e.id];
+  const list = DB.filter(x => (!shPart || x.part === shPart) && (!ql || x.name.toLowerCase().includes(ql) || x.en.toLowerCase().includes(ql)
+    || x.equip.includes(ql) || x.cat.includes(ql) || [...x.pm, ...x.sm].some(m => MUSCLES[m].includes(ql))))
+    .sort((a, b) => (used[b.db] || 0) - (used[a.db] || 0));
   const shown = list.slice(0, 120);
   $('#sh-list').innerHTML = `<div class="grp"><span>${shPart || '全部'}</span><span>${list.length}</span></div>` +
     (shown.length ? `<div class="exlist">${shown.map(x => `<div class="ex-row ${have.has(x.db) ? 'sel' : ''}">${thumbHTML(x, 'dbDetail', x.db)}
       <button class="ex-main" data-act="dbDetail" data-id="${esc(x.db)}"><span style="flex:1;min-width:0"><span class="nm">${esc(x.name)}</span><br>
-      <span class="meta">${muscleText(x) || '—'} · ${x.equip} · ${x.cat}</span></span><span class="chk">${svgChk}</span></button></div>`).join('')}</div>` : '<div class="empty">找不到動作</div>') +
+      <span class="meta">${esc(x.en)}</span><br><span class="meta">${muscleText(x) || '—'} · ${x.equip} · ${x.cat}${used[x.db] ? ` · ${used[x.db]} 組` : ''}</span></span><span class="chk">${svgChk}</span></button></div>`).join('')}</div>` : '<div class="empty">找不到動作</div>') +
     (list.length > shown.length ? `<p class="small muted" style="text-align:center">還有 ${list.length - shown.length} 個，請用搜尋縮小範圍</p>` : '');
 }
 
@@ -1211,7 +2109,7 @@ function renderExDetail(c) {
   $('#detail .hd b').textContent = c.kind === 'ex' ? e.part : '動作資料庫';
   $('#dt-body').innerHTML = `${media}
     <h2 class="dt">${esc(e.name)}</h2>
-    <div class="dsub">${e.part} · ${e.equip}${info && c.kind === 'ex' ? ` · ${esc(info.name)}` : ''}${e.cat ? ' · ' + e.cat : ''}</div>
+    <div class="dsub">${e.part} · ${e.equip}${info ? ` · ${esc(info.en)}` : ''}${e.cat ? ' · ' + e.cat : ''}</div>
     ${action}${c.kind === 'ex' ? (noteHTML(e.id) ? '<div class="mt">' + noteHTML(e.id) + '</div>' : '') + progressHTML(e) : ''}
     <div class="grp"><span>訓練肌群</span></div>
     <div class="mapbox">${bodySVG(e.pm, e.sm)}
@@ -1229,7 +2127,7 @@ function backupHTML() {
   if (!S.logs.length || !STORE_OK) return '';
   const ref = S.settings.lastExport || S.logs.reduce((a, l) => l.date < a ? l.date : a, dstr());
   const n = Math.round((parseD(dstr()) - parseD(ref)) / 864e5);
-  if (n < 7) return '';
+  if (n < 30) return '';
   return `<div class="hint">${svgSave}<span>${S.settings.lastExport ? `已經 ${n} 天沒有備份了` : '你的紀錄還沒備份過'}，建議存一份到雲端硬碟</span><button data-act="export">備份</button></div>`;
 }
 // 跟這天以前的紀錄比，重量或預估 1RM 創新高就算 PR
@@ -1601,7 +2499,11 @@ function renderSet() {
       上次匯出：${st.lastExport ? fmtDate(st.lastExport) + ' · ' + daysAgo(st.lastExport) : '從未匯出'}</p>
       ${sw('photoBackup', '備份包含進度照片')}
       <button class="btn primary mt" data-act="export">匯出備份</button>
-      <p class="small muted">手機上會跳出分享選單：選「儲存到檔案」→ iCloud Drive，或選 Google 雲端硬碟。超過 7 天沒備份，首頁會提醒你。</p>
+      <p class="small muted">手機上會跳出分享選單：選「儲存到檔案」→ iCloud Drive，或選 Google 雲端硬碟。超過 30 天沒備份，首頁會提醒你。</p>
+      <div class="set-row"><span>資料保護<br><span class="small muted">請瀏覽器不要自動清除紀錄</span></span>
+        <span class="small" style="text-align:right">${PERSIST === true ? '<span style="color:var(--acc)">✓ 已開啟</span>'
+          : PERSIST === false ? '<span class="muted">尚未開啟</span>' : '<span class="muted">不支援</span>'}</span></div>
+      ${PERSIST === false ? '<button class="btn sm" data-act="persist">再申請一次</button><p class="small muted">iPhone 要先「加入主畫面」，再從主畫面圖示打開，才比較容易開啟。</p>' : ''}
       <button class="btn mt" data-act="import">匯入 JSON 備份</button>
       <p class="small muted">資料只存在這個瀏覽器裡。清除瀏覽器資料就會消失，建議定期匯出。</p>`) +
     card('s:adv', '進階', `
@@ -1712,6 +2614,7 @@ const H = {
     if (c.classList.toggle('open')) { open.add(k); closed.delete(k); } else { open.delete(k); closed.add(k); }
   },
 
+  persist: () => askPersist(true),
   dlgOk: () => DLG && DLG($('#dlg-in').hidden ? true : $('#dlg-in').value),
   dlgNo: () => DLG && DLG(null),
 
@@ -2023,6 +2926,7 @@ ensureToday();
 if (S.today.exIds.length) open.add(S.today.exIds.find(id => !todaySets(id).length) || S.today.exIds[0]);
 render();
 loadPhotos();
+if (STORE_OK) askPersist();
 </script>
 </body>
 </html>
