@@ -105,6 +105,7 @@ nav button.on{background:var(--acc);color:var(--acc-ink);font-weight:700}
 @keyframes flash{0%{background:var(--acc-soft)}100%{background:transparent}}
 .sets .n{flex:none;width:28px;height:28px;border-radius:50%;border:1px solid var(--line2);color:var(--muted);font:500 13px var(--fd);display:grid;place-items:center}
 .sets .v{flex:1;font:700 19px var(--fd);letter-spacing:-.02em}
+.memo{display:block;font:400 12px/1.4 var(--fb);color:var(--muted);font-style:normal;letter-spacing:0;margin-top:2px}
 .sets .v small,.alt{font:500 12px var(--fd);color:var(--muted);margin-left:6px;letter-spacing:0}
 .feel{font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;border:1px solid}
 .feel.e{color:var(--easy);border-color:rgba(94,230,168,.35)}
@@ -1882,6 +1883,8 @@ const wTxt = (kg, u) => kg ? `${num(toU(kg, u))} ${u}` : '自重';
 const wAlt = (kg, u) => kg ? `${num1(toU(kg, other(u)))} ${other(u)}` : '';
 // 每組照記錄時的單位顯示；連續同重量的組合併：60 kg × 8, 8 · 62.5 kg × 6
 const uOf = s => s.u || 'kg';
+// 從舊紀錄匯入的組會帶原本的寫法（例如「26+小吊片」）
+const memoHTML = s => s.memo ? `<em class="memo">${esc(s.memo)}</em>` : '';
 function setsText(sets) {
   const g = [];
   for (const s of sets) {
@@ -1948,10 +1951,10 @@ function cardHTML(id) {
   const e = ex(id), u = unitOf(id), sets = todaySets(id), ls = lastSession(id), d = getDraft(id), st = stepOf(e, u);
   const eid = esc(id);
   const last = ls
-    ? `<div class="last"><div class="lt">上次 ${fmtDate(ls.date)} · ${daysAgo(ls.date)}</div><b>${setsText(ls.sets)}</b></div>`
+    ? `<div class="last"><div class="lt">上次 ${fmtDate(ls.date)} · ${daysAgo(ls.date)}</div><b>${setsText(ls.sets)}</b>${[...new Set(ls.sets.map(x => x.memo).filter(Boolean))].map(m => `<em class="memo">${esc(m)}</em>`).join('')}</div>`
     : `<div class="last muted">尚無過去紀錄</div>`;
   const list = sets.length ? `<ol class="sets">${sets.map((s, i) => `<li class="${s.id === flashId ? 'new' : ''}"><span class="n">${i + 1}</span>
-      <span class="v">${wTxt(s.w, uOf(s))} × ${s.r}<small>${wAlt(s.w, uOf(s))}</small></span><span class="feel ${s.feel}">${FEELS[s.feel]}</span>
+      <span class="v">${wTxt(s.w, uOf(s))} × ${s.r}<small>${wAlt(s.w, uOf(s))}</small>${memoHTML(s)}</span><span class="feel ${s.feel}">${FEELS[s.feel]}</span>
       <button class="x" data-act="delSet" data-id="${s.id}" aria-label="刪除">${svgX}</button></li>`).join('')}</ol>` : '';
   const convV = parseFloat(d.w);
   return `<div class="card ${open.has(id) ? 'open' : ''}" data-key="${eid}">
@@ -2252,7 +2255,7 @@ function daySummaryHTML(date, edit) {
     return `<div class="card" style="padding:14px 16px"><div style="display:flex;align-items:center;gap:12px">${thumbHTML(e, 'noop')}
       <div style="flex:1;min-width:0"><b>${esc(e.name)}</b>${pr[id] ? `<span class="tag" style="color:var(--acc);border-color:var(--acc-mid)">${pr[id]}</span>` : ''}<br><span class="small muted">${s.length} 組</span></div></div>
       ${s.length ? `<ol class="sets" style="margin:10px 0 0">${s.map((x, i) => `<li><span class="n">${i + 1}</span>
-        <span class="v">${wTxt(x.w, uOf(x))} × ${x.r}<small>${wAlt(x.w, uOf(x))}</small></span><span class="feel ${x.feel}">${FEELS[x.feel]}</span>
+        <span class="v">${wTxt(x.w, uOf(x))} × ${x.r}<small>${wAlt(x.w, uOf(x))}</small>${memoHTML(x)}</span><span class="feel ${x.feel}">${FEELS[x.feel]}</span>
         ${edit ? `<button class="x" data-act="dayDel" data-id="${x.id}" aria-label="刪除">${svgX}</button>` : ''}</li>`).join('')}</ol>` : ''}
       ${edit ? `<div class="day-add"><input type="number" inputmode="decimal" step="any" data-dw="1" placeholder="重量 ${unitOf(id)}"><span class="muted">×</span>
         <input type="number" inputmode="numeric" data-dr="1" placeholder="次數"><button class="btn primary" data-act="dayAdd" data-id="${esc(id)}" aria-label="補記一組">＋</button></div>` : ''}
@@ -3105,6 +3108,14 @@ $('#import-file').addEventListener('change', async e => {
   try {
     const data = JSON.parse(await f.text());
     if (!data || !Array.isArray(data.logs) || !(Array.isArray(data.custom) || Array.isArray(data.exercises))) throw new Error('格式不符');
+    // 合併檔：只加進新的動作和紀錄，不動到現有資料
+    if (data.merge) {
+      const haveEx = new Set(S.custom.map(x => x.id)), haveLog = new Set(S.logs.map(x => x.id));
+      const nc = (data.custom || []).filter(x => !haveEx.has(x.id)), nl = data.logs.filter(x => !haveLog.has(x.id));
+      if (!await ask(`要加入 ${nl.length} 組紀錄、${nc.length} 個動作？\n現有的 ${S.logs.length} 組紀錄會保留。`)) return;
+      S.custom.push(...nc); S.logs.push(...nl); save(); refreshEx(); for (const k in draft) delete draft[k];
+      showTab('train'); toast(`已加入 ${nl.length} 組紀錄`); return;
+    }
     const np = Array.isArray(data.photos) ? data.photos.length : 0;
     if (!await ask(`匯入的備份有 ${data.logs.length} 組紀錄${np ? `、${np} 張照片` : ''}。\n匯入會覆蓋目前的資料（${S.logs.length} 組），確定？`)) return;
     const {photos, ...rest} = data;
