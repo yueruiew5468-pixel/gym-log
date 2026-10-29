@@ -194,36 +194,46 @@ nav button.on{background:var(--acc);color:var(--acc-ink);font-weight:700}
   background:var(--text);color:var(--bg);border-radius:24px;padding:10px 10px 12px 20px;display:flex;align-items:center;gap:6px;
   box-shadow:0 12px 40px rgba(0,0,0,.5);overflow:hidden}
 #timer[hidden]{display:none}
-#timer .tt{flex:1;line-height:1}
+#timer .tt{flex:1;line-height:1;cursor:pointer}
 #timer .tl{font:500 11px var(--fd);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
 #timer #tt{font:700 34px var(--fd);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
-#timer button{height:50px;min-width:52px;padding:0 10px;border-radius:16px;background:rgba(10,10,11,.08);font:600 15px var(--fd)}
+#timer .tend,#timer .tring{display:none}
+#timer .tbtns,#timer .tadj,#timer .tmain{display:contents}
+#timer button{height:50px;min-width:52px;padding:0 10px;border-radius:16px;background:rgba(10,10,11,.08);font:600 15px var(--fd);display:flex;align-items:center;justify-content:center;gap:6px}
+#timer .tj{min-width:44px;padding:0 6px;font-size:13px}
+#timer button svg{width:22px;height:22px}
+#timer .tx{background:var(--bg);color:var(--text)}
+#timer .tp .play,#timer.paused .tp .pause{display:none}
+#timer.paused .tp .play{display:block}
 #timer .bar{position:absolute;left:0;bottom:0;height:4px;background:var(--bg);transition:width .25s linear}
+#timer.paused #tt{opacity:.45}
 #timer.done{background:var(--acc);animation:pulse 1s ease-in-out infinite}
-#timer .tt{cursor:pointer}
-#timer .tx{background:var(--bg);color:var(--text);min-width:56px}
-#timer .tx svg{width:22px;height:22px}
-#timer.done .tj{display:none}
-#timer.done .tx{min-width:96px;font-size:16px;gap:6px;display:flex;align-items:center;justify-content:center}
-#timer .tring{display:none}
+#timer.done .tj,#timer.done .tp{display:none}
+#timer.done .tx{min-width:96px;font-size:16px}
 /* 全螢幕：點時間放大，再點一下縮回 */
-#timer.big{inset:0;max-width:none;border-radius:0;flex-direction:column;justify-content:center;gap:28px;padding:calc(env(safe-area-inset-top) + 20px) 20px calc(env(safe-area-inset-bottom) + 40px);
-  background:var(--bg);color:var(--text);z-index:60;animation:none}
-#timer.big .tt{flex:none;position:relative;width:min(84vw,420px);aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-#timer.big .tring{display:block;position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
-#timer.big .tring circle{fill:none;stroke-width:5}
-#timer.big .tring .bg{stroke:var(--line)}
-#timer.big .tring #tarc{stroke:var(--acc);stroke-linecap:round;transition:stroke-dashoffset .25s linear;filter:drop-shadow(0 0 8px rgba(212,255,58,.5))}
-#timer.big #tt{font-size:clamp(72px,24vw,128px);position:relative}
-#timer.big .tl{position:relative;margin-bottom:10px;opacity:.7}
+#timer.big{inset:0;max-width:none;border-radius:0;flex-direction:column;justify-content:space-between;align-items:stretch;gap:0;
+  padding:calc(env(safe-area-inset-top) + 56px) 20px calc(env(safe-area-inset-bottom) + 36px);background:var(--bg);color:var(--text);z-index:60;animation:none}
+#timer.big .tt{flex:none;position:relative;width:min(84vw,400px);aspect-ratio:1;margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#timer.big .tring{display:block;position:absolute;inset:0;width:100%;height:100%}
+#timer .tring line{stroke:var(--line2);stroke-width:2.2;stroke-linecap:round}
+#timer .tring line.on{stroke:var(--acc)}
+#timer.big .tl{opacity:.7;margin-bottom:12px}
+#timer.big #tt{font-size:clamp(64px,21vw,112px);color:var(--acc)}
+#timer.big .tend{display:block;margin-top:14px;font:500 17px var(--fd);color:var(--muted)}
 #timer.big .bar{display:none}
-#timer.big button{height:64px;min-width:84px;font-size:18px;background:var(--card2);color:var(--text)}
-#timer.big .tx{background:var(--text);color:var(--bg)}
-#timer.big .tbtns{display:flex;gap:10px}
-#timer .tbtns{display:contents}
+#timer.big .tbtns{display:flex;flex-direction:column;align-items:center;gap:36px}
+#timer.big .tadj{display:flex;gap:12px}
+#timer.big .tj{height:40px;min-width:76px;border-radius:99px;background:transparent;border:1px solid var(--line2);color:var(--muted);font-size:15px}
+#timer.big .tmain{display:flex;gap:56px}
+#timer.big .tp,#timer.big .tx{width:84px;height:84px;min-width:0;border-radius:50%;padding:0}
+#timer.big .tp{background:var(--acc);color:var(--acc-ink);box-shadow:0 10px 30px rgba(212,255,58,.3)}
+#timer.big .tx{background:var(--card2);color:var(--text);border:1px solid var(--line2)}
+#timer.big button svg{width:32px;height:32px}
 #timer.big.done{background:var(--acc);color:var(--acc-ink)}
-#timer.big.done .tring .bg{stroke:rgba(10,10,11,.15)}
-#timer.big.done .tx{background:var(--acc-ink);color:var(--acc);min-width:200px;height:72px;font-size:20px}
+#timer.big.done #tt{color:var(--acc-ink)}
+#timer.big.done .tend{color:rgba(10,10,11,.6)}
+#timer.big.done .tring line{stroke:rgba(10,10,11,.18)}
+#timer.big.done .tx{width:auto;min-width:200px;border-radius:99px;background:var(--acc-ink);color:var(--acc);border:0;font-size:20px}
 @keyframes pulse{50%{transform:scale(1.025)}}
 
 /* ---------- 彈出面板 ---------- */
@@ -470,12 +480,14 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 
 <div id="timer" hidden>
   <div class="tt" data-act="tbig">
-    <svg class="tring" viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="46"/><circle id="tarc" cx="50" cy="50" r="46" pathLength="1" stroke-dasharray="1"/></svg>
-    <div class="tl" id="tl">REST</div><span id="tt">2:00</span></div>
+    <svg class="tring" viewBox="0 0 200 200" id="tticks"></svg>
+    <div class="tl" id="tl">REST</div><span id="tt">2:00</span><div class="tend" id="tend"></div></div>
   <div class="tbtns">
-    <button class="tj" data-act="tadj" data-d="-15">−15</button>
-    <button class="tj" data-act="tadj" data-d="15">+15</button>
-    <button class="tx" data-act="tstop" aria-label="關掉計時"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg><span id="tx-l"></span></button>
+    <span class="tadj"><button class="tj" data-act="tadj" data-d="-15">−15</button><button class="tj" data-act="tadj" data-d="15">+15</button></span>
+    <span class="tmain">
+      <button class="tp" data-act="tpause" aria-label="暫停或繼續"><svg class="i pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke-width="3"/></svg><svg class="i play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button>
+      <button class="tx" data-act="tstop" aria-label="關掉計時"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg><span id="tx-l"></span></button>
+    </span>
   </div>
   <div class="bar" id="tbar"></div>
 </div>
@@ -2637,69 +2649,88 @@ function showTab(t) {
 
 /* ================= 休息計時 ================= */
 // 時間到之後不會自己消失：一直顯示超過多久，每 15 秒再提醒一次，直到按 ✕ 或記下一組
-const T = {end: 0, total: 0, iv: 0, rang: false, last: 0, note: ''};
-const TKEY = 'gymlog.timer', REPEAT = 15, GIVEUP = 600;
+const T = {end: 0, total: 0, iv: 0, rang: false, last: 0, note: '', pause: 0, lit: -1};
+const TKEY = 'gymlog.timer', REPEAT = 15, GIVEUP = 600, TICKS = 90;
 const FEEL_REST = {h: 30, e: -15};
+// 一圈 90 格刻度，時間過去一格就熄一格
+$('#tticks').innerHTML = [...Array(TICKS)].map((_, i) => {
+  const a = i / TICKS * Math.PI * 2, c = Math.sin(a), d = -Math.cos(a);
+  return `<line x1="${(100 + c * 88).toFixed(2)}" y1="${(100 + d * 88).toFixed(2)}" x2="${(100 + c * 97).toFixed(2)}" y2="${(100 + d * 97).toFixed(2)}"/>`;
+}).join('');
+const TL = [...$('#tticks').children];
 function restFor(feel) {
   const d = S.settings.feelRest ? FEEL_REST[feel] || 0 : 0;
   return {sec: Math.max(15, S.settings.rest + d), note: d ? `${FEELS[feel]} ${d > 0 ? '+' : '−'}${Math.abs(d)} 秒` : ''};
 }
+const hhmm = t => { const d = new Date(t); return `${d.getHours()}:${pad2(d.getMinutes())}`; };
 function startTimer(sec, note = '') {
   clearInterval(T.iv);
-  T.total = sec; T.end = Date.now() + sec * 1000; T.rang = false; T.last = 0; T.note = note;
-  $('#timer').hidden = false; $('#timer').classList.remove('done');
+  Object.assign(T, {total: sec, end: Date.now() + sec * 1000, rang: false, last: 0, note, pause: 0, lit: -1});
+  $('#timer').hidden = false; $('#timer').classList.remove('done', 'paused');
   askNotify(); closeNotes(); keepTimer();
   tick(); T.iv = setInterval(tick, 250);
   wake(true);
 }
+function setTicks(f) {
+  const n = Math.ceil(f * TICKS); if (n === T.lit) return;
+  T.lit = n; TL.forEach((l, i) => l.classList.toggle('on', i < n));
+}
 function tick() {
   if (!T.end) return;
-  const ms = T.end - Date.now();
+  const ms = T.pause || T.end - Date.now();
   if (ms <= 0) {
     const over = Math.floor(-ms / 1000);
     if (over >= GIVEUP) return stopTimer();
-    if (!T.rang) {
-      T.rang = true;
-      $('#timer').classList.add('done'); $('#tbar').style.width = '0'; $('#tarc').style.strokeDashoffset = '1';
-    }
+    if (!T.rang) { T.rang = true; $('#timer').classList.add('done'); $('#tbar').style.width = '0'; setTicks(0); }
     // 第一次和之後每 15 秒響一次
     const k = Math.floor(over / REPEAT) + 1;
     if (k > T.last) { T.last = k; ring(); notify(over); }
     $('#tl').textContent = 'GO · 休息結束';
     $('#tt').textContent = '+' + mmss(over);
+    $('#tend').textContent = '已經超過，按停止或記下一組';
     $('#tx-l').textContent = '停止';
     return;
   }
-  const left = Math.ceil(ms / 1000), f = ms / (T.total * 1000);
-  $('#tl').textContent = 'REST · ' + (T.note || '休息中');
-  $('#tt').textContent = mmss(left);
+  const f = ms / (T.total * 1000);
+  $('#tl').textContent = T.pause ? 'PAUSED · 暫停中' : 'REST · ' + (T.note || '休息中');
+  $('#tt').textContent = mmss(Math.ceil(ms / 1000));
+  $('#tend').textContent = T.pause ? '按 ▶ 繼續' : `${hhmm(T.end)} 開始下一組`;
   $('#tx-l').textContent = '';
   $('#tbar').style.width = f * 100 + '%';
-  $('#tarc').style.strokeDashoffset = String(1 - f);
+  setTicks(f);
+}
+function pauseTimer() {
+  if (!T.end || T.rang) return;
+  if (T.pause) { T.end = Date.now() + T.pause; T.pause = 0; wake(true); }
+  else { T.pause = Math.max(1000, T.end - Date.now()); }
+  $('#timer').classList.toggle('paused', !!T.pause);
+  keepTimer(); tick();
 }
 function stopTimer() {
   clearInterval(T.iv);
-  T.end = 0; $('#timer').hidden = true; $('#timer').classList.remove('big', 'done'); wake(false);
+  T.end = 0; T.pause = 0; $('#timer').hidden = true; $('#timer').classList.remove('big', 'done', 'paused'); wake(false);
   closeNotes(); keepTimer();
 }
 function adjTimer(d) {
   if (!T.end || T.rang) { startTimer(Math.max(15, d)); return; }
-  T.end = Math.max(Date.now() + 1000, T.end + d * 1000);
-  T.total = Math.max(T.total, (T.end - Date.now()) / 1000);
+  if (T.pause) T.pause = Math.max(1000, T.pause + d * 1000);
+  else T.end = Math.max(Date.now() + 1000, T.end + d * 1000);
+  T.total = Math.max(T.total, (T.pause || T.end - Date.now()) / 1000);
   keepTimer(); tick();
 }
 // 存起來：App 被關掉再打開還能接著倒數
 function keepTimer() {
-  try { T.end ? localStorage.setItem(TKEY, JSON.stringify({end: T.end, total: T.total, note: T.note})) : localStorage.removeItem(TKEY); } catch (e) {}
+  try { T.end ? localStorage.setItem(TKEY, JSON.stringify({end: T.end, total: T.total, note: T.note, pause: T.pause})) : localStorage.removeItem(TKEY); } catch (e) {}
 }
 function resumeTimer() {
   try {
     const t = JSON.parse(localStorage.getItem(TKEY) || 'null');
-    if (!t || Date.now() - t.end > GIVEUP * 1000) return localStorage.removeItem(TKEY);
-    Object.assign(T, {end: t.end, total: t.total, note: t.note || '', rang: false, last: 0});
+    if (!t || (!t.pause && Date.now() - t.end > GIVEUP * 1000)) return localStorage.removeItem(TKEY);
+    Object.assign(T, {end: t.end, total: t.total, note: t.note || '', pause: t.pause || 0, rang: false, last: 0, lit: -1});
     // 已經過了的提醒不要補響，只從下一次開始
-    if (Date.now() > t.end) T.last = Math.floor((Date.now() - t.end) / 1000 / REPEAT) + 1;
-    $('#timer').hidden = false; tick(); T.iv = setInterval(tick, 250); wake(true);
+    if (!T.pause && Date.now() > t.end) T.last = Math.floor((Date.now() - t.end) / 1000 / REPEAT) + 1;
+    $('#timer').hidden = false; $('#timer').classList.toggle('paused', !!T.pause);
+    tick(); T.iv = setInterval(tick, 250); wake(true);
   } catch (e) {}
 }
 
@@ -2997,6 +3028,7 @@ const H = {
   tadj: (_, b) => adjTimer(+b.dataset.d),
   tstop: () => stopTimer(),
   tbig: () => $('#timer').classList.toggle('big'),
+  tpause: () => pauseTimer(),
 
   /* 設定 */
   defUnit: (_, b) => { S.settings.unit = b.dataset.v; save(); for (const k in draft) delete draft[k]; renderSet(); },
