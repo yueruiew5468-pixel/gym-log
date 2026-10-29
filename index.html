@@ -361,9 +361,53 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
   padding:11px 20px;border-radius:99px;font-weight:600;font-size:15px;opacity:0;pointer-events:none;transition:.3s cubic-bezier(.2,.9,.3,1);max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 .empty{text-align:center;padding:30px 16px;color:var(--muted)}
+/* ---------- 開場畫面 ---------- */
+#splash{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;
+  padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);transition:clip-path .75s cubic-bezier(.77,0,.18,1);clip-path:inset(0 0 0 0)}
+#splash.out{clip-path:inset(0 0 100% 0)}
+#splash .bgword{position:absolute;left:0;white-space:nowrap;font:700 34vh/1 var(--fd);letter-spacing:-.06em;color:transparent;-webkit-text-stroke:1px var(--line2);opacity:.7;
+  animation:sp-drift 9s linear infinite;pointer-events:none}
+#splash .bgword.a{top:-4vh}#splash .bgword.b{bottom:-6vh;animation-direction:reverse}
+#splash .glow{position:absolute;width:120vmin;height:120vmin;border-radius:50%;background:radial-gradient(closest-side,rgba(212,255,58,.16),transparent 70%);
+  animation:sp-glow 1.6s ease-out both}
+#splash .ring{position:relative;width:min(62vw,260px);aspect-ratio:1}
+#splash .ring svg{width:100%;height:100%;overflow:visible}
+#splash .ring path{fill:none;stroke-width:14;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:sp-draw .55s cubic-bezier(.3,.8,.3,1) forwards}
+#splash .ring path.off{stroke:var(--line2)}
+#splash .ring path.on{stroke:var(--acc);filter:drop-shadow(0 0 10px rgba(212,255,58,.55))}
+#splash .ring text{font-family:var(--fd);fill:var(--muted);font-size:13px;font-weight:500;text-anchor:middle;dominant-baseline:central;opacity:0;animation:sp-fade .4s .5s forwards}
+#splash .ring text.t{fill:var(--acc)}
+#splash .mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;animation:sp-pop .7s .35s cubic-bezier(.2,1.4,.4,1) both}
+#splash .mid b{font:700 clamp(64px,22vw,96px)/.9 var(--fd);letter-spacing:-.05em}
+#splash .mid b small{font-size:.32em;color:var(--muted);letter-spacing:0;margin-left:2px}
+#splash .mid span{font-size:12px;letter-spacing:.24em;color:var(--muted);margin-top:6px}
+#splash h2{margin:38px 0 0;font:700 clamp(40px,13vw,58px)/1 var(--fd);letter-spacing:.04em;display:flex;gap:.02em}
+#splash h2 i{font-style:normal;display:inline-block;animation:sp-rise .7s cubic-bezier(.2,.9,.2,1) both}
+#splash .eb{margin-top:14px;font:500 12px/1 var(--fd);letter-spacing:.3em;color:var(--muted);text-transform:uppercase;animation:sp-fade .6s .8s both}
+#splash .eb em{font-style:normal;color:var(--acc)}
+#splash .bar{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 40px);width:120px;height:2px;background:var(--line);border-radius:2px;overflow:hidden}
+#splash .bar::after{content:"";position:absolute;inset:0;background:var(--acc);transform-origin:left;animation:sp-load 1.5s cubic-bezier(.6,0,.3,1) both}
+@keyframes sp-draw{to{stroke-dashoffset:0}}
+@keyframes sp-fade{from{opacity:0}to{opacity:1}}
+@keyframes sp-pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+@keyframes sp-rise{from{opacity:0;transform:translateY(60%) rotate(8deg)}to{opacity:1;transform:none}}
+@keyframes sp-glow{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+@keyframes sp-load{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes sp-drift{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){#splash *{animation-duration:.01s!important;animation-delay:0s!important}}
 </style>
 </head>
 <body>
+
+<div id="splash" aria-hidden="true">
+  <div class="bgword a">GYM LOG · GYM LOG · GYM LOG · GYM LOG · </div>
+  <div class="bgword b">LIFT · LOG · REPEAT · LIFT · LOG · REPEAT · </div>
+  <div class="glow"></div>
+  <div class="ring"><svg viewBox="-130 -130 260 260" id="sp-ring"></svg><div class="mid"><b id="sp-n">0<small>/7</small></b><span>本週訓練</span></div></div>
+  <h2 id="sp-word"></h2>
+  <div class="eb" id="sp-eb"></div>
+  <div class="bar"></div>
+</div>
 
 <header><div class="in"><div class="eyebrow" id="eyebrow"></div><h1 id="title">今日訓練</h1></div></header>
 
@@ -2928,6 +2972,30 @@ open.add('s:unit'); open.add('s:rest'); open.add('s:aid'); open.add('s:backup');
 ensureToday();
 if (S.today.exIds.length) open.add(S.today.exIds.find(id => !todaySets(id).length) || S.today.exIds[0]);
 render();
+// 開場畫面：圓環 7 段 = 本週 7 天，有練的那天亮起
+(function splash() {
+  const el = $('#splash'); if (!el) return;
+  const now = new Date(), dow = (now.getDay() + 6) % 7, dates = new Set(S.logs.map(l => l.date));
+  const R = 100, gap = 9, seg = 360 / 7, pt = a => [R * Math.cos((a - 90) * Math.PI / 180), R * Math.sin((a - 90) * Math.PI / 180)].map(v => v.toFixed(2));
+  let n = 0, svg = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow + i), on = dates.has(dstr(d));
+    if (on) n++;
+    const a0 = i * seg + gap / 2, a1 = (i + 1) * seg - gap / 2, [x0, y0] = pt(a0), [x1, y1] = pt(a1);
+    const [tx, ty] = [(R + 24) * Math.cos(((a0 + a1) / 2 - 90) * Math.PI / 180), (R + 24) * Math.sin(((a0 + a1) / 2 - 90) * Math.PI / 180)];
+    svg += `<path class="${on ? 'on' : 'off'}" pathLength="1" style="animation-delay:${80 + i * 70}ms" d="M${x0} ${y0}A${R} ${R} 0 0 1 ${x1} ${y1}"/>`
+      + `<text class="${i === dow ? 't' : ''}" x="${tx.toFixed(1)}" y="${ty.toFixed(1)}">${'一二三四五六日'[i]}</text>`;
+  }
+  $('#sp-ring').innerHTML = svg;
+  $('#sp-n').innerHTML = `${n}<small>/7</small>`;
+  $('#sp-word').innerHTML = [...'健身紀錄'].map((c, i) => `<i style="animation-delay:${.45 + i * .07}s">${c}</i>`).join('');
+  const M = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'], W = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  $('#sp-eb').innerHTML = `<em>${W[now.getDay()]}</em> · ${now.getDate()} ${M[now.getMonth()]} ${now.getFullYear()}`;
+  let gone = false;
+  const go = () => { if (gone) return; gone = true; el.classList.add('out'); setTimeout(() => el.remove(), 800); };
+  el.addEventListener('click', go);
+  setTimeout(go, matchMedia('(prefers-reduced-motion:reduce)').matches ? 400 : 1700);
+})();
 loadPhotos();
 if (STORE_OK) askPersist();
 // 讓網頁可以安裝成 App，並在沒網路時也能打開
