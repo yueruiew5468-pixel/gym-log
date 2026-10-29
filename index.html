@@ -1810,7 +1810,7 @@ function defaults() {
       t('拉', ['引體向上','槓鈴划船','坐姿繩索划船','臉拉','啞鈴彎舉','錘式彎舉']),
       t('腿', ['槓鈴深蹲','羅馬尼亞硬舉','腿推機','腿彎舉','站姿提踵','懸垂舉腿']),
     ],
-    settings: {rest: 120, autoRest: true, sound: true, vibrate: true, feelRest: true, notify: true, unit: 'kg', lastExport: null,
+    settings: {rest: 120, autoRest: true, sound: true, vibrate: true, feelRest: true, notify: true, unit: 'kg', lastExport: null, cloud: null, cloudAuto: true,
       bar: {kg: 20, lb: 45}, warmup: true, photoBackup: true},
     today: {date: dstr(), exIds: []},
   };
@@ -2213,8 +2213,51 @@ const svgSave = '<svg class="i" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5
 let histM = null, dayExtra = [];
 const dayLogs = date => S.logs.filter(l => l.date === date).sort((a, b) => a.ts - b.ts);
 
+/* ================= 雲端自動備份（Google Apps Script） ================= */
+// 設定只存在這支手機裡（網址和密碼不寫進公開的程式碼）
+const backupData = () => S.settings.photoBackup && PH.length ? {...S, photos: PH} : S;
+let CLOUD_BUSY = false;
+async function cloudBackup(manual) {
+  const c = S.settings.cloud;
+  if (!c || !c.url || CLOUD_BUSY) return;
+  if (!navigator.onLine) { c.pending = true; save(); if (manual) toast('沒有網路，連上後會自動補備份'); return; }
+  CLOUD_BUSY = true; if (manual) toast('備份到雲端中…');
+  const body = JSON.stringify({key: c.key, name: `健身紀錄-${dstr()}.json`, data: JSON.stringify(backupData())});
+  try {
+    let r;
+    try { r = await (await fetch(c.url, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body})).json(); }
+    catch (e) { throw new Error('連不上雲端程式，請確認部署時「誰可以存取」選的是「所有人」'); }
+    if (!r.ok) throw new Error(r.err || '雲端回應錯誤');
+    Object.assign(c, {last: Date.now(), err: '', pending: false}, r.folder ? {folder: r.folder} : {});
+    S.settings.lastExport = dstr(); save();
+    if (manual) toast('已備份到雲端');
+  } catch (e) {
+    Object.assign(c, {err: e.message, pending: true}); save();
+    toast('雲端備份失敗：' + e.message);
+  } finally {
+    CLOUD_BUSY = false;
+    if ($('#v-set').classList.contains('on')) renderSet();
+  }
+}
+// 每個月自動備份一次：這個月還沒備份過，而且有紀錄就備份
+function cloudMonthly() {
+  const c = S.settings.cloud;
+  if (!c || !S.settings.cloudAuto || !S.logs.length) return;
+  const m = d => d.slice(0, 7);
+  if (c.pending || !c.last || m(dstr(new Date(c.last))) !== m(dstr())) cloudBackup(false);
+}
+// 掃 QR code 打開的網址：#cloud=程式網址|密碼
+function cloudFromHash() {
+  const m = location.hash.match(/^#cloud=(.+)$/); if (!m) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  const [url, key] = decodeURIComponent(m[1]).split('|');
+  if (!/^https:\/\/script\.google\.com\//.test(url) || !key) return note('雲端備份連結不正確，請重新掃描。');
+  S.settings.cloud = {url, key}; save();
+  note('已連上 Google 雲端備份！\n之後每個月會自動存一份到你的雲端資料夾。現在先備份一次。').then(() => cloudBackup(true));
+}
 function backupHTML() {
   if (!S.logs.length || !STORE_OK) return '';
+  if (S.settings.cloud && S.settings.cloud.pending && S.settings.cloud.err) return `<div class="hint">${svgSave}<span>上次雲端備份沒有成功</span><button data-act="cloudNow">重試</button></div>`;
   const ref = S.settings.lastExport || S.logs.reduce((a, l) => l.date < a ? l.date : a, dstr());
   const n = Math.round((parseD(dstr()) - parseD(ref)) / 864e5);
   if (n < 30) return '';
@@ -2616,9 +2659,17 @@ function renderSet() {
       <p class="small muted">加重提醒：在每個動作卡片的「備註與目標次數」設定次數範圍。</p>`) +
     card('s:backup', '資料備份', `
       <p class="small muted" style="margin-top:0">共 ${S.logs.length} 組紀錄、${days} 個訓練日、${S.body.length} 筆身體數據、${PH.length} 張照片、${S.custom.length} 個自訂動作、${S.templates.length} 個範本。<br>
-      上次匯出：${st.lastExport ? fmtDate(st.lastExport) + ' · ' + daysAgo(st.lastExport) : '從未匯出'}</p>
+      上次備份：${st.lastExport ? fmtDate(st.lastExport) + ' · ' + daysAgo(st.lastExport) : '從未備份'}</p>
+      <div class="flbl">Google 雲端自動備份</div>
+      ${st.cloud ? `<p class="small" style="margin:4px 0 0">${st.cloud.err ? `<span style="color:var(--hard)">上次失敗：${esc(st.cloud.err)}</span>`
+          : st.cloud.last ? `<span style="color:var(--acc)">✓ 已連上</span> · 上次 ${fmtDate(dstr(new Date(st.cloud.last)))} ${hhmm(st.cloud.last)}` : '<span style="color:var(--acc)">✓ 已連上</span> · 還沒備份過'}</p>
+        ${sw('cloudAuto', '每個月自動備份一次到雲端')}
+        <div class="row mt"><button class="btn sm primary" data-act="cloudNow">立即備份到雲端</button>${st.cloud.folder ? `<a class="btn sm" href="${esc(st.cloud.folder)}" target="_blank" rel="noopener">打開雲端資料夾</a>` : ''}</div>
+        <button class="btn ghost sm mt" data-act="cloudOff">中斷雲端連線</button>`
+      : `<p class="small muted" style="margin:4px 0 0">還沒連上。照設定說明在 Google 建好備份程式後，用手機掃描它顯示的 QR code 就會自動連上。</p>
+        <button class="btn sm mt" data-act="cloudPaste">手動貼上連結</button>`}
       ${sw('photoBackup', '備份包含進度照片')}
-      <button class="btn primary mt" data-act="export">匯出備份</button>
+      <button class="btn mt" data-act="export">匯出備份檔案</button>
       <p class="small muted">手機上會跳出分享選單：選「儲存到檔案」→ iCloud Drive，或選 Google 雲端硬碟。超過 30 天沒備份，首頁會提醒你。</p>
       <div class="set-row"><span>資料保護<br><span class="small muted">請瀏覽器不要自動清除紀錄</span></span>
         <span class="small" style="text-align:right">${PERSIST === true ? '<span style="color:var(--acc)">✓ 已開啟</span>'
@@ -2813,6 +2864,7 @@ const H = {
     if (!S.logs.some(l => l.date === dstr())) return toast('今天還沒有記錄任何一組');
     S.today.finished = true; save(); stopTimer(); renderTrain(); window.scrollTo(0, 0);
     openPanel({kind: 'summary'});
+    cloudMonthly();
   },
   resume: () => { S.today.finished = false; save(); renderTrain(); },
   summary: () => openPanel({kind: 'summary'}),
@@ -3039,7 +3091,7 @@ const H = {
   testRing: () => { audio(); ring(); },
   // 手機上直接開分享選單（可選「儲存到檔案」→ iCloud Drive，或 Google 雲端硬碟），其他情況下載檔案
   export: async () => {
-    const data = S.settings.photoBackup && PH.length ? {...S, photos: PH} : S;
+    const data = backupData();
     const name = `健身紀錄-${dstr()}.json`;
     const file = new File([JSON.stringify(data)], name, {type: 'application/json'});
     const done = () => { S.settings.lastExport = dstr(); save(); render(); toast('備份完成'); };
@@ -3054,6 +3106,12 @@ const H = {
     done();
   },
   import: () => $('#import-file').click(),
+  cloudNow: () => S.settings.cloud ? cloudBackup(true) : showTab('set'),
+  cloudOff: async () => { if (!await ask('中斷雲端備份？已經存在雲端的備份不會被刪掉。')) return; S.settings.cloud = null; save(); renderSet(); },
+  cloudPaste: async () => {
+    const v = (await askText('貼上 QR code 裡的連結', '') || '').trim(); if (!v) return;
+    const i = v.indexOf('#cloud='); location.hash = i >= 0 ? v.slice(i) : '#cloud=' + v; cloudFromHash();
+  },
   restoreBuiltin: async () => {
     if (!S.hidden.length) return toast('內建動作都在');
     const n = S.hidden.length; S.hidden = []; save(); refreshEx(); toast(`已還原 ${n} 個動作`);
@@ -3112,9 +3170,23 @@ $('#import-file').addEventListener('change', async e => {
     if (data.merge) {
       const haveEx = new Set(S.custom.map(x => x.id)), haveLog = new Set(S.logs.map(x => x.id));
       const nc = (data.custom || []).filter(x => !haveEx.has(x.id)), nl = data.logs.filter(x => !haveLog.has(x.id));
-      if (!await ask(`要加入 ${nl.length} 組紀錄、${nc.length} 個動作？\n現有的 ${S.logs.length} 組紀錄會保留。`)) return;
-      S.custom.push(...nc); S.logs.push(...nl); save(); refreshEx(); for (const k in draft) delete draft[k];
-      showTab('train'); toast(`已加入 ${nl.length} 組紀錄`); return;
+      const remap = Object.entries(data.remap || {}).filter(([a, b]) => BUILTIN.some(e => e.id === b) && (haveEx.has(a) || nc.some(x => x.id === a)));
+      const relink = Object.entries(data.relink || {}).filter(([a]) => haveEx.has(a) || nc.some(x => x.id === a));
+      const msg = nl.length || nc.length ? `要加入 ${nl.length} 組紀錄、${nc.length} 個動作？` : `要把 ${remap.length} 個動作併入動作庫、${relink.length} 個動作連上動作圖？`;
+      if (!await ask(`${msg}\n現有的 ${S.logs.length} 組紀錄會保留。`)) return;
+      S.custom.push(...nc); S.logs.push(...nl);
+      // 自訂動作其實就是動作庫裡的動作 → 紀錄、備註、範本都搬過去，再刪掉自訂的那個
+      for (const [a, b] of remap) {
+        S.logs.forEach(l => { if (l.exId === a) l.exId = b; });
+        for (const k of ['notes', 'ranges', 'units']) if (S[k][a] != null) { if (S[k][b] == null) S[k][b] = S[k][a]; delete S[k][a]; }
+        const sw = arr => [...new Set(arr.map(x => x === a ? b : x))];
+        S.today.exIds = sw(S.today.exIds); S.templates.forEach(t => { t.exIds = sw(t.exIds); });
+        S.custom = S.custom.filter(x => x.id !== a);
+      }
+      // 保留自己的名字，但借用動作庫的圖片和肌群
+      for (const [a, patch] of relink) { const c = S.custom.find(x => x.id === a); if (c) Object.assign(c, patch); }
+      save(); refreshEx(); for (const k in draft) delete draft[k];
+      showTab('train'); toast(nl.length ? `已加入 ${nl.length} 組紀錄` : '動作對應完成'); return;
     }
     const np = Array.isArray(data.photos) ? data.photos.length : 0;
     if (!await ask(`匯入的備份有 ${data.logs.length} 組紀錄${np ? `、${np} 張照片` : ''}。\n匯入會覆蓋目前的資料（${S.logs.length} 組），確定？`)) return;
@@ -3164,9 +3236,12 @@ render();
 })();
 loadPhotos();
 resumeTimer();
+cloudFromHash();
+cloudMonthly();
+window.addEventListener('online', () => { if (S.settings.cloud && S.settings.cloud.pending) cloudBackup(false); });
 if (STORE_OK) askPersist();
 // 讓網頁可以安裝成 App，並在沒網路時也能打開
-if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js', {updateViaCache: 'none'}).catch(() => {});
 </script>
 </body>
 </html>
