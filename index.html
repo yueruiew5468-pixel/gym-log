@@ -66,7 +66,7 @@ nav button.on{background:var(--acc);color:var(--acc-ink);font-weight:700}
 .ch-row .thumb{margin-left:14px}
 
 .thumb{flex:none;width:54px;height:54px;border-radius:14px;overflow:hidden;background:#fff;display:grid;place-items:center;position:relative}
-.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb img{width:100%;height:100%;object-fit:cover;-webkit-user-drag:none;pointer-events:none}
 .thumb.nob{background:var(--card2)}
 .thumb.nob svg.body{width:90%;height:90%}
 .thumb::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
@@ -97,7 +97,12 @@ nav button.on{background:var(--acc);color:var(--acc-ink);font-weight:700}
 .mtag{font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
 .mtag.p{border-color:var(--acc-mid);color:var(--acc);background:var(--acc-soft)}
 .last{border:1px dashed var(--line2);border-radius:var(--r2);padding:10px 14px;font-size:14px;margin-bottom:12px}
-.last .lt{font-size:12px;color:var(--muted);letter-spacing:.04em}
+.last .lt{display:flex;align-items:center;font-size:12px;color:var(--muted);letter-spacing:.04em}
+.last .lk{margin-left:auto;color:var(--acc);font-size:12px;letter-spacing:0;padding:6px 0 6px 10px}
+.ch-del{margin-right:10px}
+.card.dragging{position:relative;z-index:5;transform:scale(1.02);box-shadow:0 12px 32px rgba(0,0,0,.6);border-color:var(--acc-mid);transition:none}
+body.drag-on{user-select:none;-webkit-user-select:none}
+.ch-row{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 .last b{font:500 16px var(--fd)}
 .sets{list-style:none;padding:0;margin:0 0 14px}
 .sets li{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
@@ -105,6 +110,22 @@ nav button.on{background:var(--acc);color:var(--acc-ink);font-weight:700}
 @keyframes flash{0%{background:var(--acc-soft)}100%{background:transparent}}
 .sets .n{flex:none;width:28px;height:28px;border-radius:50%;border:1px solid var(--line2);color:var(--muted);font:500 13px var(--fd);display:grid;place-items:center}
 .sets .v{flex:1;font:700 19px var(--fd);letter-spacing:-.02em}
+.pl-t{display:block;font:600 12px/1.4 var(--fb);color:var(--acc);font-style:normal;letter-spacing:0;margin-top:2px}
+.plpick{margin:4px 0 14px;padding:14px;border:1px solid var(--line2);border-radius:18px;background:var(--bg)}
+.pl-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.pl-h b{font-size:15px;color:var(--text)}.pl-h span{font-size:12px;color:var(--muted)}
+.pl-h .lk{margin-left:auto;color:var(--acc);font-size:13px;padding:4px 0}
+.pl-cur{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-height:52px;margin:10px 0 0;padding:6px 8px;border-radius:14px;border:1px dashed var(--line2);background:var(--card)}
+.pl-cur button{display:flex;align-items:center;gap:4px;min-width:52px;height:40px;padding:0 10px;border-radius:12px;border:2px solid var(--line2);background:var(--card2);font:700 16px var(--fd);color:var(--text)}
+.pl-cur button i{font-style:normal;font-size:13px;color:var(--muted);font-weight:400}
+.pl-cur .plus{color:var(--muted);font-size:15px}
+.pl-empty{color:var(--muted);font-size:14px;padding:0 4px}
+.pl-how{margin:10px 2px 0;font-size:14px;color:#cfcfca}.pl-how b{color:var(--acc);font:700 16px var(--fd)}
+.pl-add{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.pl-add button{height:44px;border-radius:12px;border:1px solid var(--acc-mid);background:var(--acc-soft);color:var(--acc);font:700 15px var(--fd)}
+.pl-add button:active{background:var(--acc-mid)}
+.pl-edit{display:block;width:100%;margin-top:10px;padding:8px 0 0;font-size:13px;color:var(--muted);text-align:left}
+.lbl .lk{color:var(--acc);font-size:12px}
+.step.pl-tot{justify-content:center;height:66px}.step.pl-tot b{font:700 28px var(--fd);letter-spacing:-.03em}
 .memo{display:block;font:400 12px/1.4 var(--fb);color:var(--muted);font-style:normal;letter-spacing:0;margin-top:2px}
 .sets .v small,.alt{font:500 12px var(--fd);color:var(--muted);margin-left:6px;letter-spacing:0}
 .feel{font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;border:1px solid}
@@ -1804,6 +1825,7 @@ function defaults() {
     units: {},       // 每個動作慣用的單位
     notes: {},       // 每個動作的備註
     ranges: {},      // 每個動作的目標次數 {min, max}
+    load: {},        // 掛槓片的動作 {sd: 2 兩邊都掛 | 1 只有一邊, base: 槓子或機器本身重量(公斤)}
     body: [],        // 身體數據 {date, weight(公斤), fat, chest, waist, hip, arm, thigh, calf}
     templates: [
       t('推', ['槓鈴臥推','上斜啞鈴臥推','器械肩推','啞鈴側平舉','繩索下壓','過頭繩索臂屈伸']),
@@ -1827,6 +1849,7 @@ function normalize(s) {
     units: s.units || {},
     notes: s.notes || {},
     ranges: s.ranges || {},
+    load: s.load || {},
     body: Array.isArray(s.body) ? s.body : [],
     templates: Array.isArray(s.templates) ? s.templates : d.templates,
     settings: {...d.settings, ...(s.settings || {})},
@@ -1885,13 +1908,18 @@ const wAlt = (kg, u) => kg ? `${num1(toU(kg, other(u)))} ${other(u)}` : '';
 const uOf = s => s.u || 'kg';
 // 從舊紀錄匯入的組會帶原本的寫法（例如「26+小吊片」）
 const memoHTML = s => s.memo ? `<em class="memo">${esc(s.memo)}</em>` : '';
+// 掛槓片的組另外存每邊掛了哪些槓片 {pl: [4.5, 2.3], sd: 2}，重量 w 還是總重
+const loadOf = id => S.load[id] && S.load[id].sd ? S.load[id] : null;
+const plSum = pl => pl.reduce((a, b) => a + b, 0);
+const plTxt = s => s.pl && s.pl.length ? `${s.sd === 1 ? '只掛一邊' : '每邊'} ${s.pl.map(num).join('+')}` : '';
+const plHTML = s => s.pl && s.pl.length ? `<em class="pl-t">${plTxt(s)}</em>` : '';
 function setsText(sets) {
   const g = [];
   for (const s of sets) {
-    const last = g[g.length - 1];
-    if (last && last.w === s.w && last.u === uOf(s)) last.r.push(s.r); else g.push({w: s.w, u: uOf(s), r: [s.r]});
+    const last = g[g.length - 1], p = plTxt(s);
+    if (last && last.w === s.w && last.u === uOf(s) && last.p === p) last.r.push(s.r); else g.push({w: s.w, u: uOf(s), p, r: [s.r]});
   }
-  return g.map(x => `${wTxt(x.w, x.u)} × ${x.r.join(', ')}`).join(' · ');
+  return g.map(x => `${wTxt(x.w, x.u)}${x.p ? `（${x.p}）` : ''} × ${x.r.join(', ')}`).join(' · ');
 }
 const stepOf = (e, u) => u === 'lb' ? (e.equip === '徒手' ? 2.5 : 5)
   : e.equip === '啞鈴' ? 2 : e.equip === '壺鈴' ? 4 : e.equip === '徒手' ? 1 : 2.5;
@@ -1910,10 +1938,18 @@ function getDraft(id) {
   if (!draft[id]) {
     const u = unitOf(id), t = todaySets(id), ls = lastSession(id);
     const ref = t.length ? t[t.length - 1] : ls ? ls.sets[0] : null;
-    draft[id] = {w: ref ? num(toU(ref.w, u)) : '', r: ref ? String(ref.r) : '', feel: 'j'};
+    draft[id] = {w: ref ? num(toU(ref.w, u)) : '', r: ref ? String(ref.r) : '', feel: 'j',
+      pl: ref && ref.pl && uOf(ref) === u ? [...ref.pl] : []};
+    if (loadOf(id)) syncPl(id);
   }
   return draft[id];
 }
+// 總重 = 槓子/機器本身 + 槓片 × 掛幾邊（用輸入單位）
+function plTotal(id) {
+  const L = loadOf(id), d = draft[id], u = unitOf(id);
+  return toU(L.base || 0, u) + plSum(d.pl) * L.sd;
+}
+function syncPl(id) { const d = draft[id]; if (!d.pl) d.pl = []; d.w = num(plTotal(id)); }
 
 /* ================= 訓練頁 ================= */
 function renderTrain() {
@@ -1932,7 +1968,8 @@ function renderTrain() {
       <div><b>${todayLogs.length}</b><span>完成組數</span></div>
       <div><b>${vol >= 10000 ? num1(vol / 1000) + '<small>k</small>' : Math.round(vol)}</b><span>總量 ${u}</span></div></div>`;
     h += ids.map(cardHTML).join('');
-    h += `<button class="btn big mt" data-act="pickToday">＋ 加入動作</button>
+    h += `${ids.length > 1 ? '<p class="small muted" style="text-align:center;margin:4px 0 0">長按動作名稱可以拖曳排序</p>' : ''}
+      <button class="btn big mt" data-act="pickToday">＋ 加入動作</button>
       <div class="row mt"><button class="btn ghost sm" data-act="saveTpl">存成範本</button>
       <button class="btn ghost sm" data-act="clearToday">清空清單</button></div>
       ${todayLogs.length ? '<button class="btn finish big mt2" data-act="finish">結束訓練</button>' : ''}`;
@@ -1942,36 +1979,37 @@ function renderTrain() {
       <button class="btn primary big" data-act="tab" data-id="tpl">從範本開始</button>
       <button class="btn big mt" data-act="pickToday">＋ 加入動作</button></div>`;
   }
-  h += '<button class="btn ghost sm mt" data-act="plate" data-id="">槓片計算機</button>';
   $('#v-train').innerHTML = h;
   flashId = null;
 }
 
 function cardHTML(id) {
-  const e = ex(id), u = unitOf(id), sets = todaySets(id), ls = lastSession(id), d = getDraft(id), st = stepOf(e, u);
+  const e = ex(id), u = unitOf(id), sets = todaySets(id), ls = lastSession(id), d = getDraft(id), st = stepOf(e, u), L = loadOf(id);
   const eid = esc(id);
   const last = ls
-    ? `<div class="last"><div class="lt">上次 ${fmtDate(ls.date)} · ${daysAgo(ls.date)}</div><b>${setsText(ls.sets)}</b>${[...new Set(ls.sets.map(x => x.memo).filter(Boolean))].map(m => `<em class="memo">${esc(m)}</em>`).join('')}</div>`
-    : `<div class="last muted">尚無過去紀錄</div>`;
+    ? `<div class="last"><div class="lt">上次 ${fmtDate(ls.date)} · ${daysAgo(ls.date)}<button class="lk" data-act="detail" data-id="${eid}">說明與進度 ›</button></div><b>${setsText(ls.sets)}</b>${[...new Set(ls.sets.map(x => x.memo).filter(Boolean))].map(m => `<em class="memo">${esc(m)}</em>`).join('')}</div>`
+    : `<div class="last muted"><div class="lt">尚無過去紀錄<button class="lk" data-act="detail" data-id="${eid}">動作說明 ›</button></div></div>`;
   const list = sets.length ? `<ol class="sets">${sets.map((s, i) => `<li class="${s.id === flashId ? 'new' : ''}"><span class="n">${i + 1}</span>
-      <span class="v">${wTxt(s.w, uOf(s))} × ${s.r}<small>${wAlt(s.w, uOf(s))}</small>${memoHTML(s)}</span><span class="feel ${s.feel}">${FEELS[s.feel]}</span>
+      <span class="v">${wTxt(s.w, uOf(s))} × ${s.r}<small>${wAlt(s.w, uOf(s))}</small>${plHTML(s)}${memoHTML(s)}</span><span class="feel ${s.feel}">${FEELS[s.feel]}</span>
       <button class="x" data-act="delSet" data-id="${s.id}" aria-label="刪除">${svgX}</button></li>`).join('')}</ol>` : '';
   const convV = parseFloat(d.w);
   return `<div class="card ${open.has(id) ? 'open' : ''}" data-key="${eid}">
     <div class="ch-row">${thumbHTML(e)}
     <button class="card-h" data-act="toggle"><span class="t">${esc(e.name)}<br><span class="small muted" style="font-weight:400">${e.equip} · ${muscleText(e)}</span></span>
-      ${sets.length ? `<span class="badge">${sets.length}</span>` : `<span class="r">${ls ? wTxt(ls.sets[0].w, uOf(ls.sets[0])) : ''}</span>`}${svgChev}</button></div>
+      ${sets.length ? `<span class="badge">${sets.length}</span>` : `<span class="r">${ls ? wTxt(ls.sets[0].w, uOf(ls.sets[0])) : ''}</span>`}${svgChev}</button>
+    <button class="x ch-del" data-act="rmToday" data-id="${eid}" aria-label="從今天移除">${svgTrash}</button></div>
     <div class="card-b">
       <div class="mtags">${e.pm.map(m => `<span class="mtag p">${MUSCLES[m]}</span>`).join('')}${e.sm.map(m => `<span class="mtag">${MUSCLES[m]}</span>`).join('')}</div>
-      ${hintHTML(id)}${noteHTML(id)}${last}${warmHTML(id)}${list}
+      ${hintHTML(id)}${noteHTML(id)}${last}${L ? '' : warmHTML(id)}${list}
+      ${L ? plPickHTML(id) : ''}
       <div class="row">
-        <div><div class="lbl"><span>重量</span><span class="unit">
+        <div><div class="lbl"><span>${L ? '總重' : '重量'}</span><span class="unit">
             <button class="${u === 'kg' ? 'on' : ''}" data-act="unit" data-id="${eid}" data-v="kg">kg</button>
             <button class="${u === 'lb' ? 'on' : ''}" data-act="unit" data-id="${eid}" data-v="lb">lb</button></span></div>
-          <div class="step">
+          ${L ? `<div class="step pl-tot"><b>${esc(d.w)}</b></div>` : `<div class="step">
           <button data-act="stepW" data-id="${eid}" data-d="${-st}">−</button>
           <input type="number" inputmode="decimal" step="any" min="0" data-draft="w" data-id="${eid}" value="${esc(d.w)}" placeholder="0">
-          <button data-act="stepW" data-id="${eid}" data-d="${st}">＋</button></div>
+          <button data-act="stepW" data-id="${eid}" data-d="${st}">＋</button></div>`}
           <div class="conv" data-conv="${eid}">${convV > 0 ? '≈ ' + wAlt(fromU(convV, u), u) : ''}</div></div>
         <div><div class="lbl"><span>次數</span></div><div class="step">
           <button data-act="stepR" data-id="${eid}" data-d="-1">−</button>
@@ -1981,11 +2019,26 @@ function cardHTML(id) {
       <div class="seg">${Object.entries(FEELS).map(([k, v]) =>
         `<button class="${d.feel === k ? 'on' : ''}" data-act="feel" data-id="${eid}" data-v="${k}">${v}</button>`).join('')}</div>
       <button class="btn primary big" data-act="addSet" data-id="${eid}">完成第 ${sets.length + 1} 組</button>
-      <div class="links"><button data-act="detail" data-id="${eid}">說明與進度</button>
-        ${e.equip === '槓鈴' || e.equip === '史密斯' ? `<button data-act="plate" data-id="${eid}">槓片</button>` : ''}
-        <button data-act="moveUp" data-id="${eid}">上移</button><button data-act="rmToday" data-id="${eid}">移除</button></div>
       ${setupHTML(id)}
     </div></div>`;
+}
+// 點槓片加到這邊，點上面已掛的那片就拿掉
+function plPickHTML(id) {
+  const L = loadOf(id), d = getDraft(id), u = unitOf(id), eid = esc(id);
+  const ps = myPlates(u).filter(x => x.on).map(x => x.p), base = toU(L.base || 0, u);
+  const cur = d.pl.length
+    ? d.pl.map((p, i) => `<button data-act="plRm" data-id="${eid}" data-i="${i}" style="border-color:${plCol(ps, p)}" aria-label="拿掉 ${num(p)}">${num(p)}<i>×</i></button>`).join('<span class="plus">+</span>')
+    : '<span class="pl-empty">還沒掛槓片，點下面的重量加上去</span>';
+  const how = d.pl.length
+    ? `${base ? `槓子/機器 ${num(base)} + ` : ''}槓片 ${num(plSum(d.pl))}${L.sd === 2 ? ' × 2 邊' : ''} ＝ <b>${esc(d.w)} ${u}</b>`
+    : base ? `目前只有槓子/機器 <b>${num(base)} ${u}</b>` : '';
+  return `<div class="plpick">
+    <div class="pl-h"><b>${L.sd === 2 ? '每邊掛的槓片' : '掛的槓片'}</b><span>${L.sd === 2 ? '兩邊一樣，總重自動 ×2' : '只有一邊可以掛'}</span>
+      ${d.pl.length ? `<button class="lk" data-act="plClr" data-id="${eid}">全部清除</button>` : ''}</div>
+    <div class="pl-cur">${cur}</div>
+    ${how ? `<div class="pl-how">${how}</div>` : ''}
+    <div class="pl-add">${ps.map(p => `<button data-act="plAdd" data-id="${eid}" data-p="${p}">＋${num(p)}</button>`).join('')}</div>
+    <button class="pl-edit" data-act="plate" data-id="${eid}">健身房的槓片不一樣？編輯槓片種類 ›</button></div>`;
 }
 function updateConv(id) {
   const el = document.querySelector(`[data-conv="${CSS.escape(id)}"]`); if (!el) return;
@@ -2025,7 +2078,7 @@ function hint(id) {
 }
 function hintHTML(id) {
   const h = hint(id); if (!h) return '';
-  return `<div class="hint">${svgTrend}<span>${h.text}</span>${h.w ? `<button data-act="applyHint" data-id="${esc(id)}" data-w="${h.w}">套用</button>` : ''}</div>`;
+  return `<div class="hint">${svgTrend}<span>${h.text}</span>${h.w && !loadOf(id) ? `<button data-act="applyHint" data-id="${esc(id)}" data-w="${h.w}">套用</button>` : ''}</div>`;
 }
 function noteHTML(id) {
   const n = (S.notes[id] || '').trim();
@@ -2067,10 +2120,16 @@ function updateWarm(id) {
 }
 function setupHTML(id) {
   const key = 'n:' + id, r = S.ranges[id] || {}, n = S.notes[id] || '', eid = esc(id);
-  const sum = [r.max ? `目標 ${r.min || '?'}–${r.max} 下` : '', n.trim() ? '有備註' : ''].filter(Boolean).join(' · ');
+  const L = loadOf(id), u = unitOf(id);
+  const sum = [L ? (L.sd === 2 ? '槓片兩邊' : '槓片一邊') : '', r.max ? `目標 ${r.min || '?'}–${r.max} 下` : '', n.trim() ? '有備註' : ''].filter(Boolean).join(' · ');
   return `<div class="sub mt ${open.has(key) ? 'open' : ''}" data-key="${esc(key)}"><button class="sub-h" data-act="toggle">
-    <span class="t">備註與目標次數 <span>${sum ? '· ' + sum : ''}</span></span>${svgChev}</button>
+    <span class="t">設定與備註 <span>${sum ? '· ' + sum : ''}</span></span>${svgChev}</button>
     <div class="sub-b">
+      <div class="flbl">重量怎麼記</div>
+      <div class="chips wrap sm">${[[0, '直接輸入總重'], [2, '槓片・兩邊都掛'], [1, '槓片・只有一邊']].map(([v, t]) =>
+        `<button class="${(L ? L.sd : 0) === v ? 'on' : ''}" data-act="loadMode" data-id="${eid}" data-v="${v}">${t}</button>`).join('')}</div>
+      ${L ? `<div class="rng"><span class="muted">槓子／機器本身</span><input type="number" inputmode="decimal" step="any" data-base="${eid}" value="${L.base ? num(toU(L.base, u)) : ''}" placeholder="0"><span class="muted">${u}</span></div>
+      <p class="small muted" style="margin:0 0 12px">${L.sd === 2 ? '輸入一邊掛的槓片，總重自動 ×2。' : '只有一個地方可以掛，掛多少就是多少。'}</p>` : '<p class="small muted" style="margin:0 0 12px">掛槓片的機器選「槓片」，就能點槓片輸入、保留每邊的組合。</p>'}
       <div class="flbl">目標次數範圍</div>
       <div class="rng"><input type="number" inputmode="numeric" data-range="min" data-id="${eid}" value="${r.min || ''}" placeholder="8"><span class="muted">到</span>
         <input type="number" inputmode="numeric" data-range="max" data-id="${eid}" value="${r.max || ''}" placeholder="12"><span class="muted">下</span></div>
@@ -2298,7 +2357,7 @@ function daySummaryHTML(date, edit) {
     return `<div class="card" style="padding:14px 16px"><div style="display:flex;align-items:center;gap:12px">${thumbHTML(e, 'noop')}
       <div style="flex:1;min-width:0"><b>${esc(e.name)}</b>${pr[id] ? `<span class="tag" style="color:var(--acc);border-color:var(--acc-mid)">${pr[id]}</span>` : ''}<br><span class="small muted">${s.length} 組</span></div></div>
       ${s.length ? `<ol class="sets" style="margin:10px 0 0">${s.map((x, i) => `<li><span class="n">${i + 1}</span>
-        <span class="v">${wTxt(x.w, uOf(x))} × ${x.r}<small>${wAlt(x.w, uOf(x))}</small>${memoHTML(x)}</span><span class="feel ${x.feel}">${FEELS[x.feel]}</span>
+        <span class="v">${wTxt(x.w, uOf(x))} × ${x.r}<small>${wAlt(x.w, uOf(x))}</small>${plHTML(x)}${memoHTML(x)}</span><span class="feel ${x.feel}">${FEELS[x.feel]}</span>
         ${edit ? `<button class="x" data-act="dayDel" data-id="${x.id}" aria-label="刪除">${svgX}</button>` : ''}</li>`).join('')}</ol>` : ''}
       ${edit ? `<div class="day-add"><input type="number" inputmode="decimal" step="any" data-dw="1" placeholder="重量 ${unitOf(id)}"><span class="muted">×</span>
         <input type="number" inputmode="numeric" data-dr="1" placeholder="次數"><button class="btn primary" data-act="dayAdd" data-id="${esc(id)}" aria-label="補記一組">＋</button></div>` : ''}
@@ -2655,8 +2714,8 @@ function renderSet() {
     card('s:aid', '訓練輔助', `
       ${sw('warmup', '顯示暖身建議')}
       <div class="set-row"><span>預設槓子重量</span><span class="muted">${st.bar.kg} kg／${st.bar.lb} lb</span></div>
-      <button class="btn sm mt" data-act="plate" data-id="">打開槓片計算機</button>
-      <p class="small muted">加重提醒：在每個動作卡片的「備註與目標次數」設定次數範圍。</p>`) +
+      <button class="btn sm mt" data-act="plate" data-id="">我的槓片與槓片計算機</button>
+      <p class="small muted">掛槓片的機器：在動作卡片的「設定與備註」選「槓片」，就能直接點槓片輸入。<br>加重提醒：同一個地方設定目標次數範圍。</p>`) +
     card('s:backup', '資料備份', `
       <p class="small muted" style="margin-top:0">共 ${S.logs.length} 組紀錄、${days} 個訓練日、${S.body.length} 筆身體數據、${PH.length} 張照片、${S.custom.length} 個自訂動作、${S.templates.length} 個範本。<br>
       上次備份：${st.lastExport ? fmtDate(st.lastExport) + ' · ' + daysAgo(st.lastExport) : '從未備份'}</p>
@@ -2941,8 +3000,19 @@ const H = {
     if (from === to) return;
     const d = getDraft(id), v = parseFloat(d.w);
     if (v > 0) { const x = toU(fromU(v, from), to); d.w = to === 'lb' ? num(Math.round(x / 2.5) * 2.5) : num(Math.round(x * 2) / 2); }
-    S.units[id] = to; save(); renderTrain();
+    S.units[id] = to; if (loadOf(id)) { d.pl = []; syncPl(id); } save(); renderTrain();
   },
+  loadMode: (id, b) => {
+    const v = +b.dataset.v, e = ex(id), u = unitOf(id);
+    if (!v) delete S.load[id];
+    else S.load[id] = {base: S.load[id] ? S.load[id].base : e.equip === '槓鈴' || e.equip === '史密斯' ? fromU(S.settings.bar[u], u) : 0, sd: v};
+    const d = getDraft(id);
+    if (v) syncPl(id);
+    save(); open.add('n:' + id); renderTrain();
+  },
+  plAdd: (id, b) => { const d = getDraft(id); d.pl.push(+b.dataset.p); d.pl.sort((x, y) => y - x); syncPl(id); renderTrain(); },
+  plRm: (id, b) => { const d = getDraft(id); d.pl.splice(+b.dataset.i, 1); syncPl(id); renderTrain(); },
+  plClr: id => { getDraft(id).pl = []; syncPl(id); renderTrain(); },
   stepW: (id, b) => {
     const d = getDraft(id); d.w = num(Math.max(0, (parseFloat(d.w) || 0) + +b.dataset.d));
     b.parentNode.querySelector('input').value = d.w; updateConv(id);
@@ -2961,7 +3031,10 @@ const H = {
     let w = parseFloat(d.w); const r = parseInt(d.r);
     if (isNaN(w)) { if (e.equip === '徒手') w = 0; else return toast('請輸入重量'); }
     if (!(r > 0)) return toast('請輸入次數');
+    const L = loadOf(id);
+    if (L && !d.pl.length && !L.base) return toast('先點要掛的槓片');
     const log = {id: uid(), exId: id, date: dstr(), w: fromU(Math.max(0, w), u), u, r, feel: d.feel, ts: Date.now()};
+    if (L && d.pl.length) Object.assign(log, {pl: [...d.pl], sd: L.sd});
     S.logs.push(log); flashId = log.id;
     save(); open.add(id); renderTrain();
     if (navigator.vibrate) navigator.vibrate(30);
@@ -2971,7 +3044,6 @@ const H = {
     if (!await ask('刪除這一組？')) return;
     S.logs = S.logs.filter(l => l.id !== logId); save(); renderTrain();
   },
-  moveUp: id => { moveInArr(S.today.exIds, S.today.exIds.indexOf(id)); save(); renderTrain(); },
   rmToday: async id => {
     if (todaySets(id).length && !await ask('從今天的清單移除？已記錄的組數會保留。')) return;
     S.today.exIds = S.today.exIds.filter(x => x !== id); save(); renderTrain();
@@ -3029,7 +3101,7 @@ const H = {
   /* 詳情 */
   detail: id => openDetail({kind: 'ex', id}),
   dbDetail: db => openDetail({kind: 'db', id: db}),
-  closeDetail: () => { $('#detail').classList.remove('on'); detailCtx = null; },
+  closeDetail: () => { const was = detailCtx; $('#detail').classList.remove('on'); detailCtx = null; if (was && was.kind === 'plate' && tab === 'train') renderTrain(); },
   dtToday: id => {
     ensureToday();
     if (S.today.exIds.includes(id)) return;
@@ -3137,6 +3209,47 @@ const H = {
   },
 };
 
+// 長按動作標題拖曳排序：按住不動 0.45 秒開始，期間移動超過 8px 當作捲動
+let DRAG = null, dragEnded = false;
+const isTodayCard = el => el && el.classList.contains('card') && S.today.exIds.includes(el.dataset.key);
+document.addEventListener('pointerdown', e => {
+  dragEnded = false;
+  const row = e.target.closest('#v-train .ch-row');
+  if (!row || e.button || e.target.closest('.ch-del') || !isTodayCard(row.closest('.card'))) return;
+  const st = DRAG = {card: row.closest('.card'), x0: e.clientX, y0: e.clientY, on: false};
+  st.t = setTimeout(() => {
+    st.on = true; st.base = st.y0 + scrollY;
+    st.card.classList.add('dragging'); document.body.classList.add('drag-on');
+    if (navigator.vibrate) navigator.vibrate(20);
+  }, 450);
+});
+document.addEventListener('pointermove', e => {
+  const st = DRAG; if (!st) return;
+  if (!st.on) { if (Math.hypot(e.clientX - st.x0, e.clientY - st.y0) > 8) { clearTimeout(st.t); DRAG = null; } return; }
+  if (e.clientY < 90) scrollBy(0, -10); else if (e.clientY > innerHeight - 130) scrollBy(0, 10);
+  const c = st.card, y = e.clientY + scrollY, r = c.getBoundingClientRect(), mid = r.top + r.height / 2;
+  const nx = c.nextElementSibling, pv = c.previousElementSibling;
+  if (y > st.base && isTodayCard(nx)) { const nr = nx.getBoundingClientRect(); if (mid > nr.top + nr.height / 2) { nx.after(c); st.base += nr.height + 12; } }
+  else if (y < st.base && isTodayCard(pv)) { const pr = pv.getBoundingClientRect(); if (mid < pr.top + pr.height / 2) { pv.before(c); st.base -= pr.height + 12; } }
+  c.style.transform = `translateY(${y - st.base}px) scale(1.02)`;
+});
+// 拖曳中不讓頁面跟著捲
+document.addEventListener('touchmove', e => { if (DRAG && DRAG.on) e.preventDefault(); }, {passive: false});
+document.addEventListener('contextmenu', e => { if (e.target.closest('#v-train .ch-row')) e.preventDefault(); });
+const endDrag = () => {
+  const st = DRAG; DRAG = null; if (!st) return;
+  clearTimeout(st.t); if (!st.on) return;
+  document.body.classList.remove('drag-on');
+  const order = [...document.querySelectorAll('#v-train > .card')].map(x => x.dataset.key).filter(k => S.today.exIds.includes(k));
+  S.today.exIds = [...order, ...S.today.exIds.filter(x => !order.includes(x))];
+  dragEnded = true; setTimeout(() => { dragEnded = false; }, 300);
+  save(); renderTrain();
+};
+document.addEventListener('pointerup', endDrag);
+document.addEventListener('pointercancel', endDrag);
+// 放開手指後的那一下點擊不要展開/收起卡片
+document.addEventListener('click', e => { if (dragEnded) { dragEnded = false; e.stopPropagation(); e.preventDefault(); } }, true);
+
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]');
   if (b && H[b.dataset.act]) H[b.dataset.act](b.dataset.id, b, e);
@@ -3155,6 +3268,10 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', e => {
   const t = e.target;
+  if (t.dataset.base) {
+    const id = t.dataset.base, L = loadOf(id); if (!L) return;
+    L.base = fromU(Math.max(0, parseFloat(t.value) || 0), unitOf(id)); syncPl(id); save(); renderTrain(); return;
+  }
   if (t.dataset.set) { S.settings[t.dataset.set] = t.checked; save(); if (t.dataset.set === 'notify' && t.checked) askNotify(); }
   else if (t.id === 'bd-date') { bodyDate = t.value || dstr(); renderBody(); }
   else if (t.dataset.photo && t.files[0]) { addPhoto(t.dataset.date || bodyDate, t.dataset.photo, t.files[0]); t.value = ''; }
@@ -3184,21 +3301,37 @@ $('#import-file').addEventListener('change', async e => {
       const nc = (data.custom || []).filter(x => !haveEx.has(x.id)), nl = data.logs.filter(x => !haveLog.has(x.id));
       const remap = Object.entries(data.remap || {}).filter(([a, b]) => BUILTIN.some(e => e.id === b) && (haveEx.has(a) || nc.some(x => x.id === a)));
       const relink = Object.entries(data.relink || {}).filter(([a]) => haveEx.has(a) || nc.some(x => x.id === a));
-      const msg = nl.length || nc.length ? `要加入 ${nl.length} 組紀錄、${nc.length} 個動作？` : `要把 ${remap.length} 個動作併入動作庫、${relink.length} 個動作連上動作圖？`;
-      if (!await ask(`${msg}\n現有的 ${S.logs.length} 組紀錄會保留。`)) return;
+      // 修正檔：改既有紀錄的重量/槓片、刪掉紀錄、設定動作的掛片方式
+      const pt = data.patch || {};
+      const fix = Object.entries(pt.logs || {}).filter(([id]) => haveLog.has(id));
+      const del = (pt.del || []).filter(id => haveLog.has(id));
+      const load = Object.entries(pt.load || {}).filter(([id]) => ex(id) || nc.some(x => x.id === id));
+      const parts = [];
+      if (nl.length || nc.length) parts.push(`加入 ${nl.length} 組紀錄、${nc.length} 個動作`);
+      if (remap.length || relink.length) parts.push(`把 ${remap.length} 個動作併入動作庫、${relink.length} 個動作連上動作圖`);
+      if (fix.length) parts.push(`更新 ${fix.length} 組的槓片重量`);
+      if (del.length) parts.push(`刪除 ${del.length} 組紀錄`);
+      if (load.length) parts.push(`設定 ${load.length} 個動作的掛片方式`);
+      if (!parts.length) return note('這個檔案裡沒有新的東西，可能已經匯入過了。');
+      if (!await ask(`要${parts.join('，')}？\n其他現有的紀錄都會保留。`)) return;
       S.custom.push(...nc); S.logs.push(...nl);
       // 自訂動作其實就是動作庫裡的動作 → 紀錄、備註、範本都搬過去，再刪掉自訂的那個
       for (const [a, b] of remap) {
         S.logs.forEach(l => { if (l.exId === a) l.exId = b; });
-        for (const k of ['notes', 'ranges', 'units']) if (S[k][a] != null) { if (S[k][b] == null) S[k][b] = S[k][a]; delete S[k][a]; }
+        for (const k of ['notes', 'ranges', 'units', 'load']) if (S[k][a] != null) { if (S[k][b] == null) S[k][b] = S[k][a]; delete S[k][a]; }
         const sw = arr => [...new Set(arr.map(x => x === a ? b : x))];
         S.today.exIds = sw(S.today.exIds); S.templates.forEach(t => { t.exIds = sw(t.exIds); });
         S.custom = S.custom.filter(x => x.id !== a);
       }
       // 保留自己的名字，但借用動作庫的圖片和肌群
       for (const [a, patch] of relink) { const c = S.custom.find(x => x.id === a); if (c) Object.assign(c, patch); }
-      save(); refreshEx(); for (const k in draft) delete draft[k];
-      showTab('train'); toast(nl.length ? `已加入 ${nl.length} 組紀錄` : '動作對應完成'); return;
+      const byId = new Map(S.logs.map(l => [l.id, l]));
+      for (const [id, p] of fix) Object.assign(byId.get(id), p);
+      if (del.length) { const ds = new Set(del); S.logs = S.logs.filter(l => !ds.has(l.id)); }
+      refreshEx();
+      for (const [id, v] of load) if (ex(id)) S.load[id] = v;
+      save(); for (const k in draft) delete draft[k];
+      showTab('train'); toast(nl.length ? `已加入 ${nl.length} 組紀錄` : fix.length || del.length ? '紀錄已更新' : '動作對應完成'); return;
     }
     const np = Array.isArray(data.photos) ? data.photos.length : 0;
     if (!await ask(`匯入的備份有 ${data.logs.length} 組紀錄${np ? `、${np} 張照片` : ''}。\n匯入會覆蓋目前的資料（${S.logs.length} 組），確定？`)) return;
