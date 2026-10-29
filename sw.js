@@ -1,5 +1,5 @@
 // 離線支援：有網路時永遠抓最新版（更新網站後馬上生效），沒網路時才用上次存下的版本
-const CACHE = 'gymlog-v2';
+const CACHE = 'gymlog-v3';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -20,4 +20,14 @@ self.addEventListener('fetch', e => {
       .then(r => { const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r; })
       .catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
   );
+});
+
+// 點「休息結束」通知：回到 App 並停止鬧鈴
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({type: 'window', includeUncontrolled: true}).then(list => {
+    const c = list[0];
+    if (c) { c.postMessage('stopAlarm'); return c.focus(); }
+    return self.clients.openWindow('./');
+  }));
 });

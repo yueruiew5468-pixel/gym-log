@@ -146,6 +146,7 @@ nav button.on{background:var(--acc);color:var(--acc-ink);font-weight:700}
 .chips{display:flex;gap:8px;overflow-x:auto;padding:0 16px 10px;scrollbar-width:none;margin:0 -16px}
 .chips::-webkit-scrollbar{display:none}
 .chips button{flex:none;height:38px;padding:0 16px;border-radius:99px;border:1px solid var(--line);background:transparent;font-size:14px;color:var(--muted)}
+.chips.wrap{flex-wrap:wrap;overflow:visible;margin:0;padding:0 0 10px}
 .chips.sm button{height:32px;font-size:13px;padding:0 13px}
 .chips button.on{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:600}
 .grp{font:500 12px var(--fd);color:var(--muted);letter-spacing:.16em;text-transform:uppercase;margin:18px 6px 8px;display:flex;justify-content:space-between}
@@ -199,7 +200,30 @@ nav button.on{background:var(--acc);color:var(--acc-ink);font-weight:700}
 #timer button{height:50px;min-width:52px;padding:0 10px;border-radius:16px;background:rgba(10,10,11,.08);font:600 15px var(--fd)}
 #timer .bar{position:absolute;left:0;bottom:0;height:4px;background:var(--bg);transition:width .25s linear}
 #timer.done{background:var(--acc);animation:pulse 1s ease-in-out infinite}
-#timer.done #tt{font-size:24px}
+#timer .tt{cursor:pointer}
+#timer .tx{background:var(--bg);color:var(--text);min-width:56px}
+#timer .tx svg{width:22px;height:22px}
+#timer.done .tj{display:none}
+#timer.done .tx{min-width:96px;font-size:16px;gap:6px;display:flex;align-items:center;justify-content:center}
+#timer .tring{display:none}
+/* 全螢幕：點時間放大，再點一下縮回 */
+#timer.big{inset:0;max-width:none;border-radius:0;flex-direction:column;justify-content:center;gap:28px;padding:calc(env(safe-area-inset-top) + 20px) 20px calc(env(safe-area-inset-bottom) + 40px);
+  background:var(--bg);color:var(--text);z-index:60;animation:none}
+#timer.big .tt{flex:none;position:relative;width:min(84vw,420px);aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#timer.big .tring{display:block;position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+#timer.big .tring circle{fill:none;stroke-width:5}
+#timer.big .tring .bg{stroke:var(--line)}
+#timer.big .tring #tarc{stroke:var(--acc);stroke-linecap:round;transition:stroke-dashoffset .25s linear;filter:drop-shadow(0 0 8px rgba(212,255,58,.5))}
+#timer.big #tt{font-size:clamp(72px,24vw,128px);position:relative}
+#timer.big .tl{position:relative;margin-bottom:10px;opacity:.7}
+#timer.big .bar{display:none}
+#timer.big button{height:64px;min-width:84px;font-size:18px;background:var(--card2);color:var(--text)}
+#timer.big .tx{background:var(--text);color:var(--bg)}
+#timer.big .tbtns{display:flex;gap:10px}
+#timer .tbtns{display:contents}
+#timer.big.done{background:var(--acc);color:var(--acc-ink)}
+#timer.big.done .tring .bg{stroke:rgba(10,10,11,.15)}
+#timer.big.done .tx{background:var(--acc-ink);color:var(--acc);min-width:200px;height:72px;font-size:20px}
 @keyframes pulse{50%{transform:scale(1.025)}}
 
 /* ---------- 彈出面板 ---------- */
@@ -445,10 +469,14 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 </main>
 
 <div id="timer" hidden>
-  <div class="tt"><div class="tl" id="tl">REST</div><span id="tt">2:00</span></div>
-  <button data-act="tadj" data-d="-15">−15</button>
-  <button data-act="tadj" data-d="15">+15</button>
-  <button data-act="tstop">略過</button>
+  <div class="tt" data-act="tbig">
+    <svg class="tring" viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="46"/><circle id="tarc" cx="50" cy="50" r="46" pathLength="1" stroke-dasharray="1"/></svg>
+    <div class="tl" id="tl">REST</div><span id="tt">2:00</span></div>
+  <div class="tbtns">
+    <button class="tj" data-act="tadj" data-d="-15">−15</button>
+    <button class="tj" data-act="tadj" data-d="15">+15</button>
+    <button class="tx" data-act="tstop" aria-label="關掉計時"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg><span id="tx-l"></span></button>
+  </div>
   <div class="bar" id="tbar"></div>
 </div>
 
@@ -1769,7 +1797,7 @@ function defaults() {
       t('拉', ['引體向上','槓鈴划船','坐姿繩索划船','臉拉','啞鈴彎舉','錘式彎舉']),
       t('腿', ['槓鈴深蹲','羅馬尼亞硬舉','腿推機','腿彎舉','站姿提踵','懸垂舉腿']),
     ],
-    settings: {rest: 120, autoRest: true, sound: true, vibrate: true, unit: 'kg', lastExport: null,
+    settings: {rest: 120, autoRest: true, sound: true, vibrate: true, feelRest: true, notify: true, unit: 'kg', lastExport: null,
       bar: {kg: 20, lb: 45}, warmup: true, photoBackup: true},
     today: {date: dstr(), exIds: []},
   };
@@ -2453,44 +2481,74 @@ function renderCompare(c) {
 
 /* ================= 槓片計算 ================= */
 const PLATES = {kg: [25, 20, 15, 10, 5, 2.5, 1.25], lb: [45, 35, 25, 10, 5, 2.5]};
-const PCOL = ['#e5484d', '#3e7bfa', '#f5c518', '#30a46c', '#f3f3ee', '#9b3b3b', '#a0a0a8'];
-const PLH = [100, 100, 88, 74, 56, 44, 36];
+// 很多健身房用磅片但標 kg，例如 45 lb 標成 20.3
+const PRESETS = {kg: [{name: '標準 kg 槓片', v: PLATES.kg}, {name: '磅片換算 kg', v: [20.3, 15.6, 11.3, 4.5, 2.3]}], lb: [{name: '標準 lb 槓片', v: PLATES.lb}]};
+const PCOL = ['#e5484d', '#3e7bfa', '#f5c518', '#30a46c', '#f3f3ee', '#9b3b3b', '#a0a0a8', '#7a5af8', '#e98a3c'];
 const BARS = {kg: [20, 15, 10, 0], lb: [45, 35, 25, 0]};
 let P = {u: 'kg', v: ''};
+// 每個單位各存一份「我的槓片」：{p: 重量, on: 健身房有沒有}
+function myPlates(u) {
+  const all = S.settings.plates || (S.settings.plates = {});
+  if (!Array.isArray(all[u])) all[u] = PLATES[u].map(p => ({p, on: true}));
+  return all[u].sort((x, y) => y.p - x.p);
+}
 function openPlate(id) {
   const u = id ? unitOf(id) : S.settings.unit, w = id ? parseFloat(getDraft(id).w) : NaN;
   P = {u, v: w > 0 ? num(w) : ''};
   openPanel({kind: 'plate'});
 }
+// 槓片不一定是整數（20.3、15.6…），用「湊得出的所有重量」找最接近的組合，不是只從大的開始塞
 function plateCalc() {
   const t = parseFloat(P.v), bar = S.settings.bar[P.u];
   if (!(t > 0)) return null;
-  if (t < bar) return {err: `比槓子（${bar} ${P.u}）還輕`};
-  let side = (t - bar) / 2; const out = [];
-  PLATES[P.u].forEach((p, i) => { const n = Math.floor((side + 1e-6) / p); if (n) { out.push({p, n, i}); side -= n * p; } });
-  return {out, side, actual: t - side * 2, bar};
+  if (t < bar) return {err: `比槓子（${num(bar)} ${P.u}）還輕`};
+  const ps = myPlates(P.u).filter(x => x.on).map(x => x.p);
+  const side = (t - bar) / 2, k = 100, goal = Math.round(side * k);
+  if (!ps.length) return {err: '先在下面選你健身房有的槓片'};
+  const units = ps.map(p => Math.round(p * k)), lim = goal + Math.max(...units);
+  // cnt[x] = 湊出 x 最少要幾片；from[x] = 最後一片用哪個
+  const cnt = new Int32Array(lim + 1).fill(1e9), from = new Int16Array(lim + 1).fill(-1);
+  cnt[0] = 0;
+  for (let x = 1; x <= lim; x++) units.forEach((u, i) => { if (u <= x && cnt[x - u] + 1 < cnt[x]) { cnt[x] = cnt[x - u] + 1; from[x] = i; } });
+  const build = x => { const m = new Map(); while (x > 0) { const i = from[x]; m.set(i, (m.get(i) || 0) + 1); x -= units[i]; } return [...m].sort((a, b) => a[0] - b[0]).map(([i, n]) => ({p: ps[i], n, i})); };
+  // 差一點點但少掛很多片比較實際：總重每差 1 單位算 3 分、每多一片算 1 分，挑分數最低的
+  const cost = x => Math.abs(x - goal) / k * 2 * 3 + cnt[x];
+  let best = -1;
+  for (let x = 0; x <= lim; x++) if (cnt[x] < 1e9 && (best < 0 || cost(x) < cost(best) - 1e-9)) best = x;
+  const res = {out: build(best), diff: (best - goal) / k * 2, actual: bar + best / k * 2, bar, ps};
+  if (best !== goal && cnt[goal] <= cnt[best] + 3) res.exact = {out: build(goal), actual: t};
+  return res;
 }
+const plCol = (ps, p) => PCOL[ps.indexOf(p) % PCOL.length];
+const plH = (ps, p) => Math.round(34 + 66 * Math.sqrt(p / Math.max(...ps)));
+const plList = (r, out) => out.length ? `<ul class="plist">${out.map(x => `<li><i style="background:${plCol(r.ps, x.p)}"></i>${num(x.p)} ${P.u}<b>× ${x.n}</b></li>`).join('')}</ul>` : '<p class="muted">不用掛槓片，空槓就好</p>';
 function plateRes() {
   const r = plateCalc();
   if (!r) return '<div class="empty">輸入目標重量</div>';
   if (r.err) return `<div class="empty">${r.err}</div>`;
   const vis = r.out.flatMap(x => Array(x.n).fill(x));
-  return `<div class="plates"><div class="bar0"></div>${vis.map(x => `<div class="pl" style="height:${PLH[x.i]}%;background:${PCOL[x.i]}">${num(x.p)}</div>`).join('')}<div class="collar"></div><div class="sleeve"></div></div>
+  return `<div class="plates"><div class="bar0"></div>${vis.map(x => `<div class="pl" style="height:${plH(r.ps, x.p)}%;background:${plCol(r.ps, x.p)}">${num(x.p)}</div>`).join('')}<div class="collar"></div><div class="sleeve"></div></div>
     <div class="grp"><span>每邊要掛</span></div>
-    ${r.out.length ? `<ul class="plist">${r.out.map(x => `<li><i style="background:${PCOL[x.i]}"></i>${num(x.p)} ${P.u}<b>× ${x.n}</b></li>`).join('')}</ul>` : '<p class="muted">不用掛槓片，空槓就好</p>'}
-    <p class="small muted">${r.side > 1e-6
-      ? `現有槓片湊不到剛好，最接近是 <b>${num(r.actual)} ${P.u}</b>（每邊少 ${num(r.side)}）`
-      : `槓子 ${num(r.bar)} ＋ 每邊 ${num((r.actual - r.bar) / 2)} × 2 ＝ ${num(r.actual)} ${P.u}`}</p>`;
+    ${plList(r, r.out)}
+    <p class="small muted">${Math.abs(r.diff) > 1e-6
+      ? `現有槓片湊不到剛好，這樣掛是 <b>${num(r.actual)} ${P.u}</b>（${r.diff > 0 ? '多' : '少'} ${num(Math.abs(r.diff))}）`
+      : `槓子 ${num(r.bar)} ＋ 每邊 ${num((r.actual - r.bar) / 2)} × 2 ＝ ${num(r.actual)} ${P.u}`}</p>
+    ${r.exact ? `<div class="grp"><span>要剛好 ${num(r.exact.actual)} ${P.u} 的掛法</span></div>${plList(r, r.exact.out)}` : ''}`;
 }
 function renderPlate() {
-  const st = P.u === 'lb' ? 5 : 2.5;
+  const mine = myPlates(P.u), on = mine.filter(x => x.on).map(x => x.p);
+  const st = on.length ? Math.min(...on) * 2 : (P.u === 'lb' ? 5 : 2.5), bar = S.settings.bar[P.u];
+  const bars = BARS[P.u].includes(bar) ? BARS[P.u] : [...BARS[P.u], bar];
   $('#detail .hd b').textContent = '槓片計算';
   $('#dt-body').innerHTML = `
     <div class="lbl"><span>目標總重量</span><span class="unit"><button class="${P.u === 'kg' ? 'on' : ''}" data-act="pUnit" data-id="kg">kg</button><button class="${P.u === 'lb' ? 'on' : ''}" data-act="pUnit" data-id="lb">lb</button></span></div>
     <div class="step"><button data-act="pStep" data-d="${-st}">−</button><input type="number" inputmode="decimal" step="any" data-plate="1" value="${esc(P.v)}" placeholder="0"><button data-act="pStep" data-d="${st}">＋</button></div>
     <div class="flbl mt2">槓子重量</div>
-    <div class="chips" style="margin:0 -16px">${BARS[P.u].map(b => `<button class="${S.settings.bar[P.u] === b ? 'on' : ''}" data-act="pBar" data-id="${b}">${b ? b + ' ' + P.u : '不用槓'}</button>`).join('')}</div>
-    <div id="pl-res">${plateRes()}</div>`;
+    <div class="chips" style="margin:0 -16px">${bars.map(b => `<button class="${bar === b ? 'on' : ''}" data-act="pBar" data-id="${b}">${b ? num(b) + ' ' + P.u : '不用槓'}</button>`).join('')}<button data-act="pBarAdd">＋ 其他</button></div>
+    <div id="pl-res">${plateRes()}</div>
+    <div class="flbl mt2">我的健身房有的槓片（點一下切換有/沒有）</div>
+    <div class="chips wrap">${mine.map((x, i) => `<button class="${x.on ? 'on' : ''}" data-act="pTog" data-id="${i}">${num(x.p)}</button>`).join('')}<button data-act="pAdd">＋ 新增尺寸</button></div>
+    <div class="chips sm wrap">${PRESETS[P.u].map((x, i) => `<button data-act="pPreset" data-id="${i}">套用：${x.name}</button>`).join('')}</div>`;
 }
 
 /* ================= 範本頁 ================= */
@@ -2533,9 +2591,9 @@ function renderSet() {
     card('s:rest', '休息計時', `
       <div class="set-row"><span>預設休息時間</span><span class="mini-step">
         <button data-act="restAdj" data-d="-15">−15</button><b>${mmss(st.rest)}</b><button data-act="restAdj" data-d="15">+15</button></span></div>
-      ${sw('autoRest', '完成一組自動開始倒數')}${sw('sound', '時間到發出聲音')}${sw('vibrate', '時間到震動')}
+      ${sw('autoRest', '完成一組自動開始倒數')}${sw('feelRest', '依感覺調整：吃力 +30 秒、輕鬆 −15 秒')}${sw('sound', '時間到發出聲音')}${sw('vibrate', '時間到震動')}${sw('notify', '螢幕關掉或切到別的 App 時跳出通知')}
       <button class="btn sm mt" data-act="testRing">測試提示音與震動</button>
-      <p class="small muted">iPhone 不支援網頁震動；靜音模式下可能沒有聲音。倒數時會盡量保持螢幕不關閉。</p>`) +
+      <p class="small muted">時間到之後每 ${REPEAT} 秒會再提醒一次，按 ✕ 或記下一組就停。點計時器上的時間可以放大成全螢幕。${'Notification' in window && Notification.permission === 'denied' ? '<br><b>通知被擋住了</b>：到 Chrome 的網站設定把這個網站的通知打開。' : ''}</p>`) +
     card('s:aid', '訓練輔助', `
       ${sw('warmup', '顯示暖身建議')}
       <div class="set-row"><span>預設槓子重量</span><span class="muted">${st.bar.kg} kg／${st.bar.lb} lb</span></div>
@@ -2578,11 +2636,19 @@ function showTab(t) {
 }
 
 /* ================= 休息計時 ================= */
-const T = {end: 0, total: 0, iv: 0, rang: false, hideT: 0};
-function startTimer(sec) {
-  clearInterval(T.iv); clearTimeout(T.hideT);
-  T.total = sec; T.end = Date.now() + sec * 1000; T.rang = false;
-  $('#timer').hidden = false; $('#timer').classList.remove('done'); $('#tl').textContent = 'REST · 休息中';
+// 時間到之後不會自己消失：一直顯示超過多久，每 15 秒再提醒一次，直到按 ✕ 或記下一組
+const T = {end: 0, total: 0, iv: 0, rang: false, last: 0, note: ''};
+const TKEY = 'gymlog.timer', REPEAT = 15, GIVEUP = 600;
+const FEEL_REST = {h: 30, e: -15};
+function restFor(feel) {
+  const d = S.settings.feelRest ? FEEL_REST[feel] || 0 : 0;
+  return {sec: Math.max(15, S.settings.rest + d), note: d ? `${FEELS[feel]} ${d > 0 ? '+' : '−'}${Math.abs(d)} 秒` : ''};
+}
+function startTimer(sec, note = '') {
+  clearInterval(T.iv);
+  T.total = sec; T.end = Date.now() + sec * 1000; T.rang = false; T.last = 0; T.note = note;
+  $('#timer').hidden = false; $('#timer').classList.remove('done');
+  askNotify(); closeNotes(); keepTimer();
   tick(); T.iv = setInterval(tick, 250);
   wake(true);
 }
@@ -2590,28 +2656,71 @@ function tick() {
   if (!T.end) return;
   const ms = T.end - Date.now();
   if (ms <= 0) {
+    const over = Math.floor(-ms / 1000);
+    if (over >= GIVEUP) return stopTimer();
     if (!T.rang) {
-      T.rang = true; clearInterval(T.iv);
-      $('#timer').classList.add('done'); $('#tl').textContent = 'GO · 休息結束'; $('#tt').textContent = '開始下一組！';
-      $('#tbar').style.width = '0';
-      ring();
-      T.hideT = setTimeout(stopTimer, 8000);
+      T.rang = true;
+      $('#timer').classList.add('done'); $('#tbar').style.width = '0'; $('#tarc').style.strokeDashoffset = '1';
     }
+    // 第一次和之後每 15 秒響一次
+    const k = Math.floor(over / REPEAT) + 1;
+    if (k > T.last) { T.last = k; ring(); notify(over); }
+    $('#tl').textContent = 'GO · 休息結束';
+    $('#tt').textContent = '+' + mmss(over);
+    $('#tx-l').textContent = '停止';
     return;
   }
-  $('#tt').textContent = mmss(Math.ceil(ms / 1000));
-  $('#tbar').style.width = (ms / (T.total * 1000) * 100) + '%';
+  const left = Math.ceil(ms / 1000), f = ms / (T.total * 1000);
+  $('#tl').textContent = 'REST · ' + (T.note || '休息中');
+  $('#tt').textContent = mmss(left);
+  $('#tx-l').textContent = '';
+  $('#tbar').style.width = f * 100 + '%';
+  $('#tarc').style.strokeDashoffset = String(1 - f);
 }
 function stopTimer() {
-  clearInterval(T.iv); clearTimeout(T.hideT);
-  T.end = 0; $('#timer').hidden = true; wake(false);
+  clearInterval(T.iv);
+  T.end = 0; $('#timer').hidden = true; $('#timer').classList.remove('big', 'done'); wake(false);
+  closeNotes(); keepTimer();
 }
 function adjTimer(d) {
   if (!T.end || T.rang) { startTimer(Math.max(15, d)); return; }
   T.end = Math.max(Date.now() + 1000, T.end + d * 1000);
   T.total = Math.max(T.total, (T.end - Date.now()) / 1000);
-  tick();
+  keepTimer(); tick();
 }
+// 存起來：App 被關掉再打開還能接著倒數
+function keepTimer() {
+  try { T.end ? localStorage.setItem(TKEY, JSON.stringify({end: T.end, total: T.total, note: T.note})) : localStorage.removeItem(TKEY); } catch (e) {}
+}
+function resumeTimer() {
+  try {
+    const t = JSON.parse(localStorage.getItem(TKEY) || 'null');
+    if (!t || Date.now() - t.end > GIVEUP * 1000) return localStorage.removeItem(TKEY);
+    Object.assign(T, {end: t.end, total: t.total, note: t.note || '', rang: false, last: 0});
+    // 已經過了的提醒不要補響，只從下一次開始
+    if (Date.now() > t.end) T.last = Math.floor((Date.now() - t.end) / 1000 / REPEAT) + 1;
+    $('#timer').hidden = false; tick(); T.iv = setInterval(tick, 250); wake(true);
+  } catch (e) {}
+}
+
+// 背景通知：手機螢幕關著或切到別的 App 時，用系統通知提醒
+function askNotify() {
+  if (S.settings.notify && 'Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {});
+}
+async function notify(over) {
+  if (!S.settings.notify || document.visibilityState === 'visible' || !('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    const reg = await navigator.serviceWorker?.getRegistration();
+    const opt = {body: over ? `已經超過 ${mmss(over)}，點這裡回到 App` : '開始下一組！', tag: 'rest', renotify: true, requireInteraction: true,
+      icon: 'icon-192.png', badge: 'icon-192.png', vibrate: S.settings.vibrate ? [300, 150, 300, 150, 500] : [], silent: !S.settings.sound};
+    if (reg) reg.showNotification('休息結束', opt); else new Notification('休息結束', opt);
+  } catch (e) {}
+}
+async function closeNotes() {
+  try { const reg = await navigator.serviceWorker?.getRegistration(); (await reg?.getNotifications({tag: 'rest'}) || []).forEach(n => n.close()); } catch (e) {}
+}
+// 點通知回到 App 時 = 已經看到了，停止鬧鈴
+navigator.serviceWorker?.addEventListener('message', e => { if (e.data === 'stopAlarm' && T.rang) stopTimer(); });
 
 let AC = null;
 function audio() {
@@ -2704,6 +2813,19 @@ const H = {
   },
   pStep: (_, b) => { P.v = num(Math.max(0, (parseFloat(P.v) || 0) + +b.dataset.d)); renderPlate(); },
   pBar: v => { S.settings.bar[P.u] = +v; save(); renderPlate(); },
+  pBarAdd: async () => {
+    const v = parseFloat(await askText(`槓子重量（${P.u}，可以有小數）`, ''));
+    if (!(v >= 0)) return; S.settings.bar[P.u] = v; save(); renderPlate();
+  },
+  pTog: i => { const x = myPlates(P.u)[+i]; x.on = !x.on; save(); renderPlate(); },
+  pAdd: async () => {
+    const v = parseFloat(await askText(`新增槓片重量（${P.u}，例如 20.3）`, ''));
+    if (!(v > 0)) return;
+    const m = myPlates(P.u), x = m.find(y => Math.abs(y.p - v) < 1e-6);
+    if (x) x.on = true; else m.push({p: Math.round(v * 100) / 100, on: true});
+    save(); renderPlate();
+  },
+  pPreset: i => { myPlates(P.u); S.settings.plates[P.u] = PRESETS[P.u][+i].v.map(p => ({p, on: true})); save(); renderPlate(); toast('已換成' + PRESETS[P.u][+i].name); },
   bMetric: k => { bodyMetric = k; renderBody(); },
   bodySave: async () => {
     const e = {date: bodyDate}; let any = false;
@@ -2757,7 +2879,7 @@ const H = {
     S.logs.push(log); flashId = log.id;
     save(); open.add(id); renderTrain();
     if (navigator.vibrate) navigator.vibrate(30);
-    if (S.settings.autoRest) startTimer(S.settings.rest); else toast('已記錄');
+    if (S.settings.autoRest) { const r = restFor(d.feel); startTimer(r.sec, r.note); } else toast('已記錄');
   },
   delSet: async logId => {
     if (!await ask('刪除這一組？')) return;
@@ -2874,6 +2996,7 @@ const H = {
   /* 休息計時 */
   tadj: (_, b) => adjTimer(+b.dataset.d),
   tstop: () => stopTimer(),
+  tbig: () => $('#timer').classList.toggle('big'),
 
   /* 設定 */
   defUnit: (_, b) => { S.settings.unit = b.dataset.v; save(); for (const k in draft) delete draft[k]; renderSet(); },
@@ -2927,7 +3050,7 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', e => {
   const t = e.target;
-  if (t.dataset.set) { S.settings[t.dataset.set] = t.checked; save(); }
+  if (t.dataset.set) { S.settings[t.dataset.set] = t.checked; save(); if (t.dataset.set === 'notify' && t.checked) askNotify(); }
   else if (t.id === 'bd-date') { bodyDate = t.value || dstr(); renderBody(); }
   else if (t.dataset.photo && t.files[0]) { addPhoto(t.dataset.date || bodyDate, t.dataset.photo, t.files[0]); t.value = ''; }
   else if (t.dataset.cmp) { detailCtx[t.dataset.cmp] = t.value; renderDetail(); }
@@ -2961,7 +3084,7 @@ $('#import-file').addEventListener('change', async e => {
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
-  if (T.end) { tick(); if (!T.rang) wake(true); }
+  if (T.end) { tick(); wake(true); closeNotes(); }
   if (S.today.date !== dstr()) { ensureToday(); render(); }
 });
 
@@ -2997,6 +3120,7 @@ render();
   setTimeout(go, matchMedia('(prefers-reduced-motion:reduce)').matches ? 400 : 1700);
 })();
 loadPhotos();
+resumeTimer();
 if (STORE_OK) askPersist();
 // 讓網頁可以安裝成 App，並在沒網路時也能打開
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});
