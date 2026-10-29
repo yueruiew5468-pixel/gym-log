@@ -2667,7 +2667,7 @@ function renderSet() {
         <div class="row mt"><button class="btn sm primary" data-act="cloudNow">立即備份到雲端</button>${st.cloud.folder ? `<a class="btn sm" href="${esc(st.cloud.folder)}" target="_blank" rel="noopener">打開雲端資料夾</a>` : ''}</div>
         <button class="btn ghost sm mt" data-act="cloudOff">中斷雲端連線</button>`
       : `<p class="small muted" style="margin:4px 0 0">還沒連上。照設定說明在 Google 建好備份程式後，用手機掃描它顯示的 QR code 就會自動連上。</p>
-        <button class="btn sm mt" data-act="cloudPaste">手動貼上連結</button>`}
+        <button class="btn sm mt" data-act="cloudPaste">貼上 Google 程式網址</button>`}
       ${sw('photoBackup', '備份包含進度照片')}
       <button class="btn mt" data-act="export">匯出備份檔案</button>
       <p class="small muted">手機上會跳出分享選單：選「儲存到檔案」→ iCloud Drive，或選 Google 雲端硬碟。超過 30 天沒備份，首頁會提醒你。</p>
@@ -3109,8 +3109,20 @@ const H = {
   cloudNow: () => S.settings.cloud ? cloudBackup(true) : showTab('set'),
   cloudOff: async () => { if (!await ask('中斷雲端備份？已經存在雲端的備份不會被刪掉。')) return; S.settings.cloud = null; save(); renderSet(); },
   cloudPaste: async () => {
-    const v = (await askText('貼上 QR code 裡的連結', '') || '').trim(); if (!v) return;
-    const i = v.indexOf('#cloud='); location.hash = i >= 0 ? v.slice(i) : '#cloud=' + v; cloudFromHash();
+    const v = (await askText('貼上 Google 備份程式的網址（結尾是 /exec）', '') || '').trim(); if (!v) return;
+    const i = v.indexOf('#cloud=');
+    if (i >= 0) { location.hash = v.slice(i); return cloudFromHash(); }
+    const url = v.split(/[?#]/)[0];
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url)) return note('網址不對，要是 https://script.google.com/macros/s/…/exec');
+    // 直接問 Google 程式要密碼，不用打開它的網頁（多個 Google 帳號時網頁常打不開）
+    toast('連線中…');
+    try {
+      const r = await (await fetch(url, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({connect: true})})).json();
+      if (!r.ok || !r.key) throw new Error('Google 程式還是舊版：請貼上新的程式碼，再「管理部署作業」→ 編輯 → 版本選「新版本」→ 部署');
+      S.settings.cloud = {url, key: r.key, folder: r.folder || ''}; save();
+      await note('已連上 Google 雲端備份！\n之後每個月會自動存一份到你的雲端資料夾。現在先備份一次。');
+      cloudBackup(true);
+    } catch (e) { note('連線失敗：' + (e.message === 'Failed to fetch' ? '連不上，請確認部署時「誰可以存取」是「所有人」' : e.message)); }
   },
   restoreBuiltin: async () => {
     if (!S.hidden.length) return toast('內建動作都在');
