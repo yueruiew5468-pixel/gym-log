@@ -418,6 +418,23 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 #toast.on{opacity:1;transform:translate(-50%,0)}
 .empty{text-align:center;padding:30px 16px;color:var(--muted)}
 /* ---------- 開場畫面 ---------- */
+#welcome{position:fixed;inset:0;z-index:150;background:var(--bg);display:flex;flex-direction:column;
+  padding:calc(env(safe-area-inset-top) + 16px) 20px calc(env(safe-area-inset-bottom) + 24px);overflow-y:auto}
+#welcome[hidden]{display:none}
+.wl-top{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+.wl-dots{display:flex;gap:6px}.wl-dots i{width:22px;height:4px;border-radius:2px;background:var(--line2)}.wl-dots i.on{background:var(--acc)}
+.wl-top button{color:var(--muted);font-size:15px;padding:10px 0 10px 16px}
+.wl-body{flex:1;display:flex;flex-direction:column;justify-content:center;max-width:480px;width:100%;margin:0 auto;animation:wl-in .35s ease both}
+@keyframes wl-in{from{opacity:0;transform:translateY(12px)}}
+.wl-body h2{font:700 clamp(34px,10vw,46px)/1.02 var(--fd);letter-spacing:-.04em;margin:0 0 12px}
+.wl-body h2 em{font-style:normal;color:var(--acc)}
+.wl-body>p{color:var(--muted);margin:0 0 28px;font-size:15px;line-height:1.6}
+.wl-opt{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:18px;margin-bottom:10px;border-radius:20px;border:1px solid var(--line2);background:var(--card)}
+.wl-opt:active,.wl-opt.on{border-color:var(--acc);background:var(--acc-soft)}
+.wl-opt b{display:block;font-size:17px}.wl-opt span{display:block;font-size:13px;color:var(--muted);margin-top:3px}
+.wl-opt .ic{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:var(--card2);font:700 16px var(--fd);color:var(--acc)}
+.wl-back{align-self:flex-start;color:var(--muted);font-size:14px;padding:12px 0;margin-top:6px}
+.hint .x-tip{flex:none;width:32px;height:32px;padding:0;background:none;color:var(--muted);font-weight:400;display:grid;place-items:center}
 #splash{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;
   padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);transition:clip-path .75s cubic-bezier(.77,0,.18,1);clip-path:inset(0 0 0 0)}
 #splash.out{clip-path:inset(0 0 100% 0)}
@@ -455,6 +472,7 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 </head>
 <body>
 
+<div id="welcome" hidden></div>
 <div id="splash" aria-hidden="true">
   <div class="bgword a">GYM LOG · GYM LOG · GYM LOG · GYM LOG · </div>
   <div class="bgword b">LIFT · LOG · REPEAT · LIFT · LOG · REPEAT · </div>
@@ -1833,7 +1851,7 @@ function defaults() {
       t('腿', ['槓鈴深蹲','羅馬尼亞硬舉','腿推機','腿彎舉','站姿提踵','懸垂舉腿']),
     ],
     settings: {rest: 120, autoRest: true, sound: true, vibrate: true, feelRest: true, notify: true, unit: 'kg', lastExport: null, cloud: null, cloudAuto: true,
-      bar: {kg: 20, lb: 45}, warmup: true, photoBackup: true},
+      bar: {kg: 20, lb: 45}, warmup: true, photoBackup: true, onboarded: false, tips: {}},
     today: {date: dstr(), exIds: []},
   };
 }
@@ -1953,7 +1971,7 @@ function syncPl(id) { const d = draft[id]; if (!d.pl) d.pl = []; d.w = num(plTot
 
 /* ================= 訓練頁 ================= */
 function renderTrain() {
-  ensureToday();
+  ensureToday(); plateTipUsed = false;
   const ids = S.today.exIds.filter(ex);
   const t = dstr(), u = S.settings.unit;
   const todayLogs = S.logs.filter(l => l.date === t);
@@ -1968,7 +1986,7 @@ function renderTrain() {
       <div><b>${todayLogs.length}</b><span>完成組數</span></div>
       <div><b>${vol >= 10000 ? num1(vol / 1000) + '<small>k</small>' : Math.round(vol)}</b><span>總量 ${u}</span></div></div>`;
     h += ids.map(cardHTML).join('');
-    h += `${ids.length > 1 ? '<p class="small muted" style="text-align:center;margin:4px 0 0">長按動作名稱可以拖曳排序</p>' : ''}
+    h += `${ids.length > 1 ? tipHTML('drag', '長按動作名稱可以拖曳排序；點動作的圖片可以看說明與進度。') : ''}
       <button class="btn big mt" data-act="pickToday">＋ 加入動作</button>
       <div class="row mt"><button class="btn ghost sm" data-act="saveTpl">存成範本</button>
       <button class="btn ghost sm" data-act="clearToday">清空清單</button></div>
@@ -2001,7 +2019,7 @@ function cardHTML(id) {
     <div class="card-b">
       <div class="mtags">${e.pm.map(m => `<span class="mtag p">${MUSCLES[m]}</span>`).join('')}${e.sm.map(m => `<span class="mtag">${MUSCLES[m]}</span>`).join('')}</div>
       ${hintHTML(id)}${noteHTML(id)}${last}${L ? '' : warmHTML(id)}${list}
-      ${L ? plPickHTML(id) : ''}
+      ${L ? plPickHTML(id) : plateTip(id)}
       <div class="row">
         <div><div class="lbl"><span>${L ? '總重' : '重量'}</span><span class="unit">
             <button class="${u === 'kg' ? 'on' : ''}" data-act="unit" data-id="${eid}" data-v="kg">kg</button>
@@ -2021,6 +2039,14 @@ function cardHTML(id) {
       <button class="btn primary big" data-act="addSet" data-id="${eid}">完成第 ${sets.length + 1} 組</button>
       ${setupHTML(id)}
     </div></div>`;
+}
+// 器械、槓鈴第一次出現時提示可以改成點槓片輸入（同一次畫面只提示一張卡片）
+let plateTipUsed = false;
+function plateTip(id) {
+  const e = ex(id);
+  if (plateTipUsed || !tipOn('plate') || !['器械', '槓鈴', '史密斯'].includes(e.equip)) return '';
+  plateTipUsed = true;
+  return tipHTML('plate', '這台是掛槓片的嗎？改成點槓片輸入，會自動算總重、保留每邊的組合。', `<button data-act="plateTipGo" data-id="${esc(id)}">設定</button>`);
 }
 // 點槓片加到這邊，點上面已掛的那片就拿掉
 function plPickHTML(id) {
@@ -2340,7 +2366,8 @@ function doneHTML(logs) {
   const n = new Set(logs.map(l => l.exId)).size, pr = Object.keys(prsOf(dstr())).length;
   return `<div class="hero"><h2>Workout<br><em>done.</em></h2><p>今天完成 ${n} 個動作、${logs.length} 組${pr ? `，破了 ${pr} 項個人紀錄` : ''}。<br>紀錄都已經存好了，好好休息。</p>
     <button class="btn primary big" data-act="summary">查看今天的總結</button>
-    <button class="btn big mt" data-act="resume">繼續訓練</button></div>`;
+    <button class="btn big mt" data-act="resume">繼續訓練</button></div>
+    ${S.settings.cloud ? '' : tipHTML('cloud', '紀錄只存在這支手機裡。開啟 Google 雲端自動備份，換手機也不怕不見。', '<button data-act="cloudTipGo">去設定</button>')}`;
 }
 function daySummaryHTML(date, edit) {
   const logs = dayLogs(date), u = S.settings.unit, by = {};
@@ -2909,6 +2936,19 @@ function rerenderCurrent() { if ($('#detail').classList.contains('on')) renderDe
 
 const H = {
   tab: id => showTab(id),
+  wUnit: (_, b) => { S.settings.unit = b.dataset.v; for (const k in draft) delete draft[k]; save(); WEL.step = 1; renderWelcome(); },
+  wPlate: (_, b) => {
+    const k = +b.dataset.v, u = S.settings.unit;
+    if (k >= 0) { myPlates(u); S.settings.plates[u] = PRESETS[u][k].v.map(p => ({p, on: true})); save(); }
+    WEL.step = 2; renderWelcome();
+  },
+  wBack: () => { WEL.step = Math.max(0, WEL.step - 1); renderWelcome(); },
+  wGo: (_, b) => {
+    S.settings.onboarded = true; save(); $('#welcome').hidden = true; render();
+    if (b.dataset.v === 'tpl') showTab('tpl'); else if (b.dataset.v === 'pick') H.pickToday();
+  },
+  cloudTipGo: () => { tipDone('cloud'); open.add('s:backup'); showTab('set'); },
+  tipOff: k => { tipDone(k); rerenderCurrent(); },
   toggle: (_, b) => {
     const c = b.closest('[data-key]'), k = c.dataset.key;
     if (c.classList.toggle('open')) { open.add(k); closed.delete(k); } else { open.delete(k); closed.add(k); }
@@ -3004,12 +3044,14 @@ const H = {
   },
   loadMode: (id, b) => {
     const v = +b.dataset.v, e = ex(id), u = unitOf(id);
+    tipDone('plate');
     if (!v) delete S.load[id];
     else S.load[id] = {base: S.load[id] ? S.load[id].base : e.equip === '槓鈴' || e.equip === '史密斯' ? fromU(S.settings.bar[u], u) : 0, sd: v};
     const d = getDraft(id);
     if (v) syncPl(id);
     save(); open.add('n:' + id); renderTrain();
   },
+  plateTipGo: id => { tipDone('plate'); open.add('n:' + id); renderTrain(); const c = document.querySelector(`[data-key="${CSS.escape('n:' + id)}"]`); if (c) c.scrollIntoView({block: 'center', behavior: 'smooth'}); },
   plAdd: (id, b) => { const d = getDraft(id); d.pl.push(+b.dataset.p); d.pl.sort((x, y) => y - x); syncPl(id); renderTrain(); },
   plRm: (id, b) => { const d = getDraft(id); d.pl.splice(+b.dataset.i, 1); syncPl(id); renderTrain(); },
   plClr: id => { getDraft(id).pl = []; syncPl(id); renderTrain(); },
@@ -3209,6 +3251,35 @@ const H = {
   },
 };
 
+/* ================= 第一次使用：歡迎畫面、一次性提示 ================= */
+let WEL = {step: 0};
+function renderWelcome() {
+  const el = $('#welcome'), st = S.settings, u = st.unit, i = WEL.step;
+  const opt = (act, v, ic, t, sub, on) => `<button class="wl-opt ${on ? 'on' : ''}" data-act="${act}" data-v="${v}"><span class="ic">${ic}</span><span><b>${t}</b><span>${sub}</span></span></button>`;
+  const steps = [
+    () => `<h2>歡迎來到<br><em>健身紀錄</em></h2><p>記下每一組的重量和次數，看自己一點一點變強。<br>先花 10 秒設定兩件事。</p>
+      <div class="flbl">你習慣用什麼單位？</div>
+      ${opt('wUnit', 'kg', 'kg', '公斤 kg', '大部分台灣健身房', u === 'kg')}${opt('wUnit', 'lb', 'lb', '磅 lb', '槓片上標的是磅', u === 'lb')}`,
+    () => `<h2>你的健身房<br>用哪種<em>槓片</em>？</h2><p>掛槓片的機器可以直接點槓片輸入，App 會幫你算總重。</p>
+      ${PRESETS[u].map((x, k) => opt('wPlate', k, x.v[0], x.name, x.v.map(num).join('、'), false)).join('')}
+      ${opt('wPlate', -1, '?', '不確定，之後再設', '可以在「設定」→「我的槓片」修改', false)}
+      <button class="wl-back" data-act="wBack">‹ 上一步</button>`,
+    () => `<h2>準備好了，<br>要怎麼<em>開始</em>？</h2><p>之後隨時可以在「範本」頁建立自己的課表。</p>
+      ${opt('wGo', 'tpl', '▶', '從範本開始', '內建推、拉、腿三套課表', false)}
+      ${opt('wGo', 'pick', '＋', '自己挑動作', '從動作庫選今天要練的', false)}
+      ${opt('wGo', 'look', '…', '先逛逛', '看看有什麼功能', false)}
+      <button class="wl-back" data-act="wBack">‹ 上一步</button>`,
+  ];
+  el.innerHTML = `<div class="wl-top"><div class="wl-dots">${steps.map((_, k) => `<i class="${k <= i ? 'on' : ''}"></i>`).join('')}</div>
+    <button data-act="wGo" data-v="look">跳過</button></div><div class="wl-body">${steps[i]()}</div>`;
+  el.hidden = false;
+}
+// 提示只出現一次，按 ✕ 或照著做就不再出現
+const tipOn = k => !S.settings.tips[k];
+const tipHTML = (k, text, btn = '') => tipOn(k)
+  ? `<div class="hint">${svgTrend}<span>${text}</span>${btn}<button class="x-tip" data-act="tipOff" data-id="${k}" aria-label="不再顯示">${svgX}</button></div>` : '';
+const tipDone = k => { if (tipOn(k)) { S.settings.tips[k] = 1; save(); } };
+
 // 長按動作標題拖曳排序：按住不動 0.45 秒開始，期間移動超過 8px 當作捲動
 let DRAG = null, dragEnded = false;
 const isTodayCard = el => el && el.classList.contains('card') && S.today.exIds.includes(el.dataset.key);
@@ -3354,7 +3425,10 @@ $('#nx-muscle').innerHTML = '<option value="">（不指定）</option>' + Object
 open.add('s:unit'); open.add('s:rest'); open.add('s:aid'); open.add('s:backup');
 ensureToday();
 if (S.today.exIds.length) open.add(S.today.exIds.find(id => !todaySets(id).length) || S.today.exIds[0]);
+// 已經有紀錄的人不用看歡迎畫面
+if (!S.settings.onboarded && S.logs.length) { S.settings.onboarded = true; save(); }
 render();
+if (!S.settings.onboarded) renderWelcome();
 // 開場畫面：圓環 7 段 = 本週 7 天，有練的那天亮起
 (function splash() {
   const el = $('#splash'); if (!el) return;
