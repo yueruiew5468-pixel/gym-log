@@ -1,5 +1,5 @@
 // 離線支援：有網路時永遠抓最新版（更新網站後馬上生效），沒網路時才用上次存下的版本
-const CACHE = 'gymlog-v4';
+const CACHE = 'gymlog-v5';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

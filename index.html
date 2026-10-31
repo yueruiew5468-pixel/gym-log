@@ -322,6 +322,11 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 .wk-h b{font:700 26px var(--fd);letter-spacing:-.03em}
 .wk-h small{font-size:13px;color:var(--muted);font-weight:500}
 .wk-row{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.wk-mus{display:flex;align-items:center;gap:14px;margin-top:12px;padding:12px 4px 0;border-top:1px solid var(--line)}
+.wk-mus svg.body{width:104px;flex:none}
+.wk-mus span{display:block;font:500 12px var(--fd);color:var(--muted);letter-spacing:.16em;margin-bottom:4px}
+.wk-mus p{margin:0;font-size:14px;line-height:1.5}
+.wk-mus p.none{color:var(--muted)}
 .wd{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
 .wd i{font:500 13px var(--fd);font-style:normal;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line)}
 .wd.on i{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
@@ -468,6 +473,28 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 @keyframes sp-load{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes sp-drift{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 @media (prefers-reduced-motion:reduce){#splash *{animation-duration:.01s!important;animation-delay:0s!important}}
+
+/* ---------- 墨豹吉祥物 ---------- */
+/* 舞台：正方形 = 原圖範圍；wide 是趴下用的寬舞台（1340:1080），即時動畫只佔中間的正方形 */
+.pt-stage{position:relative;aspect-ratio:1}
+.pt-stage.wide{aspect-ratio:1340/1080}
+.pt-stage canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+.pt-stage.wide .pt-fx,.pt-stage.wide .pt-gl{left:10.4478%;width:80.597%}
+.wl-m{width:min(190px,26vh);margin:0 0 4px -12px}
+/* 今天還沒開始：墨豹坐著待機；訓練完成：墨豹趴下休息 */
+.ready-top{display:flex;align-items:center;gap:6px;margin-bottom:20px}
+.ready-top>div:first-child{flex:1;min-width:0}
+.ready-top p{margin-bottom:0}
+.ready-vis{width:min(50%,180px);flex:none;margin:-6px -4px -6px 0;pointer-events:none}
+.done-vis{width:min(100%,320px);margin:-14px auto 4px}
+#prpop{position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  background:rgba(10,10,11,.86);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);animation:fadeO .25s ease both;transition:opacity .3s}
+#prpop.out{opacity:0}
+#prpop .pr-m{width:min(82vw,380px)}
+#prpop .pr-t{text-align:center;margin-top:-12px}
+#prpop .pr-t em{display:block;font:700 13px var(--fd);letter-spacing:.2em;color:var(--acc);font-style:normal}
+#prpop .pr-t b{display:block;font:700 clamp(28px,8vw,38px)/1.1 var(--fd);letter-spacing:-.03em;margin-top:6px}
+#prpop .pr-t span{display:block;color:var(--muted);margin-top:6px;font-size:15px}
 </style>
 </head>
 <body>
@@ -575,6 +602,7 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 <input type="file" id="import-file" accept="application/json,.json" hidden>
 <div id="toast"></div>
 
+<script src="mascot/mascot.js?v=4"></script>
 <script>
 'use strict';
 
@@ -1992,14 +2020,41 @@ function renderTrain() {
       <button class="btn ghost sm" data-act="clearToday">清空清單</button></div>
       ${todayLogs.length ? '<button class="btn finish big mt2" data-act="finish">結束訓練</button>' : ''}`;
   } else {
-    h += `<div class="hero">${bodySVG(['ch','quad','dfr'], ['tri','glu','abs'], {only: 'front'})}
-      <h2>Ready<br>to <em>lift</em>?</h2><p>今天還沒開始。<br>選一個範本，或直接加入動作。</p>
+    h += window.Mascot
+      ? `<div class="hero"><div class="ready-top"><div><h2>Ready<br>to <em>lift</em>?</h2><p>今天還沒開始。<br>選一個範本，<br>或直接加入動作。</p></div>
+        <div class="ready-vis" data-m="ready"></div></div>`
+      : `<div class="hero">${bodySVG(['ch','quad','dfr'], ['tri','glu','abs'], {only: 'front'})}
+      <h2>Ready<br>to <em>lift</em>?</h2><p>今天還沒開始。<br>選一個範本，或直接加入動作。</p>`;
+    h += `
       <button class="btn primary big" data-act="tab" data-id="tpl">從範本開始</button>
       <button class="btn big mt" data-act="pickToday">＋ 加入動作</button></div>`;
   }
   $('#v-train').innerHTML = h;
   flashId = null;
+  trainMascot();
 }
+// 訓練頁的墨豹：頁面重繪時把同一隻搬到新位置，不重開、不重播；切到別的分頁只暫停（銷毀再重建會閃白）
+let TRM = null, lieNext = false;
+function trainMascot() {
+  if (tab !== 'train') { if (TRM) TRM.m.pause(); return; }
+  const slot = $('#v-train [data-m]'), kind = slot ? slot.dataset.m : '';
+  if (TRM && TRM.kind !== kind) { TRM.m.destroy(); TRM = null; }
+  if (!kind) return;
+  if (TRM) TRM.m.resume();
+  else {
+    const el = document.createElement('div');
+    TRM = {kind, el, m: Mascot.mount(el, {wide: kind === 'done'})};
+    if (kind === 'ready') TRM.m.idle(); else if (lieNext) TRM.m.sit(); else TRM.m.rest();
+  }
+  slot.append(TRM.el);
+  setTimeout(maybeLie);  // 等「結束訓練」把總結面板打開後再判斷
+}
+// 剛按完「結束訓練」：等總結面板關掉、真的看得到時，墨豹才坐下→趴下
+function maybeLie() {
+  if (!lieNext || !TRM || TRM.kind !== 'done' || tab !== 'train' || $('#detail').classList.contains('on')) return;
+  lieNext = false; TRM.m.lieDown();
+}
+new MutationObserver(maybeLie).observe($('#detail'), {attributes: true, attributeFilter: ['class']});
 
 function cardHTML(id) {
   const e = ex(id), u = unitOf(id), sets = todaySets(id), ls = lastSession(id), d = getDraft(id), st = stepOf(e, u), L = loadOf(id);
@@ -2086,8 +2141,19 @@ function weekHTML() {
     if (on) n++;
     return `<div class="wd ${on ? 'on' : ''} ${ds === dstr() ? 'today' : ''}"><span>${'一二三四五六日'[i]}</span><i>${on ? svgChk : d.getDate()}</i></div>`;
   }).join('');
+  // 這週練到的部位：動作的主要肌群亮色、次要肌群淡色
+  const mon = dstr(new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow)), cnt = {}, sec = new Set();
+  for (const l of S.logs) {
+    const e = l.date >= mon && ex(l.exId); if (!e) continue;
+    (e.pm || []).forEach(m => { cnt[m] = (cnt[m] || 0) + 1; });
+    (e.sm || []).forEach(m => sec.add(m));
+  }
+  const pm = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]), sm = [...sec].filter(m => !cnt[m]);
+  const names = pm.map(m => MUSCLES[m]).filter(Boolean);
+  const mus = `<div class="wk-mus">${bodySVG(pm, sm, {labels: false})}<div><span>本週練到的部位</span>
+    ${names.length ? `<p>${names.slice(0, 5).join('、')}${names.length > 5 ? ` 等 ${names.length} 個部位` : ''}</p>` : '<p class="none">這週還沒練到任何部位</p>'}</div></div>`;
   return `<div class="week"><div class="wk-h"><div><span>本週已訓練</span><br><b>${n}<small> / 7 天</small></b></div>
-    <button class="wk-more" data-act="history">訓練歷史 ›</button></div><div class="wk-row">${cells}</div></div>`;
+    <button class="wk-more" data-act="history">訓練歷史 ›</button></div><div class="wk-row">${cells}</div>${mus}</div>`;
 }
 
 // 設了目標次數，而且所有組都做到上限 → 提醒加重
@@ -2364,7 +2430,7 @@ function prsOf(date) {
 const fmtDur = ms => { const m = Math.max(1, Math.round(ms / 6e4)); return m < 60 ? `${m}<small>分</small>` : `${Math.floor(m / 60)}<small>時</small>${m % 60}<small>分</small>`; };
 function doneHTML(logs) {
   const n = new Set(logs.map(l => l.exId)).size, pr = Object.keys(prsOf(dstr())).length;
-  return `<div class="hero"><h2>Workout<br><em>done.</em></h2><p>今天完成 ${n} 個動作、${logs.length} 組${pr ? `，破了 ${pr} 項個人紀錄` : ''}。<br>紀錄都已經存好了，好好休息。</p>
+  return `<div class="hero">${window.Mascot ? '<div class="done-vis" data-m="done"></div>' : ''}<h2>Workout<br><em>done.</em></h2><p>今天完成 ${n} 個動作、${logs.length} 組${pr ? `，破了 ${pr} 項個人紀錄` : ''}。<br>紀錄都已經存好了，好好休息。</p>
     <button class="btn primary big" data-act="summary">查看今天的總結</button>
     <button class="btn big mt" data-act="resume">繼續訓練</button></div>
     ${S.settings.cloud ? '' : tipHTML('cloud', '紀錄只存在這支手機裡。開啟 Google 雲端自動備份，換手機也不怕不見。', '<button data-act="cloudTipGo">去設定</button>')}`;
@@ -2781,6 +2847,7 @@ function render() {
 }
 function showTab(t) {
   tab = t;
+  if (t !== 'train') trainMascot();
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + t));
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.id === t));
   render();
@@ -2850,6 +2917,19 @@ function stopTimer() {
   clearInterval(T.iv);
   T.end = 0; T.pause = 0; $('#timer').hidden = true; $('#timer').classList.remove('big', 'done', 'paused'); wake(false);
   closeNotes(); keepTimer();
+}
+// 破紀錄：墨豹怒吼＋綠光，3.4 秒後自己收起來（點一下也會收）
+function showPR(name, kind, detail) {
+  if (!window.Mascot) return toast(`${kind}！${name}`);
+  const old = $('#prpop'); if (old) old.remove();
+  const el = document.createElement('div'); el.id = 'prpop';
+  el.innerHTML = `<div class="pr-m"></div><div class="pr-t"><em>NEW RECORD · ${kind}</em><b>${esc(name)}</b><span>${detail}</span></div>`;
+  document.body.append(el);
+  const m = Mascot.mount(el.querySelector('.pr-m')); m.pr();
+  if (navigator.vibrate) navigator.vibrate([40, 60, 80]);
+  let gone = false;
+  const close = () => { if (gone) return; gone = true; el.classList.add('out'); setTimeout(() => { m.destroy(); el.remove(); }, 300); };
+  el.onclick = close; setTimeout(close, 3400);
 }
 function adjTimer(d) {
   if (!T.end || T.rang) { startTimer(Math.max(15, d)); return; }
@@ -2945,6 +3025,7 @@ const H = {
   wBack: () => { WEL.step = Math.max(0, WEL.step - 1); renderWelcome(); },
   wGo: (_, b) => {
     S.settings.onboarded = true; save(); $('#welcome').hidden = true; render();
+    if (WEL.m) { WEL.m.destroy(); WEL.m = WEL.mEl = null; }
     if (b.dataset.v === 'tpl') showTab('tpl'); else if (b.dataset.v === 'pick') H.pickToday();
   },
   cloudTipGo: () => { tipDone('cloud'); open.add('s:backup'); showTab('set'); },
@@ -2961,7 +3042,7 @@ const H = {
   /* 結束訓練、歷史 */
   finish: () => {
     if (!S.logs.some(l => l.date === dstr())) return toast('今天還沒有記錄任何一組');
-    S.today.finished = true; save(); stopTimer(); renderTrain(); window.scrollTo(0, 0);
+    S.today.finished = true; lieNext = true; save(); stopTimer(); renderTrain(); window.scrollTo(0, 0);
     openPanel({kind: 'summary'});
     cloudMonthly();
   },
@@ -3077,10 +3158,14 @@ const H = {
     if (L && !d.pl.length && !L.base) return toast('先點要掛的槓片');
     const log = {id: uid(), exId: id, date: dstr(), w: fromU(Math.max(0, w), u), u, r, feel: d.feel, ts: Date.now()};
     if (L && d.pl.length) Object.assign(log, {pl: [...d.pl], sd: L.sd});
+    const prior = S.logs.filter(l => l.exId === id), e1 = x => x.w * (1 + x.r / 30);
+    const pr = !prior.length || log.w <= 0 ? '' : log.w > Math.max(...prior.map(x => x.w)) + 1e-9 ? '重量 PR'
+      : e1(log) > Math.max(...prior.map(e1)) + 1e-9 ? '1RM PR' : '';
     S.logs.push(log); flashId = log.id;
     save(); open.add(id); renderTrain();
     if (navigator.vibrate) navigator.vibrate(30);
-    if (S.settings.autoRest) { const r = restFor(d.feel); startTimer(r.sec, r.note); } else toast('已記錄');
+    if (S.settings.autoRest) { const r = restFor(d.feel); startTimer(r.sec, r.note); } else if (!pr) toast('已記錄');
+    if (pr) showPR(e.name, pr, `${wTxt(log.w, u)} × ${r}`);
   },
   delSet: async logId => {
     if (!await ask('刪除這一組？')) return;
@@ -3272,6 +3357,10 @@ function renderWelcome() {
   ];
   el.innerHTML = `<div class="wl-top"><div class="wl-dots">${steps.map((_, k) => `<i class="${k <= i ? 'on' : ''}"></i>`).join('')}</div>
     <button data-act="wGo" data-v="look">跳過</button></div><div class="wl-body">${steps[i]()}</div>`;
+  if (window.Mascot) {
+    if (!WEL.m) { WEL.mEl = document.createElement('div'); WEL.mEl.className = 'wl-m'; WEL.m = Mascot.mount(WEL.mEl); WEL.m.idle({lick: true}); }
+    el.querySelector('.wl-body').prepend(WEL.mEl);
+  }
   el.hidden = false;
 }
 // 提示只出現一次，按 ✕ 或照著做就不再出現
