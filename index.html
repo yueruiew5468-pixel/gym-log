@@ -372,6 +372,10 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 .cal button.today.on{color:var(--acc-ink)}
 .cal button:disabled{opacity:.25}
 .r90{transform:rotate(-90deg)}
+.gym-pick{display:flex;align-items:center;gap:8px;margin:0 2px 12px}
+.gym-pick span{font:500 12px var(--fd);color:var(--muted);letter-spacing:.16em;margin-right:2px}
+.gym-pick button{font:600 13px var(--fd);padding:6px 14px;border-radius:99px;border:1px solid var(--line2);color:var(--muted)}
+.gym-pick button.on{background:var(--text);color:var(--bg);border-color:var(--text)}
 .day-in{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 /* 打字補記 */
 .qt{padding:16px}
@@ -499,7 +503,9 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 .pt-stage.wide{aspect-ratio:1340/1080}
 .pt-stage canvas{position:absolute;top:0;left:0;width:100%;height:100%}
 .pt-stage.wide .pt-fx,.pt-stage.wide .pt-gl{left:10.4478%;width:80.597%}
-.wl-m{width:min(190px,26vh);margin:0 0 4px -12px}
+.wl-head{display:flex;align-items:flex-end;gap:4px}
+.wl-head h2{flex:0 1 auto;min-width:0;font-size:clamp(28px,8.4vw,46px);word-break:keep-all}
+.wl-m{width:min(132px,33vw,20vh);flex:none;margin:0 0 4px -6px}
 /* 今天還沒開始：墨豹坐著待機；訓練完成：墨豹趴下休息 */
 .ready-top{display:flex;align-items:center;gap:6px;margin-bottom:20px}
 .ready-top>div:first-child{flex:1;min-width:0}
@@ -1893,6 +1899,7 @@ function defaults() {
     ranges: {},      // 每個動作的目標次數 {min, max}
     load: {},        // 掛槓片的動作 {sd: 2 兩邊都掛 | 1 只有一邊, base: 槓子或機器本身重量(公斤)}
     alias: {},       // 打字補記時自己的說法 → 動作 id（選過一次就記住）
+    gym: {},         // 每天在哪間健身房 {日期: 健身房名稱}（同名機器在不同間重量不一樣）
     body: [],        // 身體數據 {date, weight(公斤), fat, chest, waist, hip, arm, thigh, calf}
     templates: [
       t('推', ['槓鈴臥推','上斜啞鈴臥推','器械肩推','啞鈴側平舉','繩索下壓','過頭繩索臂屈伸']),
@@ -1900,7 +1907,7 @@ function defaults() {
       t('腿', ['槓鈴深蹲','羅馬尼亞硬舉','腿推機','腿彎舉','站姿提踵','懸垂舉腿']),
     ],
     settings: {rest: 120, autoRest: true, sound: true, vibrate: true, feelRest: true, notify: true, unit: 'kg', lastExport: null, cloud: null, cloudAuto: true,
-      bar: {kg: 20, lb: 45}, warmup: true, photoBackup: true, onboarded: false, tips: {}},
+      bar: {kg: 20, lb: 45}, gyms: [], warmup: true, photoBackup: true, onboarded: false, tips: {}},
     today: {date: dstr(), exIds: []},
   };
 }
@@ -1918,6 +1925,7 @@ function normalize(s) {
     ranges: s.ranges || {},
     load: s.load || {},
     alias: s.alias || {},
+    gym: s.gym || {},
     body: Array.isArray(s.body) ? s.body : [],
     templates: Array.isArray(s.templates) ? s.templates : d.templates,
     settings: {...d.settings, ...(s.settings || {})},
@@ -2047,6 +2055,23 @@ const inDay = el => !!(el && el.closest && el.closest('#detail'));
 const draftOf = (id, el) => inDay(el) ? dayDraft(id) : getDraft(id);
 const redraw = el => inDay(el) ? renderDetail() : renderTrain();
 
+/* ================= 健身房 ================= */
+// 某天在哪間：有記就用記的；沒記就沿用那天之前最近一次記的
+function gymOf(date) {
+  if (S.gym[date]) return S.gym[date];
+  let best = '', g = '';
+  for (const d in S.gym) if (d < date && d > best) { best = d; g = S.gym[d]; }
+  return g;
+}
+// 有記錄的那天要把健身房定下來，之後改前面的日子才不會連帶改到
+const fixGym = date => { if (!S.gym[date]) { const g = gymOf(date); if (g) S.gym[date] = g; } };
+function gymPickHTML(date) {
+  if (S.settings.gyms.length < 2) return '';
+  const cur = gymOf(date);
+  return `<div class="gym-pick"><span>健身房</span>${S.settings.gyms.map(g =>
+    `<button class="${g === cur ? 'on' : ''}" data-act="setGym" data-id="${esc(g)}" data-date="${date}">${esc(g)}</button>`).join('')}</div>`;
+}
+
 /* ================= 訓練頁 ================= */
 function renderTrain() {
   ensureToday(); plateTipUsed = false;
@@ -2055,7 +2080,7 @@ function renderTrain() {
   const todayLogs = S.logs.filter(l => l.date === t);
   const vol = toU(todayLogs.reduce((a, l) => a + l.w * l.r, 0), u);
   let h = STORE_OK ? '' : `<div class="hint" style="border-color:rgba(255,95,79,.5);background:rgba(255,95,79,.1)"><span>現在是預覽模式，資料不會被儲存。請用網址（例如 Netlify、GitHub Pages）在手機瀏覽器開啟。</span></div>`;
-  h += backupHTML() + weekHTML();
+  h += backupHTML() + weekHTML() + gymPickHTML(t);
   if (S.today.finished && todayLogs.length) {
     h += doneHTML(todayLogs);
   } else if (ids.length) {
@@ -2600,7 +2625,7 @@ function qtHTML() {
   // 點日期後先選補記方式：打字，或從動作庫挑動作再逐組輸入
   const menu = `<div class="row" style="margin-bottom:12px"><button class="btn ${QT.open ? 'primary' : ''}" data-act="qtOpen">文字補記</button>
     <button class="btn" data-act="dayPick">從動作庫選擇</button></div>`;
-  if (!QT.open) return menu;
+  if (!QT.open) return gymPickHTML(detailCtx.date) + menu;
   const items = QT.items || [];
   const rows = items.map((it, i) => {
     const r = qtResolve(it), e = it.id && ex(it.id);
@@ -2614,7 +2639,7 @@ function qtHTML() {
         <button data-act="qtLib" data-i="${i}">從動作庫選…</button></div></div></div>`;
   }).join('');
   const ok = items.filter(it => !qtResolve(it).err).length;
-  return menu + `<div class="card qt"><div class="qt-h"><b>打字補記</b><span>一行一個動作</span></div>
+  return gymPickHTML(detailCtx.date) + menu + `<div class="card qt"><div class="qt-h"><b>打字補記</b><span>一行一個動作</span></div>
     <textarea id="qt-in" placeholder="槓鈴胸推 兩邊各加4.5+2.3 - 4.5+4.5&#10;機械三頭上拉 10-15&#10;槓片胸推 11.3槓片各兩邊">${esc(QT.text)}</textarea>
     <button class="btn mt" data-act="qtParse">輸出</button>
     ${items.length ? `<div class="mt">${rows}</div>
@@ -2677,11 +2702,11 @@ function renderHistory() {
 }
 
 /* ================= 進度折線圖 ================= */
-let pMetric = 'max';
+let pMetric = 'max', pGym = '';
 const METRICS = {max: '最大重量', e1rm: '預估 1RM', vol: '單次總量'};
-function exSeries(id, metric) {
+function exSeries(id, metric, gym = '') {
   const by = {};
-  for (const l of S.logs) if (l.exId === id) (by[l.date] ||= []).push(l);
+  for (const l of S.logs) if (l.exId === id && (!gym || gymOf(l.date) === gym)) (by[l.date] ||= []).push(l);
   return Object.keys(by).sort().map(d => {
     const s = by[d].sort((a, b) => a.ts - b.ts);
     const y = metric === 'max' ? Math.max(...s.map(x => x.w))
@@ -2691,13 +2716,19 @@ function exSeries(id, metric) {
   });
 }
 function progressHTML(e) {
-  const id = e.id, u = unitOf(id), all = exSeries(id, pMetric);
+  const id = e.id, u = unitOf(id);
+  // 這個動作在兩間以上都做過才顯示健身房篩選
+  const gs = [...new Set(S.logs.filter(l => l.exId === id).map(l => gymOf(l.date)).filter(Boolean))];
+  if (pGym && !gs.includes(pGym)) pGym = '';
+  const all = exSeries(id, pMetric, gs.length > 1 ? pGym : '');
+  const gymChips = gs.length > 1 ? `<div class="chips" style="margin:0 -16px 4px;padding-bottom:12px"><button class="${pGym ? '' : 'on'}" data-act="pGym" data-id="">全部</button>${gs.map(g =>
+    `<button class="${pGym === g ? 'on' : ''}" data-act="pGym" data-id="${esc(g)}">${esc(g)}</button>`).join('')}</div>` : '';
   if (!all.length) return `<div class="grp"><span>進度</span></div><div class="card"><div class="empty">記錄這個動作後，就會在這裡看到進步曲線</div></div>`;
   const pts = all.map(p => ({d: p.d, y: toU(p.y, u)}));
   const best = Math.max(...pts.map(p => p.y)), lastV = pts[pts.length - 1].y, diff = lastV - pts[0].y;
   return `<div class="grp"><span>進度</span><span>${all.length} 次訓練</span></div>
     <div class="card" style="padding:16px">
-      <div class="chips" style="margin:0 -16px 4px;padding-bottom:12px">${Object.entries(METRICS).map(([k, v]) =>
+      ${gymChips}<div class="chips" style="margin:0 -16px 4px;padding-bottom:12px">${Object.entries(METRICS).map(([k, v]) =>
         `<button class="${pMetric === k ? 'on' : ''}" data-act="pMetric" data-id="${k}">${v}</button>`).join('')}</div>
       <div class="tiles"><div><span>最佳</span><b>${num1(best)}<small>${u}</small></b></div>
         <div><span>最近一次</span><b>${num1(lastV)}<small>${u}</small></b></div>
@@ -2706,7 +2737,7 @@ function progressHTML(e) {
     </div>
     <div class="card ${open.has('dt:hist') ? 'open' : ''}" data-key="dt:hist"><button class="card-h" data-act="toggle"><span class="t">最近紀錄</span>${svgChev}</button>
       <div class="card-b"><ul class="hist">${all.slice(-8).reverse().map(p =>
-        `<li><span class="dd">${fmtDate(p.d)}</span><span class="vv">${setsText(p.sets)}</span></li>`).join('')}</ul></div></div>`;
+        `<li><span class="dd">${fmtDate(p.d)}${gs.length > 1 && gymOf(p.d) ? `<br><small class="muted">${esc(gymOf(p.d))}</small>` : ''}</span><span class="vv">${setsText(p.sets)}</span></li>`).join('')}</ul></div></div>`;
 }
 
 const CH = {};
@@ -2993,6 +3024,10 @@ function renderSet() {
       <div class="set-row"><span>預設槓子重量</span><span class="muted">${st.bar.kg} kg／${st.bar.lb} lb</span></div>
       <button class="btn sm mt" data-act="plate" data-id="">我的槓片與槓片計算機</button>
       <p class="small muted">掛槓片的機器：在動作卡片的「設定與備註」選「槓片」，就能直接點槓片輸入。<br>加重提醒：同一個地方設定目標次數範圍。</p>`) +
+    card('s:gym', '健身房', `
+      <p class="small muted" style="margin-top:0">在兩間以上的健身房練才需要設定。同名的機器在不同間重量可能不一樣，記下每天在哪一間，進步曲線就能分開看。</p>
+      <div class="qt-cand">${st.gyms.map(g => `<button data-act="gymDel" data-id="${esc(g)}">${esc(g)} ✕</button>`).join('')}
+        <button data-act="gymAdd">＋ 新增健身房</button></div>`) +
     card('s:backup', '資料備份', `
       <p class="small muted" style="margin-top:0">共 ${S.logs.length} 組紀錄、${days} 個訓練日、${S.body.length} 筆身體數據、${PH.length} 張照片、${S.custom.length} 個自訂動作、${S.templates.length} 個範本。<br>
       上次備份：${st.lastExport ? fmtDate(st.lastExport) + ' · ' + daysAgo(st.lastExport) : '從未備份'}</p>
@@ -3246,11 +3281,24 @@ const H = {
     const log = {id: uid(), exId: id, date, w: fromU(Math.max(0, w), u), u, r, feel: d.feel, ts};
     if (L && d.pl.length) Object.assign(log, {pl: [...d.pl], sd: L.sd});
     else if (d.sd && d.pl && d.pl.length && String(d.w) === String(d.plw)) Object.assign(log, {pl: [...d.pl], sd: d.sd});
-    S.logs.push(log);
+    S.logs.push(log); fixGym(date);
     save(); renderDetail(); render(); toast('已補記一組');
   },
   // 文字寫了重量變化（例如 10-15）：點哪個重量就用哪個
   dayW: (id, b) => { const d = dayDraft(id), o = d.opts[+b.dataset.i]; Object.assign(d, {w: o.w, pl: [...o.pl], sd: o.sd, desc: o.desc, plw: o.w, cur: +b.dataset.i}); renderDetail(); },
+  gymAdd: async () => {
+    const g = (await askText('健身房名稱', '') || '').trim(); if (!g) return;
+    if (!S.settings.gyms.includes(g)) S.settings.gyms.push(g);
+    save(); renderSet(); toast(S.settings.gyms.length < 2 ? '再新增一間，訓練頁就會出現健身房選擇' : '已新增');
+  },
+  gymDel: async g => {
+    const n = Object.values(S.gym).filter(x => x === g).length;
+    if (!await ask(`刪除「${g}」？${n ? `\n已經標記在這間的 ${n} 天會變成沒有標記。` : ''}`)) return;
+    S.settings.gyms = S.settings.gyms.filter(x => x !== g);
+    for (const d in S.gym) if (S.gym[d] === g) delete S.gym[d];
+    save(); renderSet();
+  },
+  setGym: (g, b) => { S.gym[b.dataset.date] = g; save(); if ($('#detail').classList.contains('on')) renderDetail(); render(); },
   qtOpen: () => { QT.open = !QT.open; renderDetail(); if (QT.open) setTimeout(() => $('#qt-in') && $('#qt-in').focus(), 50); },
   qtParse: () => {
     QT.text = $('#qt-in').value;
@@ -3286,6 +3334,7 @@ const H = {
   /* 第二階段 */
   applyHint: (id, b) => { getDraft(id).w = b.dataset.w; renderTrain(); toast(`已改成 ${b.dataset.w} ${unitOf(id)}`); },
   pMetric: k => { pMetric = k; renderDetail(); },
+  pGym: g => { pGym = g || ''; renderDetail(); },
   plate: id => openPlate(id),
   pUnit: u => {
     if (P.u === u) return;
@@ -3377,7 +3426,7 @@ const H = {
     const prior = S.logs.filter(l => l.exId === id), e1 = x => x.w * (1 + x.r / 30);
     const pr = !prior.length || log.w <= 0 ? '' : log.w > Math.max(...prior.map(x => x.w)) + 1e-9 ? '重量 PR'
       : e1(log) > Math.max(...prior.map(e1)) + 1e-9 ? '1RM PR' : '';
-    S.logs.push(log); flashId = log.id;
+    S.logs.push(log); flashId = log.id; fixGym(log.date);
     save(); open.add(id); renderTrain();
     if (navigator.vibrate) navigator.vibrate(30);
     if (S.settings.autoRest) { const r = restFor(d.feel); startTimer(r.sec, r.note); } else if (!pr) toast('已記錄');
@@ -3575,7 +3624,9 @@ function renderWelcome() {
     <button data-act="wGo" data-v="look">跳過</button></div><div class="wl-body">${steps[i]()}</div>`;
   if (window.Mascot) {
     if (!WEL.m) { WEL.mEl = document.createElement('div'); WEL.mEl.className = 'wl-m'; WEL.m = Mascot.mount(WEL.mEl); WEL.m.idle({lick: true}); }
-    el.querySelector('.wl-body').prepend(WEL.mEl);
+    // 墨豹放在標題右邊的空位
+    const h2 = el.querySelector('.wl-body h2'), head = document.createElement('div');
+    head.className = 'wl-head'; h2.replaceWith(head); head.append(h2, WEL.mEl);
   }
   el.hidden = false;
 }
@@ -3679,7 +3730,11 @@ async function importData(data) {
   if (data.merge) {
     const haveEx = new Set(S.custom.map(x => x.id)), haveLog = new Set(S.logs.map(x => x.id));
     const nc = (data.custom || []).filter(x => !haveEx.has(x.id)), nl = data.logs.filter(x => !haveLog.has(x.id));
-    const remap = Object.entries(data.remap || {}).filter(([a, b]) => BUILTIN.some(e => e.id === b) && (haveEx.has(a) || nc.some(x => x.id === a)));
+    // 合併重複的動作：自訂 → 內建，或自訂 → 另一個自訂
+    const remap = Object.entries(data.remap || {}).filter(([a, b]) => a !== b && (BUILTIN.some(e => e.id === b) || haveEx.has(b)) && (haveEx.has(a) || nc.some(x => x.id === a)));
+    // 刪掉從沒記過的自訂動作（有紀錄的不刪）
+    const delEx = (data.delEx || []).filter(id => haveEx.has(id) && !S.logs.some(l => l.exId === id));
+    const gymSet = Object.entries(data.gym || {}).filter(([d, g]) => S.gym[d] !== g);
     const relink = Object.entries(data.relink || {}).filter(([a]) => haveEx.has(a) || nc.some(x => x.id === a));
     // 修正檔：改既有紀錄的重量/槓片、刪掉紀錄、設定動作的掛片方式
     const pt = data.patch || {};
@@ -3688,7 +3743,10 @@ async function importData(data) {
     const load = Object.entries(pt.load || {}).filter(([id]) => ex(id) || nc.some(x => x.id === id));
     const parts = [];
     if (nl.length || nc.length) parts.push(`加入 ${nl.length} 組紀錄${nc.length ? `、${nc.length} 個動作` : ''}`);
-    if (remap.length || relink.length) parts.push(`把 ${remap.length} 個動作併入動作庫、${relink.length} 個動作連上動作圖`);
+    if (remap.length) parts.push(`合併 ${remap.length} 個重複的動作（紀錄會搬到保留的那個）`);
+    if (relink.length) parts.push(`把 ${relink.length} 個動作連上動作圖`);
+    if (delEx.length) parts.push(`刪除 ${delEx.length} 個沒記過的動作`);
+    if (gymSet.length) parts.push(`標記 ${gymSet.length} 天在哪間健身房`);
     if (fix.length) parts.push(`更新 ${fix.length} 組的槓片重量`);
     if (del.length) parts.push(`刪除 ${del.length} 組紀錄`);
     if (load.length) parts.push(`設定 ${load.length} 個動作的掛片方式`);
@@ -3703,6 +3761,12 @@ async function importData(data) {
       S.today.exIds = sw(S.today.exIds); S.templates.forEach(t => { t.exIds = sw(t.exIds); });
       S.custom = S.custom.filter(x => x.id !== a);
     }
+    for (const [d, g] of gymSet) { S.gym[d] = g; if (!S.settings.gyms.includes(g)) S.settings.gyms.push(g); }
+    if (delEx.length) {
+      const ds = new Set(delEx), keep = arr => arr.filter(x => !ds.has(x));
+      S.custom = S.custom.filter(x => !ds.has(x.id)); S.today.exIds = keep(S.today.exIds); S.templates.forEach(t => { t.exIds = keep(t.exIds); });
+    }
+    for (const k in S.alias) { const m = remap.find(([a]) => a === S.alias[k]); if (m) S.alias[k] = m[1]; else if (delEx.includes(S.alias[k])) delete S.alias[k]; }
     // 保留自己的名字，但借用動作庫的圖片和肌群
     for (const [a, patch] of relink) { const c = S.custom.find(x => x.id === a); if (c) Object.assign(c, patch); }
     const byId = new Map(S.logs.map(l => [l.id, l]));
@@ -3711,7 +3775,7 @@ async function importData(data) {
     refreshEx();
     for (const [id, v] of load) if (ex(id)) S.load[id] = v;
     save(); for (const k in draft) delete draft[k];
-    showTab('train'); toast(nl.length ? `已加入 ${nl.length} 組紀錄` : fix.length || del.length ? '紀錄已更新' : '動作對應完成'); return;
+    showTab('train'); toast(nl.length ? `已加入 ${nl.length} 組紀錄` : fix.length || del.length ? '紀錄已更新' : remap.length || relink.length || delEx.length ? '動作整理完成' : '健身房已標記'); return;
   }
   const np = Array.isArray(data.photos) ? data.photos.length : 0;
   if (!await ask(`匯入的備份有 ${data.logs.length} 組紀錄${np ? `、${np} 張照片` : ''}。\n匯入會覆蓋目前的資料（${S.logs.length} 組），確定？`)) return;
