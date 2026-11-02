@@ -359,7 +359,7 @@
     return api;
   }
 
-  window.Panther = { create, RIG };
+  window.Panther = { create, RIG, load: loadImg };
 })();
 
 // ---------- 場景控制：把即時動畫和影片片段接起來 ----------
@@ -455,7 +455,8 @@
       async lieDown() {
         job++; eng.onLoop = null;
         if (reduce()) return eng.play('rest', {dy: REST_IN.dy, t0: REST_IN.t0});
-        let m; try { m = await loadClip('lie'); } catch (e) { return eng.play('rest', {dy: REST_IN.dy, t0: REST_IN.t0}); }
+        // 影片播完要接趴姿：趴姿的圖要先載好，不然接手時底下還是坐姿，會閃一下
+        let m; try { [m] = await Promise.all([loadClip('lie'), P.load(P.RIG.rest.img)]); } catch (e) { return eng.play('rest', {dy: REST_IN.dy, t0: REST_IN.t0}); }
         if (dead) return;
         drawFrame(m, 0, 1); glc.style.visibility = 'hidden';
         // 影片跟原圖的細節畫法不同，結尾讓最後一格在趴姿動畫上 0.8 秒淡出
@@ -471,7 +472,7 @@
       async standUp() {
         job++; eng.onLoop = null;
         if (reduce()) return eng.play('idle');
-        let m; try { m = await loadClip('lie'); } catch (e) { return eng.play('idle'); }
+        let m; try { [m] = await Promise.all([loadClip('lie'), P.load(P.RIG.idle.img)]); } catch (e) { return eng.play('idle'); }
         if (dead) return;
         await clip(m, {reverse: true, fadeIn: 0.4, fadeOut: 0.4,
           near: () => { eng.play('idle'); eng.seek = 0; },

@@ -617,7 +617,7 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 <input type="file" id="import-file" accept="application/json,.json" hidden>
 <div id="toast"></div>
 
-<script src="mascot/mascot.js?v=4"></script>
+<script src="mascot/mascot.js?v=5"></script>
 <script>
 'use strict';
 
@@ -2539,11 +2539,14 @@ const qtUnit = s => /lb|磅/i.test(s || '') ? 'lb' : /kg|公斤/i.test(s || '') 
 // 一行：動作說法 + 重量（或掛的槓片）+ 次數／組數 + 感受，順序隨意
 function qtParse(line) {
   let t = line.replace(/[×xX＊*]/g, 'x').replace(/，/g, ',').replace(/＋/g, '+').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 65248));
-  let w = null, u = '', reps = null, sets = null, pl = null, feelAll = 'j', feelLast = '';
+  let w = null, u = '', reps = null, sets = null, pl = null, side = 0, feelAll = 'j', feelLast = '';
+  // 掛片：「每邊／兩邊各／兩側」= 兩邊都掛（×2）；「單邊／只掛一邊」= 只有一邊。這些字後面的數字當槓片
+  t = t.replace(/兩邊各|每邊各|一邊各|兩側各|各掛|每邊|兩邊|兩側|雙邊|左右各/g, () => { side = 2; return ' 掛 '; });
+  t = t.replace(/只掛一邊|只有一邊|單邊|單側/g, () => { side = side || 1; return ' 掛 '; });
   t = t.replace(/最後一?組?\s*(吃力|很重|好重|很累|力竭|困難)/, () => { feelLast = 'h'; return ' '; });
   t = t.replace(/吃力|很重|好重|很累|力竭|困難/, () => { feelAll = 'h'; return ' '; });
   t = t.replace(/很輕鬆|輕鬆|很輕/, () => { feelAll = 'e'; return ' '; });
-  t = t.replace(/掛\s*([\d.]+(?:\s*[+、,和跟與]\s*[\d.]+)*)\s*(kg|公斤|lb|磅)?\s*(?:的)?(?:槓片|片)?/i,
+  t = t.replace(/(?:掛\s*)+(?:各\s*)?([\d.]+(?:\s*[+、,和跟與]\s*[\d.]+)*)\s*(kg|公斤|lb|磅)?\s*(?:的)?(?:槓片|片)?/i,
     (_, a, b) => { pl = a.split(/[+、,和跟與]/).map(Number).filter(x => x > 0); u = qtUnit(b) || u; return ' '; });
   t = t.replace(/([\d.]+)\s*(kg|公斤|lb|磅)/i, (m, a, b) => { w = +a; u = qtUnit(b) || u; return ' '; });
   // 60x8x3 = 重量×次數×組數；60x8 = 重量×次數；前面已經有重量時 12x3 = 次數×組數
@@ -2561,23 +2564,25 @@ function qtParse(line) {
   if (reps && reps.length === 1 && sets > 1) reps = Array(sets).fill(reps[0]);
   const phrase = t.replace(/[,.。:：;；\-–~()（）\[\]「」]/g, ' ').replace(/\s+/g, ' ').trim();
   const cands = qtMatch(phrase);
-  return {raw: line.trim(), phrase, w, u, pl, reps: (reps || []).filter(r => r > 0), feelAll, feelLast, cands, id: cands[0] ? cands[0].id : null};
+  return {raw: line.trim(), phrase, w, u, pl, side, reps: (reps || []).filter(r => r > 0), feelAll, feelLast, cands, id: cands[0] ? cands[0].id : null};
 }
 // 依選定的動作算出實際要記的重量（掛槓片的機器用它的設定算總重；沒寫重量就沿用那天之前最近一次）
 function qtResolve(it) {
   const e = it.id && ex(it.id); if (!e) return {err: '找不到這個動作，點「從動作庫選」'};
   if (!it.reps.length) return {err: '找不到次數，例如「8下」「60x8」「5,5,4」'};
   const u = it.u || unitOf(it.id), L = loadOf(it.id);
-  let w = it.w, pl = null, note = '';
+  let w = it.w, pl = null, sd = 0, base = 0, note = '';
   if (it.pl) {
+    // 文字有寫兩邊／單邊就照文字；沒寫就照這個動作的掛片設定；都沒有就把槓片加總
     const sum = it.pl.reduce((a, b) => a + b, 0);
-    if (L) { pl = it.pl; w = toU(L.base || 0, u) + sum * L.sd; } else { w = sum; note = '（槓片加總）'; }
+    sd = it.side || (L ? L.sd : 0); base = L ? toU(L.base || 0, u) : 0;
+    if (sd) { pl = it.pl; w = base + sum * sd; } else { w = sum; note = '（槓片加總）'; }
   }
   if (w === null) {
     if (e.equip === '徒手') w = 0;
     else { const ls = lastSession(it.id, detailCtx.date); if (!ls) return {err: '沒寫重量，也沒有之前的紀錄可以沿用'}; w = +num(toU(ls.sets[0].w, uOf(ls.sets[0]))); note = '（沿用上次的重量）'; }
   }
-  return {u, w, pl, sd: L ? L.sd : 0, note};
+  return {u, w, pl, sd, base, note};
 }
 function qtHTML() {
   // 點日期後先選補記方式：打字，或從動作庫挑動作再逐組輸入
@@ -2592,7 +2597,8 @@ function qtHTML() {
     const others = it.cands.filter(c => c.id !== it.id).slice(0, 2);
     return `<div class="qt-row">${e ? thumbHTML(e, 'noop') : '<span class="thumb nob"></span>'}<div style="flex:1;min-width:0">
       <b>${e ? esc(e.name) : '？'}</b>
-      ${r.err ? `<span class="err">${r.err}</span>` : `<span class="v">${num(r.w)} ${r.u}${r.pl ? `（掛 ${r.pl.map(num).join('+')}）` : ''} × ${it.reps.join(', ')}${feel}${r.note}</span>`}
+      ${r.err ? `<span class="err">${r.err}</span>` : `<span class="v">${num(r.w)} ${r.u} × ${it.reps.join(', ')}${feel}${r.note}</span>
+        ${r.pl ? `<span class="raw">${r.sd === 2 ? '每邊' : '單邊'} ${r.pl.map(num).join('+')}${r.sd === 2 ? ' × 2 邊' : ''}${r.base ? ` ＋ 槓子／機器 ${num(r.base)}` : ''} ＝ ${num(r.w)} ${r.u}</span>` : ''}`}
       <span class="raw">你寫的：${esc(it.raw)}</span>
       <div class="qt-cand">${others.map(c => `<button data-act="qtPick" data-i="${i}" data-id="${esc(c.id)}">${esc(ex(c.id).name)}？</button>`).join('')}
         <button data-act="qtLib" data-i="${i}">從動作庫選…</button></div></div></div>`;
