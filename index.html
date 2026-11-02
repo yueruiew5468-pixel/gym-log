@@ -368,12 +368,27 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 .cal button.today.on{color:var(--acc-ink)}
 .cal button:disabled{opacity:.25}
 .r90{transform:rotate(-90deg)}
-.day-add{display:flex;align-items:center;gap:8px;margin-top:10px}
-.day-add input{flex:1;min-width:0;height:46px;border-radius:12px;border:1px solid var(--line2);background:var(--bg);text-align:center;font:700 17px var(--fd);outline:none}
-.day-add .btn{flex:0 0 56px;min-height:46px;padding:0}
+.day-in{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+/* 打字補記 */
+.qt{padding:16px}
+.qt-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px}
+.qt-h span{font-size:12px;color:var(--muted)}
+.qt textarea{width:100%;min-height:96px;resize:vertical;border-radius:14px;border:1px solid var(--line2);background:var(--bg);color:var(--text);
+  padding:12px;font:15px/1.6 var(--fb, inherit);outline:none}
+.qt textarea::placeholder{color:var(--dim)}
+.qt-row{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+.qt-row:first-child{border-top:0}
+.qt-row .thumb{flex:none}
+.qt-row b{display:block}
+.qt-row .v{display:block;font-size:14px;margin-top:2px}
+.qt-row .raw{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.qt-row .err{color:var(--hard);font-size:13px;margin-top:2px;display:block}
+.qt-cand{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.qt-cand button{font-size:13px;padding:6px 10px;border-radius:99px;border:1px solid var(--line2);color:var(--muted)}
+.qt-cand button.on{border-color:var(--acc);color:var(--acc)}
 
 /* ---------- 對話框 ---------- */
-#dlg{z-index:50}
+#dlg{z-index:160}
 .dlg{position:absolute;left:16px;right:16px;top:38%;transform:translateY(-50%);max-width:420px;margin:0 auto;background:var(--card);
   border:1px solid var(--line2);border-radius:26px;padding:24px 18px 18px;animation:fade .2s ease;box-shadow:0 20px 60px rgba(0,0,0,.6)}
 .dlg p{margin:0 0 18px;font-size:17px;line-height:1.55;white-space:pre-line}
@@ -1872,6 +1887,7 @@ function defaults() {
     notes: {},       // 每個動作的備註
     ranges: {},      // 每個動作的目標次數 {min, max}
     load: {},        // 掛槓片的動作 {sd: 2 兩邊都掛 | 1 只有一邊, base: 槓子或機器本身重量(公斤)}
+    alias: {},       // 打字補記時自己的說法 → 動作 id（選過一次就記住）
     body: [],        // 身體數據 {date, weight(公斤), fat, chest, waist, hip, arm, thigh, calf}
     templates: [
       t('推', ['槓鈴臥推','上斜啞鈴臥推','器械肩推','啞鈴側平舉','繩索下壓','過頭繩索臂屈伸']),
@@ -1896,6 +1912,7 @@ function normalize(s) {
     notes: s.notes || {},
     ranges: s.ranges || {},
     load: s.load || {},
+    alias: s.alias || {},
     body: Array.isArray(s.body) ? s.body : [],
     templates: Array.isArray(s.templates) ? s.templates : d.templates,
     settings: {...d.settings, ...(s.settings || {})},
@@ -1939,8 +1956,8 @@ const ex = id => EXMAP.get(id);
 const unitOf = id => S.units[id] || S.settings.unit;
 function usage() { const m = {}; for (const l of S.logs) m[l.exId] = (m[l.exId] || 0) + 1; return m; }
 const todaySets = id => { const t = dstr(); return S.logs.filter(l => l.exId === id && l.date === t).sort((a, b) => a.ts - b.ts); };
-function lastSession(id) {
-  const t = dstr(); let best = null;
+function lastSession(id, t = dstr()) {
+  let best = null;
   for (const l of S.logs) if (l.exId === id && l.date < t && (!best || l.date > best)) best = l.date;
   if (!best) return null;
   return {date: best, sets: S.logs.filter(l => l.exId === id && l.date === best).sort((a, b) => a.ts - b.ts)};
@@ -1991,11 +2008,28 @@ function getDraft(id) {
   return draft[id];
 }
 // 總重 = 槓子/機器本身 + 槓片 × 掛幾邊（用輸入單位）
-function plTotal(id) {
-  const L = loadOf(id), d = draft[id], u = unitOf(id);
+function plTotal(id, d = draft[id]) {
+  const L = loadOf(id), u = unitOf(id);
   return toU(L.base || 0, u) + plSum(d.pl) * L.sd;
 }
-function syncPl(id) { const d = draft[id]; if (!d.pl) d.pl = []; d.w = num(plTotal(id)); }
+function syncPl(id, d = draft[id]) { if (!d.pl) d.pl = []; d.w = num(plTotal(id, d)); }
+// 月曆補記用自己的草稿（跟今天的訓練分開）：預填那天的最後一組，沒有就用那天以前最近一次
+let bdraft = {};
+function dayDraft(id) {
+  const date = detailCtx.date, k = date + '|' + id;
+  if (!bdraft[k]) {
+    const u = unitOf(id), same = dayLogs(date).filter(l => l.exId === id), ls = lastSession(id, date);
+    const ref = same.length ? same[same.length - 1] : ls ? ls.sets[0] : null;
+    const d = bdraft[k] = {w: ref ? num(toU(ref.w, u)) : '', r: ref ? String(ref.r) : '', feel: 'j',
+      pl: ref && ref.pl && uOf(ref) === u ? [...ref.pl] : []};
+    if (loadOf(id)) syncPl(id, d);
+  }
+  return bdraft[k];
+}
+// 按鈕在補記面板裡就用補記的草稿、重畫面板；否則是今天的訓練
+const inDay = el => !!(el && el.closest && el.closest('#detail'));
+const draftOf = (id, el) => inDay(el) ? dayDraft(id) : getDraft(id);
+const redraw = el => inDay(el) ? renderDetail() : renderTrain();
 
 /* ================= 訓練頁 ================= */
 function renderTrain() {
@@ -2104,8 +2138,8 @@ function plateTip(id) {
   return tipHTML('plate', '這台是掛槓片的嗎？改成點槓片輸入，會自動算總重、保留每邊的組合。', `<button data-act="plateTipGo" data-id="${esc(id)}">設定</button>`);
 }
 // 點槓片加到這邊，點上面已掛的那片就拿掉
-function plPickHTML(id) {
-  const L = loadOf(id), d = getDraft(id), u = unitOf(id), eid = esc(id);
+function plPickHTML(id, d = getDraft(id)) {
+  const L = loadOf(id), u = unitOf(id), eid = esc(id);
   const ps = myPlates(u).filter(x => x.on).map(x => x.p), base = toU(L.base || 0, u);
   const cur = d.pl.length
     ? d.pl.map((p, i) => `<button data-act="plRm" data-id="${eid}" data-i="${i}" style="border-color:${plCol(ps, p)}" aria-label="拿掉 ${num(p)}">${num(p)}<i>×</i></button>`).join('<span class="plus">+</span>')
@@ -2121,11 +2155,11 @@ function plPickHTML(id) {
     <div class="pl-add">${ps.map(p => `<button data-act="plAdd" data-id="${eid}" data-p="${p}">＋${num(p)}</button>`).join('')}</div>
     <button class="pl-edit" data-act="plate" data-id="${eid}">健身房的槓片不一樣？編輯槓片種類 ›</button></div>`;
 }
-function updateConv(id) {
-  const el = document.querySelector(`[data-conv="${CSS.escape(id)}"]`); if (!el) return;
-  const u = unitOf(id), v = parseFloat(getDraft(id).w);
+function updateConv(id, src) {
+  const day = inDay(src), el = document.querySelector(`${day ? '#detail' : '#v-train'} [data-conv="${CSS.escape(id)}"]`); if (!el) return;
+  const u = unitOf(id), v = parseFloat(draftOf(id, src).w);
   el.textContent = v > 0 ? '≈ ' + wAlt(fromU(v, u), u) : '';
-  updateWarm(id);
+  if (!day) updateWarm(id);
 }
 
 /* ================= 本週、加重提醒、暖身、備註 ================= */
@@ -2452,12 +2486,11 @@ function daySummaryHTML(date, edit) {
       ${s.length ? `<ol class="sets" style="margin:10px 0 0">${s.map((x, i) => `<li><span class="n">${i + 1}</span>
         <span class="v">${wTxt(x.w, uOf(x))} × ${x.r}<small>${wAlt(x.w, uOf(x))}</small>${plHTML(x)}${memoHTML(x)}</span><span class="feel ${x.feel}">${FEELS[x.feel]}</span>
         ${edit ? `<button class="x" data-act="dayDel" data-id="${x.id}" aria-label="刪除">${svgX}</button>` : ''}</li>`).join('')}</ol>` : ''}
-      ${edit ? `<div class="day-add"><input type="number" inputmode="decimal" step="any" data-dw="1" placeholder="重量 ${unitOf(id)}"><span class="muted">×</span>
-        <input type="number" inputmode="numeric" data-dr="1" placeholder="次數"><button class="btn primary" data-act="dayAdd" data-id="${esc(id)}" aria-label="補記一組">＋</button></div>` : ''}
+      ${edit ? dayInputHTML(id, date, s.length) : ''}
     </div>`;
   }).join('');
   if (!ids.length) h += '<div class="card"><div class="empty">這天沒有訓練紀錄</div></div>';
-  if (edit) h += '<button class="btn mt" data-act="dayPick">＋ 補記其他動作</button>';
+
   return h;
 }
 function renderSummary() {
@@ -2465,9 +2498,139 @@ function renderSummary() {
   $('#dt-body').innerHTML = `<h2 class="dt" style="font-size:40px">Nice work<span style="color:var(--acc)">.</span></h2>
     <div class="dsub">${fmtDate(dstr())} 的訓練總結</div>${daySummaryHTML(dstr(), false)}`;
 }
+/* ================= 打字補記：一行一個動作，App 自己解析，動作用自己的說法比對 ================= */
+let QT = {open: false, text: '', items: null};
+// 器材、部位、常見說法 → 動作名稱裡會出現的字
+const QT_EQUIP = [[/史密斯/, '史密斯'], [/槓鈴|長槓|大槓/, '槓鈴'], [/啞鈴/, '啞鈴'], [/繩|滑輪|拉索/, '繩索'], [/壺鈴/, '壺鈴'],
+  [/彈力帶/, '彈力帶'], [/徒手|自重|空手/, '徒手'], [/機|器械/, '器械']];
+const QT_PART = [[/胸/, '胸'], [/背|闊/, '背'], [/肩/, '肩'], [/二頭|手臂前/, '二頭'], [/三頭|手臂後|掰掰/, '三頭'],
+  [/前臂|手腕|握力/, '前臂'], [/腹|核心|肚/, '核心'], [/腿|臀|屁股|蹲/, '腿']];
+const QT_WORDS = [[/躺|臥/, ['臥推', '仰臥']], [/斜/, ['上斜']], [/坐/, ['坐姿']], [/站/, ['站姿']], [/夾/, ['夾胸', '夾']],
+  [/飛鳥|張開/, ['飛鳥']], [/往下拉|拉下|下拉/, ['下拉']], [/划|往後拉|拉向/, ['划船']], [/引體|拉單槓/, ['引體向上']],
+  [/蹲/, ['深蹲', '蹲']], [/硬舉/, ['硬舉']], [/彎舉|捲手|彎手/, ['彎舉']], [/下壓|往下壓|壓下/, ['下壓']],
+  [/側平舉|側舉|往旁邊舉/, ['側平舉']], [/前平舉|往前舉/, ['前平舉']], [/聳肩/, ['聳肩']], [/推/, ['推']], [/蹬|推腿/, ['腿推']],
+  [/踢/, ['踢']], [/伸腿|腿伸/, ['腿伸屈']], [/勾腿|腿彎|腿往後/, ['腿彎舉']], [/提踵|墊腳|小腿/, ['提踵']],
+  [/臀推|頂髖|挺髖/, ['臀推']], [/撐體|雙槓/, ['撐體']], [/臉拉/, ['臉拉']], [/反向飛鳥|後三角/, ['反向飛鳥']],
+  [/外展|往外開/, ['外展']], [/內收|往內夾|夾腿/, ['內收']], [/捲腹|仰臥起坐/, ['捲腹']], [/舉腿/, ['舉腿']], [/平板/, ['平板']]];
+const bigrams = s => { const o = []; for (let i = 0; i < s.length - 1; i++) o.push(s.slice(i, i + 2)); return o; };
+function qtMatch(phrase) {
+  const p = phrase.replace(/\s+/g, ''); if (!p) return [];
+  const al = S.alias[p], pb = bigrams(p);
+  const eq = (QT_EQUIP.find(([re]) => re.test(p)) || [])[1], pt = (QT_PART.find(([re]) => re.test(p)) || [])[1];
+  const words = QT_WORDS.filter(([re]) => re.test(p)).flatMap(([, w]) => w), used = usage();
+  return EXS.map(e => {
+    const n = e.name.replace(/\s+/g, ''), nb = bigrams(n);
+    let s = e.id === al ? 1000 : 0;
+    if (n === p) s += 500; else if (p.length >= 2 && n.includes(p)) s += 200 + p.length * 5; else if (n.length >= 2 && p.includes(n)) s += 180 + n.length * 5;
+    // 字照順序出現在名稱裡（上斜…臥推 → 上斜槓鈴臥推）
+    else if (p.length >= 2) { let k = 0; for (const ch of n) if (ch === p[k]) k++; if (k === p.length) s += 200 + p.length * 5; }
+    // 沒提到史密斯時，一般說法通常指自由重量
+    if (eq !== '史密斯' && e.equip === '史密斯') s -= 25;
+    if (pb.length && nb.length) s += 240 * pb.filter(b => nb.includes(b)).length / (pb.length + nb.length);
+    for (const w of words) if (n.includes(w)) s += 30;
+    if (eq) s += e.equip === eq ? 35 : -20;
+    if (pt) s += e.part === pt ? 25 : -15;
+    // 同分時：以前記過的優先，其次名稱短、排在動作庫前面的（比較常見）
+    s += Math.min(used[e.id] || 0, 20) - n.length * 0.5 - (e.order || 0) * 0.001;
+    return {id: e.id, s};
+  }).filter(x => x.s > 20).sort((a, b) => b.s - a.s).slice(0, 3);
+}
+const qtUnit = s => /lb|磅/i.test(s || '') ? 'lb' : /kg|公斤/i.test(s || '') ? 'kg' : '';
+// 一行：動作說法 + 重量（或掛的槓片）+ 次數／組數 + 感受，順序隨意
+function qtParse(line) {
+  let t = line.replace(/[×xX＊*]/g, 'x').replace(/，/g, ',').replace(/＋/g, '+').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 65248));
+  let w = null, u = '', reps = null, sets = null, pl = null, feelAll = 'j', feelLast = '';
+  t = t.replace(/最後一?組?\s*(吃力|很重|好重|很累|力竭|困難)/, () => { feelLast = 'h'; return ' '; });
+  t = t.replace(/吃力|很重|好重|很累|力竭|困難/, () => { feelAll = 'h'; return ' '; });
+  t = t.replace(/很輕鬆|輕鬆|很輕/, () => { feelAll = 'e'; return ' '; });
+  t = t.replace(/掛\s*([\d.]+(?:\s*[+、,和跟與]\s*[\d.]+)*)\s*(kg|公斤|lb|磅)?\s*(?:的)?(?:槓片|片)?/i,
+    (_, a, b) => { pl = a.split(/[+、,和跟與]/).map(Number).filter(x => x > 0); u = qtUnit(b) || u; return ' '; });
+  t = t.replace(/([\d.]+)\s*(kg|公斤|lb|磅)/i, (m, a, b) => { w = +a; u = qtUnit(b) || u; return ' '; });
+  // 60x8x3 = 重量×次數×組數；60x8 = 重量×次數；前面已經有重量時 12x3 = 次數×組數
+  t = t.replace(/([\d.]+)\s*x\s*(\d+)\s*x\s*(\d+)/, (_, a, b, c) => { if (w === null) w = +a; reps = [+b]; sets = +c; return ' '; });
+  t = t.replace(/([\d.]+)\s*x\s*(\d+)/, (m, a, b, off, all) => {
+    if (reps) return m;
+    if (w !== null || pl || /\d/.test(all.slice(0, off))) { reps = [+a]; sets = +b; } else { w = +a; reps = [+b]; }
+    return ' ';
+  });
+  t = t.replace(/(\d+)\s*組/, (_, a) => { sets = +a; return ' '; });
+  t = t.replace(/(\d+)\s*(?:下|次|reps?)/i, (m, a) => { if (reps) return m; reps = [+a]; return ' '; });
+  t = t.replace(/\d+(?:\s*[,、/]\s*\d+)+/, m => { if (reps) return m; reps = m.split(/[,、/]/).map(Number); return ' '; });
+  // 沒寫單位的數字：先當重量，再當次數
+  t = t.replace(/[\d.]+/g, m => { if (w === null && !pl) w = +m; else if (!reps) reps = [+m]; return ' '; });
+  if (reps && reps.length === 1 && sets > 1) reps = Array(sets).fill(reps[0]);
+  const phrase = t.replace(/[,.。:：;；\-–~()（）\[\]「」]/g, ' ').replace(/\s+/g, ' ').trim();
+  const cands = qtMatch(phrase);
+  return {raw: line.trim(), phrase, w, u, pl, reps: (reps || []).filter(r => r > 0), feelAll, feelLast, cands, id: cands[0] ? cands[0].id : null};
+}
+// 依選定的動作算出實際要記的重量（掛槓片的機器用它的設定算總重；沒寫重量就沿用那天之前最近一次）
+function qtResolve(it) {
+  const e = it.id && ex(it.id); if (!e) return {err: '找不到這個動作，點「從動作庫選」'};
+  if (!it.reps.length) return {err: '找不到次數，例如「8下」「60x8」「5,5,4」'};
+  const u = it.u || unitOf(it.id), L = loadOf(it.id);
+  let w = it.w, pl = null, note = '';
+  if (it.pl) {
+    const sum = it.pl.reduce((a, b) => a + b, 0);
+    if (L) { pl = it.pl; w = toU(L.base || 0, u) + sum * L.sd; } else { w = sum; note = '（槓片加總）'; }
+  }
+  if (w === null) {
+    if (e.equip === '徒手') w = 0;
+    else { const ls = lastSession(it.id, detailCtx.date); if (!ls) return {err: '沒寫重量，也沒有之前的紀錄可以沿用'}; w = +num(toU(ls.sets[0].w, uOf(ls.sets[0]))); note = '（沿用上次的重量）'; }
+  }
+  return {u, w, pl, sd: L ? L.sd : 0, note};
+}
+function qtHTML() {
+  // 點日期後先選補記方式：打字，或從動作庫挑動作再逐組輸入
+  const menu = `<div class="row" style="margin-bottom:12px"><button class="btn ${QT.open ? 'primary' : ''}" data-act="qtOpen">文字補記</button>
+    <button class="btn" data-act="dayPick">從動作庫選擇</button></div>`;
+  if (!QT.open) return menu;
+  const items = QT.items || [];
+  const ok = items.map(qtResolve).filter((r, i) => !r.err).length;
+  const rows = items.map((it, i) => {
+    const r = qtResolve(it), e = it.id && ex(it.id);
+    const feel = it.feelAll !== 'j' ? `，${FEELS[it.feelAll]}` : it.feelLast ? '，最後一組吃力' : '';
+    const others = it.cands.filter(c => c.id !== it.id).slice(0, 2);
+    return `<div class="qt-row">${e ? thumbHTML(e, 'noop') : '<span class="thumb nob"></span>'}<div style="flex:1;min-width:0">
+      <b>${e ? esc(e.name) : '？'}</b>
+      ${r.err ? `<span class="err">${r.err}</span>` : `<span class="v">${num(r.w)} ${r.u}${r.pl ? `（掛 ${r.pl.map(num).join('+')}）` : ''} × ${it.reps.join(', ')}${feel}${r.note}</span>`}
+      <span class="raw">你寫的：${esc(it.raw)}</span>
+      <div class="qt-cand">${others.map(c => `<button data-act="qtPick" data-i="${i}" data-id="${esc(c.id)}">${esc(ex(c.id).name)}？</button>`).join('')}
+        <button data-act="qtLib" data-i="${i}">從動作庫選…</button></div></div></div>`;
+  }).join('');
+  return menu + `<div class="card qt"><div class="qt-h"><b>打字補記</b><span>一行一個動作</span></div>
+    <textarea id="qt-in" placeholder="臥推 60kg 8下 3組&#10;坐著往前推的機器 掛20+10 10下 4組 最後吃力&#10;深蹲 80 5,5,4">${esc(QT.text)}</textarea>
+    <button class="btn mt" data-act="qtParse">輸出</button>
+    ${items.length ? `<div class="mt">${rows}</div>
+      ${ok ? `<button class="btn primary big mt" data-act="qtAdd">加入 ${items.reduce((a, it) => a + (qtResolve(it).err ? 0 : it.reps.length), 0)} 組</button>` : ''}` : ''}</div>`;
+}
+// 補記一組的輸入區：跟訓練頁同一套（槓片、單位、加減、感受）
+function dayInputHTML(id, date, n) {
+  const e = ex(id), u = unitOf(id), d = dayDraft(id), L = loadOf(id), st = stepOf(e, u), eid = esc(id), ls = lastSession(id, date);
+  const v = parseFloat(d.w);
+  return `<div class="day-in">
+    ${ls ? `<div class="small muted" style="margin-bottom:10px">那天之前最近一次 ${fmtDate(ls.date)}：${setsText(ls.sets)}</div>` : ''}
+    ${L ? plPickHTML(id, d) : ''}
+    <div class="row">
+      <div><div class="lbl"><span>${L ? '總重' : '重量'}</span><span class="unit">
+          <button class="${u === 'kg' ? 'on' : ''}" data-act="unit" data-id="${eid}" data-v="kg">kg</button>
+          <button class="${u === 'lb' ? 'on' : ''}" data-act="unit" data-id="${eid}" data-v="lb">lb</button></span></div>
+        ${L ? `<div class="step pl-tot"><b>${esc(d.w)}</b></div>` : `<div class="step">
+        <button data-act="stepW" data-id="${eid}" data-d="${-st}">−</button>
+        <input type="number" inputmode="decimal" step="any" min="0" data-draft="w" data-id="${eid}" value="${esc(d.w)}" placeholder="0">
+        <button data-act="stepW" data-id="${eid}" data-d="${st}">＋</button></div>`}
+        <div class="conv" data-conv="${eid}">${v > 0 ? '≈ ' + wAlt(fromU(v, u), u) : ''}</div></div>
+      <div><div class="lbl"><span>次數</span></div><div class="step">
+        <button data-act="stepR" data-id="${eid}" data-d="-1">−</button>
+        <input type="number" inputmode="numeric" step="1" min="0" data-draft="r" data-id="${eid}" value="${esc(d.r)}" placeholder="0">
+        <button data-act="stepR" data-id="${eid}" data-d="1">＋</button></div></div>
+    </div>
+    <div class="seg">${Object.entries(FEELS).map(([k, x]) =>
+      `<button class="${d.feel === k ? 'on' : ''}" data-act="feel" data-id="${eid}" data-v="${k}">${x}</button>`).join('')}</div>
+    <button class="btn primary big" data-act="dayAdd" data-id="${eid}">補記第 ${n + 1} 組</button></div>`;
+}
 function renderDay(c) {
   $('#detail .hd b').textContent = fmtDate(c.date);
-  $('#dt-body').innerHTML = (c.from ? '<button class="wk-more" data-act="history" style="margin-bottom:14px">‹ 回到月曆</button>' : '') + daySummaryHTML(c.date, true);
+  $('#dt-body').innerHTML = (c.from ? '<button class="wk-more" data-act="history" style="margin-bottom:14px">‹ 回到月曆</button>' : '') + qtHTML() + daySummaryHTML(c.date, true);
 }
 function renderHistory() {
   if (!histM) { const n = new Date(); histM = new Date(n.getFullYear(), n.getMonth(), 1); }
@@ -3050,16 +3213,47 @@ const H = {
   summary: () => openPanel({kind: 'summary'}),
   history: () => openPanel({kind: 'history'}),
   histNav: (_, b) => { histM = new Date(histM.getFullYear(), histM.getMonth() + +b.dataset.d, 1); renderHistory(); },
-  day: d => { const from = !!(detailCtx && detailCtx.kind === 'history'); dayExtra = []; openPanel({kind: 'day', date: d, from}); },
+  day: d => { const from = !!(detailCtx && detailCtx.kind === 'history'); dayExtra = []; bdraft = {}; QT = {open: false, text: '', items: null}; openPanel({kind: 'day', date: d, from}); },
   dayAdd: (id, b) => {
-    const card = b.closest('.card'), u = unitOf(id), date = detailCtx.date;
-    let w = parseFloat(card.querySelector('[data-dw]').value); const r = parseInt(card.querySelector('[data-dr]').value);
+    const d = dayDraft(id), u = unitOf(id), date = detailCtx.date, L = loadOf(id);
+    let w = parseFloat(d.w); const r = parseInt(d.r);
     if (isNaN(w)) { if (ex(id).equip === '徒手') w = 0; else return toast('請輸入重量'); }
     if (!(r > 0)) return toast('請輸入次數');
+    if (L && !d.pl.length && !L.base) return toast('先點要掛的槓片');
     const same = dayLogs(date);
     const ts = date === dstr() ? Date.now() : (same.length ? same[same.length - 1].ts : parseD(date).getTime() + 18 * 36e5) + 6e4;
-    S.logs.push({id: uid(), exId: id, date, w: fromU(Math.max(0, w), u), u, r, feel: 'j', ts});
+    const log = {id: uid(), exId: id, date, w: fromU(Math.max(0, w), u), u, r, feel: d.feel, ts};
+    if (L && d.pl.length) Object.assign(log, {pl: [...d.pl], sd: L.sd});
+    S.logs.push(log);
     save(); renderDetail(); render(); toast('已補記一組');
+  },
+  qtOpen: () => { QT.open = !QT.open; renderDetail(); if (QT.open) setTimeout(() => $('#qt-in') && $('#qt-in').focus(), 50); },
+  qtParse: () => {
+    QT.text = $('#qt-in').value;
+    const lines = QT.text.split('\n').map(x => x.trim()).filter(Boolean);
+    if (!lines.length) return toast('先打上要補記的內容');
+    QT.items = lines.map(qtParse); renderDetail();
+  },
+  qtPick: (id, b) => { QT.items[+b.dataset.i].id = id; renderDetail(); },
+  qtLib: (_, b) => {
+    const it = QT.items[+b.dataset.i];
+    openSheet('pick', `「${it.phrase || it.raw}」是哪個動作？`, [], sel => { if (sel.length) it.id = sel[sel.length - 1]; renderDetail(); });
+  },
+  qtAdd: () => {
+    const date = detailCtx.date; let n = 0;
+    const same = dayLogs(date);
+    let ts = date === dstr() ? Date.now() : (same.length ? same[same.length - 1].ts : parseD(date).getTime() + 18 * 36e5);
+    for (const it of QT.items) {
+      const r = qtResolve(it); if (r.err) continue;
+      it.reps.forEach((rep, k) => {
+        const feel = k === it.reps.length - 1 && it.feelLast ? it.feelLast : it.feelAll;
+        const log = {id: uid(), exId: it.id, date, w: fromU(Math.max(0, r.w), r.u), u: r.u, r: rep, feel, ts: ts += 6e4};
+        if (r.pl) Object.assign(log, {pl: [...r.pl], sd: r.sd});
+        S.logs.push(log); n++;
+      });
+      if (it.phrase) S.alias[it.phrase.replace(/\s+/g, '')] = it.id;
+    }
+    QT = {open: false, text: '', items: null}; save(); renderDetail(); render(); toast(`已補記 ${n} 組`);
   },
   dayDel: async logId => {
     if (!await ask('刪除這一組？')) return;
@@ -3119,9 +3313,9 @@ const H = {
   unit: (id, b) => {
     const from = unitOf(id), to = b.dataset.v;
     if (from === to) return;
-    const d = getDraft(id), v = parseFloat(d.w);
+    const d = draftOf(id, b), v = parseFloat(d.w);
     if (v > 0) { const x = toU(fromU(v, from), to); d.w = to === 'lb' ? num(Math.round(x / 2.5) * 2.5) : num(Math.round(x * 2) / 2); }
-    S.units[id] = to; if (loadOf(id)) { d.pl = []; syncPl(id); } save(); renderTrain();
+    S.units[id] = to; if (loadOf(id)) { d.pl = []; syncPl(id, d); } save(); redraw(b);
   },
   loadMode: (id, b) => {
     const v = +b.dataset.v, e = ex(id), u = unitOf(id);
@@ -3133,20 +3327,20 @@ const H = {
     save(); open.add('n:' + id); renderTrain();
   },
   plateTipGo: id => { tipDone('plate'); open.add('n:' + id); renderTrain(); const c = document.querySelector(`[data-key="${CSS.escape('n:' + id)}"]`); if (c) c.scrollIntoView({block: 'center', behavior: 'smooth'}); },
-  plAdd: (id, b) => { const d = getDraft(id); d.pl.push(+b.dataset.p); d.pl.sort((x, y) => y - x); syncPl(id); renderTrain(); },
-  plRm: (id, b) => { const d = getDraft(id); d.pl.splice(+b.dataset.i, 1); syncPl(id); renderTrain(); },
-  plClr: id => { getDraft(id).pl = []; syncPl(id); renderTrain(); },
+  plAdd: (id, b) => { const d = draftOf(id, b); d.pl.push(+b.dataset.p); d.pl.sort((x, y) => y - x); syncPl(id, d); redraw(b); },
+  plRm: (id, b) => { const d = draftOf(id, b); d.pl.splice(+b.dataset.i, 1); syncPl(id, d); redraw(b); },
+  plClr: (id, b) => { const d = draftOf(id, b); d.pl = []; syncPl(id, d); redraw(b); },
   stepW: (id, b) => {
-    const d = getDraft(id); d.w = num(Math.max(0, (parseFloat(d.w) || 0) + +b.dataset.d));
-    b.parentNode.querySelector('input').value = d.w; updateConv(id);
+    const d = draftOf(id, b); d.w = num(Math.max(0, (parseFloat(d.w) || 0) + +b.dataset.d));
+    b.parentNode.querySelector('input').value = d.w; updateConv(id, b);
   },
   // 上面 updateConv 也會更新暖身建議
   stepR: (id, b) => {
-    const d = getDraft(id); d.r = String(Math.max(0, (parseInt(d.r) || 0) + +b.dataset.d));
+    const d = draftOf(id, b); d.r = String(Math.max(0, (parseInt(d.r) || 0) + +b.dataset.d));
     b.parentNode.querySelector('input').value = d.r;
   },
   feel: (id, b) => {
-    getDraft(id).feel = b.dataset.v;
+    draftOf(id, b).feel = b.dataset.v;
     b.parentNode.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
   },
   addSet: id => {
@@ -3416,7 +3610,8 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('input', e => {
   const t = e.target;
-  if (t.dataset.draft) { getDraft(t.dataset.id)[t.dataset.draft] = t.value; if (t.dataset.draft === 'w') updateConv(t.dataset.id); }
+  if (t.id === 'qt-in') QT.text = t.value;
+  if (t.dataset.draft) { draftOf(t.dataset.id, t)[t.dataset.draft] = t.value; if (t.dataset.draft === 'w') updateConv(t.dataset.id, t); }
   else if (t.dataset.note) { S.notes[t.dataset.note] = t.value; save(); }
   else if (t.dataset.range) {
     const id = t.dataset.id, r = S.ranges[id] = {...(S.ranges[id] || {})};
@@ -3452,55 +3647,68 @@ document.addEventListener('pointerdown', () => audio(), {passive: true});
 $('#import-file').addEventListener('change', async e => {
   const f = e.target.files[0]; e.target.value = '';
   if (!f) return;
-  try {
-    const data = JSON.parse(await f.text());
-    if (!data || !Array.isArray(data.logs) || !(Array.isArray(data.custom) || Array.isArray(data.exercises))) throw new Error('格式不符');
-    // 合併檔：只加進新的動作和紀錄，不動到現有資料
-    if (data.merge) {
-      const haveEx = new Set(S.custom.map(x => x.id)), haveLog = new Set(S.logs.map(x => x.id));
-      const nc = (data.custom || []).filter(x => !haveEx.has(x.id)), nl = data.logs.filter(x => !haveLog.has(x.id));
-      const remap = Object.entries(data.remap || {}).filter(([a, b]) => BUILTIN.some(e => e.id === b) && (haveEx.has(a) || nc.some(x => x.id === a)));
-      const relink = Object.entries(data.relink || {}).filter(([a]) => haveEx.has(a) || nc.some(x => x.id === a));
-      // 修正檔：改既有紀錄的重量/槓片、刪掉紀錄、設定動作的掛片方式
-      const pt = data.patch || {};
-      const fix = Object.entries(pt.logs || {}).filter(([id]) => haveLog.has(id));
-      const del = (pt.del || []).filter(id => haveLog.has(id));
-      const load = Object.entries(pt.load || {}).filter(([id]) => ex(id) || nc.some(x => x.id === id));
-      const parts = [];
-      if (nl.length || nc.length) parts.push(`加入 ${nl.length} 組紀錄、${nc.length} 個動作`);
-      if (remap.length || relink.length) parts.push(`把 ${remap.length} 個動作併入動作庫、${relink.length} 個動作連上動作圖`);
-      if (fix.length) parts.push(`更新 ${fix.length} 組的槓片重量`);
-      if (del.length) parts.push(`刪除 ${del.length} 組紀錄`);
-      if (load.length) parts.push(`設定 ${load.length} 個動作的掛片方式`);
-      if (!parts.length) return note('這個檔案裡沒有新的東西，可能已經匯入過了。');
-      if (!await ask(`要${parts.join('，')}？\n其他現有的紀錄都會保留。`)) return;
-      S.custom.push(...nc); S.logs.push(...nl);
-      // 自訂動作其實就是動作庫裡的動作 → 紀錄、備註、範本都搬過去，再刪掉自訂的那個
-      for (const [a, b] of remap) {
-        S.logs.forEach(l => { if (l.exId === a) l.exId = b; });
-        for (const k of ['notes', 'ranges', 'units', 'load']) if (S[k][a] != null) { if (S[k][b] == null) S[k][b] = S[k][a]; delete S[k][a]; }
-        const sw = arr => [...new Set(arr.map(x => x === a ? b : x))];
-        S.today.exIds = sw(S.today.exIds); S.templates.forEach(t => { t.exIds = sw(t.exIds); });
-        S.custom = S.custom.filter(x => x.id !== a);
-      }
-      // 保留自己的名字，但借用動作庫的圖片和肌群
-      for (const [a, patch] of relink) { const c = S.custom.find(x => x.id === a); if (c) Object.assign(c, patch); }
-      const byId = new Map(S.logs.map(l => [l.id, l]));
-      for (const [id, p] of fix) Object.assign(byId.get(id), p);
-      if (del.length) { const ds = new Set(del); S.logs = S.logs.filter(l => !ds.has(l.id)); }
-      refreshEx();
-      for (const [id, v] of load) if (ex(id)) S.load[id] = v;
-      save(); for (const k in draft) delete draft[k];
-      showTab('train'); toast(nl.length ? `已加入 ${nl.length} 組紀錄` : fix.length || del.length ? '紀錄已更新' : '動作對應完成'); return;
-    }
-    const np = Array.isArray(data.photos) ? data.photos.length : 0;
-    if (!await ask(`匯入的備份有 ${data.logs.length} 組紀錄${np ? `、${np} 張照片` : ''}。\n匯入會覆蓋目前的資料（${S.logs.length} 組），確定？`)) return;
-    const {photos, ...rest} = data;
-    S = normalize(rest); save(); refreshEx(); open.clear(); for (const k in draft) delete draft[k];
-    if (np) { await pTx('readwrite', s => { s.clear(); photos.forEach(p => s.put(p)); }); await loadPhotos(); }
-    showTab('train'); toast('匯入完成');
-  } catch (err) { note('匯入失敗：' + err.message); }
+  try { await importData(JSON.parse(await f.text())); } catch (err) { note('匯入失敗：' + err.message); }
 });
+// 匯入：檔案和「帶入連結」共用
+async function importData(data) {
+  if (!data || !Array.isArray(data.logs) || !(Array.isArray(data.custom) || Array.isArray(data.exercises))) throw new Error('格式不符');
+  // 合併檔：只加進新的動作和紀錄，不動到現有資料
+  if (data.merge) {
+    const haveEx = new Set(S.custom.map(x => x.id)), haveLog = new Set(S.logs.map(x => x.id));
+    const nc = (data.custom || []).filter(x => !haveEx.has(x.id)), nl = data.logs.filter(x => !haveLog.has(x.id));
+    const remap = Object.entries(data.remap || {}).filter(([a, b]) => BUILTIN.some(e => e.id === b) && (haveEx.has(a) || nc.some(x => x.id === a)));
+    const relink = Object.entries(data.relink || {}).filter(([a]) => haveEx.has(a) || nc.some(x => x.id === a));
+    // 修正檔：改既有紀錄的重量/槓片、刪掉紀錄、設定動作的掛片方式
+    const pt = data.patch || {};
+    const fix = Object.entries(pt.logs || {}).filter(([id]) => haveLog.has(id));
+    const del = (pt.del || []).filter(id => haveLog.has(id));
+    const load = Object.entries(pt.load || {}).filter(([id]) => ex(id) || nc.some(x => x.id === id));
+    const parts = [];
+    if (nl.length || nc.length) parts.push(`加入 ${nl.length} 組紀錄${nc.length ? `、${nc.length} 個動作` : ''}`);
+    if (remap.length || relink.length) parts.push(`把 ${remap.length} 個動作併入動作庫、${relink.length} 個動作連上動作圖`);
+    if (fix.length) parts.push(`更新 ${fix.length} 組的槓片重量`);
+    if (del.length) parts.push(`刪除 ${del.length} 組紀錄`);
+    if (load.length) parts.push(`設定 ${load.length} 個動作的掛片方式`);
+    if (!parts.length) return note('這份資料裡沒有新的東西，可能已經加入過了。');
+    if (!await ask(`${data.title ? data.title + '\n' : ''}要${parts.join('，')}？\n其他現有的紀錄都會保留。`)) return;
+    S.custom.push(...nc); S.logs.push(...nl);
+    // 自訂動作其實就是動作庫裡的動作 → 紀錄、備註、範本都搬過去，再刪掉自訂的那個
+    for (const [a, b] of remap) {
+      S.logs.forEach(l => { if (l.exId === a) l.exId = b; });
+      for (const k of ['notes', 'ranges', 'units', 'load']) if (S[k][a] != null) { if (S[k][b] == null) S[k][b] = S[k][a]; delete S[k][a]; }
+      const sw = arr => [...new Set(arr.map(x => x === a ? b : x))];
+      S.today.exIds = sw(S.today.exIds); S.templates.forEach(t => { t.exIds = sw(t.exIds); });
+      S.custom = S.custom.filter(x => x.id !== a);
+    }
+    // 保留自己的名字，但借用動作庫的圖片和肌群
+    for (const [a, patch] of relink) { const c = S.custom.find(x => x.id === a); if (c) Object.assign(c, patch); }
+    const byId = new Map(S.logs.map(l => [l.id, l]));
+    for (const [id, p] of fix) Object.assign(byId.get(id), p);
+    if (del.length) { const ds = new Set(del); S.logs = S.logs.filter(l => !ds.has(l.id)); }
+    refreshEx();
+    for (const [id, v] of load) if (ex(id)) S.load[id] = v;
+    save(); for (const k in draft) delete draft[k];
+    showTab('train'); toast(nl.length ? `已加入 ${nl.length} 組紀錄` : fix.length || del.length ? '紀錄已更新' : '動作對應完成'); return;
+  }
+  const np = Array.isArray(data.photos) ? data.photos.length : 0;
+  if (!await ask(`匯入的備份有 ${data.logs.length} 組紀錄${np ? `、${np} 張照片` : ''}。\n匯入會覆蓋目前的資料（${S.logs.length} 組），確定？`)) return;
+  const {photos, ...rest} = data;
+  S = normalize(rest); save(); refreshEx(); open.clear(); for (const k in draft) delete draft[k];
+  if (np) { await pTx('readwrite', s => { s.clear(); photos.forEach(p => s.put(p)); }); await loadPhotos(); }
+  showTab('train'); toast('匯入完成');
+}
+// 帶入連結：#add=（JSON 壓縮後的 base64url）。內容在 # 後面，不會傳到伺服器；一樣只加入新紀錄，點兩次也不會重複
+async function addFromHash() {
+  const m = location.hash.match(/^#add=([A-Za-z0-9_-]+)$/); if (!m) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  try {
+    const bin = Uint8Array.from(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+    const text = await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+    const data = JSON.parse(text);
+    if (!data || !data.merge) throw new Error('連結格式不符');
+    await importData(data);
+  } catch (err) { note('帶入失敗：' + (err.message || err) + '\n請確認連結完整，或請對方重新產生。'); }
+}
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
@@ -3545,6 +3753,7 @@ if (!S.settings.onboarded) renderWelcome();
 loadPhotos();
 resumeTimer();
 cloudFromHash();
+addFromHash();
 cloudMonthly();
 window.addEventListener('online', () => { if (S.settings.cloud && S.settings.cloud.pending) cloudBackup(false); });
 if (STORE_OK) askPersist();
