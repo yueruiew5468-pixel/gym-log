@@ -2501,31 +2501,39 @@ function renderSummary() {
 /* ================= 打字補記：一行一個動作，App 自己解析，動作用自己的說法比對 ================= */
 let QT = {open: false, text: '', items: null};
 // 器材、部位、常見說法 → 動作名稱裡會出現的字
-const QT_EQUIP = [[/史密斯/, '史密斯'], [/槓鈴|長槓|大槓/, '槓鈴'], [/啞鈴/, '啞鈴'], [/繩|滑輪|拉索/, '繩索'], [/壺鈴/, '壺鈴'],
+const QT_EQUIP = [[/史密斯/, '史密斯'], [/槓片|掛片/, '器械'], [/槓鈴|長槓|大槓/, '槓鈴'], [/啞鈴/, '啞鈴'], [/繩|滑輪|拉索|cable/i, '繩索'], [/壺鈴/, '壺鈴'],
   [/彈力帶/, '彈力帶'], [/徒手|自重|空手/, '徒手'], [/機|器械/, '器械']];
-const QT_PART = [[/胸/, '胸'], [/背|闊/, '背'], [/肩/, '肩'], [/二頭|手臂前/, '二頭'], [/三頭|手臂後|掰掰/, '三頭'],
+const QT_PART = [[/胸|臥推|躺著推/, '胸'], [/背|闊/, '背'], [/肩/, '肩'], [/二頭|手臂前/, '二頭'], [/三頭|手臂後|掰掰/, '三頭'],
   [/前臂|手腕|握力/, '前臂'], [/腹|核心|肚/, '核心'], [/腿|臀|屁股|蹲/, '腿']];
-const QT_WORDS = [[/躺|臥/, ['臥推', '仰臥']], [/斜/, ['上斜']], [/坐/, ['坐姿']], [/站/, ['站姿']], [/夾/, ['夾胸', '夾']],
+const QT_WORDS = [[/躺|臥/, ['臥推', '仰臥']], [/單手|單臂/, ['單臂']], [/胸推/, ['推胸']], [/斜/, ['上斜']], [/坐/, ['坐姿']], [/站/, ['站姿']], [/夾/, ['夾胸', '夾']],
   [/飛鳥|張開/, ['飛鳥']], [/往下拉|拉下|下拉/, ['下拉']], [/划|往後拉|拉向/, ['划船']], [/引體|拉單槓/, ['引體向上']],
   [/蹲/, ['深蹲', '蹲']], [/硬舉/, ['硬舉']], [/彎舉|捲手|彎手/, ['彎舉']], [/下壓|往下壓|壓下/, ['下壓']],
   [/側平舉|側舉|往旁邊舉/, ['側平舉']], [/前平舉|往前舉/, ['前平舉']], [/聳肩/, ['聳肩']], [/推/, ['推']], [/蹬|推腿/, ['腿推']],
   [/踢/, ['踢']], [/伸腿|腿伸/, ['腿伸屈']], [/勾腿|腿彎|腿往後/, ['腿彎舉']], [/提踵|墊腳|小腿/, ['提踵']],
   [/臀推|頂髖|挺髖/, ['臀推']], [/撐體|雙槓/, ['撐體']], [/臉拉/, ['臉拉']], [/反向飛鳥|後三角/, ['反向飛鳥']],
   [/外展|往外開/, ['外展']], [/內收|往內夾|夾腿/, ['內收']], [/捲腹|仰臥起坐/, ['捲腹']], [/舉腿/, ['舉腿']], [/平板/, ['平板']]];
+const qtKey = s => String(s).replace(/[\s()（）［］\[\]]/g, '').toLowerCase();
 const bigrams = s => { const o = []; for (let i = 0; i < s.length - 1; i++) o.push(s.slice(i, i + 2)); return o; };
 function qtMatch(phrase) {
-  const p = phrase.replace(/\s+/g, ''); if (!p) return [];
+  const p = qtKey(phrase); if (!p) return [];
+  // 說法拆成幾段（括號、空白分開），每段都出現在名稱裡的優先：「槓片胸推（地下室）」→「（地下室）槓片胸推」
+  const pieces = phrase.split(/[\s()（）]+/).map(qtKey).filter(x => x.length >= 2);
   const al = S.alias[p], pb = bigrams(p);
   const eq = (QT_EQUIP.find(([re]) => re.test(p)) || [])[1], pt = (QT_PART.find(([re]) => re.test(p)) || [])[1];
   const words = QT_WORDS.filter(([re]) => re.test(p)).flatMap(([, w]) => w), used = usage();
   return EXS.map(e => {
-    const n = e.name.replace(/\s+/g, ''), nb = bigrams(n);
+    const n = qtKey(e.name), nb = bigrams(n);
     let s = e.id === al ? 1000 : 0;
+    if (pieces.length > 1 && pieces.every(x => n.includes(x))) s += 230 + p.length * 5;
+    // 每個字都在名稱裡、只是順序不同（槓片推胸 → 槓片胸推）
+    else if (p.length >= 3 && [...p].every(c => n.includes(c))) s += 190 + p.length * 5;
     if (n === p) s += 500; else if (p.length >= 2 && n.includes(p)) s += 200 + p.length * 5; else if (n.length >= 2 && p.includes(n)) s += 180 + n.length * 5;
     // 字照順序出現在名稱裡（上斜…臥推 → 上斜槓鈴臥推）
     else if (p.length >= 2) { let k = 0; for (const ch of n) if (ch === p[k]) k++; if (k === p.length) s += 200 + p.length * 5; }
     // 沒提到史密斯時，一般說法通常指自由重量
     if (eq !== '史密斯' && e.equip === '史密斯') s -= 25;
+    // 「槓片臥推」「槓片胸推」是掛槓片的機器，不是槓鈴
+    if (/槓片|掛片/.test(p) && ['槓鈴', '啞鈴', '繩索', '徒手', '壺鈴', '彈力帶'].includes(e.equip)) s -= 60;
     if (pb.length && nb.length) s += 240 * pb.filter(b => nb.includes(b)).length / (pb.length + nb.length);
     for (const w of words) if (n.includes(w)) s += 30;
     if (eq) s += e.equip === eq ? 35 : -20;
@@ -2536,53 +2544,41 @@ function qtMatch(phrase) {
   }).filter(x => x.s > 20).sort((a, b) => b.s - a.s).slice(0, 3);
 }
 const qtUnit = s => /lb|磅/i.test(s || '') ? 'lb' : /kg|公斤/i.test(s || '') ? 'kg' : '';
-// 一行：動作說法 + 重量（或掛的槓片）+ 次數／組數 + 感受，順序隨意
+// 一行 = 動作說法 + 重量。只讀重量（次數之後在逐組輸入自己填）
+//   4.5+2.3 - 4.5+4.5、22 - 23：這次做的重量區間，逐組輸入時兩端都可以點來帶入
+//   兩邊／各兩邊／每邊／左右各 = 槓片兩邊都掛；單邊 = 只掛一邊；「槓片」「掛」「加」= 這些數字是槓片
+//   括號裡有數字的是備註，例如（15開始可以了）；沒數字的當名稱的一部分，例如（地下室）
 function qtParse(line) {
-  let t = line.replace(/[×xX＊*]/g, 'x').replace(/，/g, ',').replace(/＋/g, '+').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 65248));
-  let w = null, u = '', reps = null, sets = null, pl = null, side = 0, feelAll = 'j', feelLast = '';
-  // 掛片：「每邊／兩邊各／兩側」= 兩邊都掛（×2）；「單邊／只掛一邊」= 只有一邊。這些字後面的數字當槓片
-  t = t.replace(/兩邊各|每邊各|一邊各|兩側各|各掛|每邊|兩邊|兩側|雙邊|左右各/g, () => { side = 2; return ' 掛 '; });
-  t = t.replace(/只掛一邊|只有一邊|單邊|單側/g, () => { side = side || 1; return ' 掛 '; });
-  t = t.replace(/最後一?組?\s*(吃力|很重|好重|很累|力竭|困難)/, () => { feelLast = 'h'; return ' '; });
-  t = t.replace(/吃力|很重|好重|很累|力竭|困難/, () => { feelAll = 'h'; return ' '; });
-  t = t.replace(/很輕鬆|輕鬆|很輕/, () => { feelAll = 'e'; return ' '; });
-  t = t.replace(/(?:掛\s*)+(?:各\s*)?([\d.]+(?:\s*[+、,和跟與]\s*[\d.]+)*)\s*(kg|公斤|lb|磅)?\s*(?:的)?(?:槓片|片)?/i,
-    (_, a, b) => { pl = a.split(/[+、,和跟與]/).map(Number).filter(x => x > 0); u = qtUnit(b) || u; return ' '; });
-  t = t.replace(/([\d.]+)\s*(kg|公斤|lb|磅)/i, (m, a, b) => { w = +a; u = qtUnit(b) || u; return ' '; });
-  // 60x8x3 = 重量×次數×組數；60x8 = 重量×次數；前面已經有重量時 12x3 = 次數×組數
-  t = t.replace(/([\d.]+)\s*x\s*(\d+)\s*x\s*(\d+)/, (_, a, b, c) => { if (w === null) w = +a; reps = [+b]; sets = +c; return ' '; });
-  t = t.replace(/([\d.]+)\s*x\s*(\d+)/, (m, a, b, off, all) => {
-    if (reps) return m;
-    if (w !== null || pl || /\d/.test(all.slice(0, off))) { reps = [+a]; sets = +b; } else { w = +a; reps = [+b]; }
-    return ' ';
-  });
-  t = t.replace(/(\d+)\s*組/, (_, a) => { sets = +a; return ' '; });
-  t = t.replace(/(\d+)\s*(?:下|次|reps?)/i, (m, a) => { if (reps) return m; reps = [+a]; return ' '; });
-  t = t.replace(/\d+(?:\s*[,、/]\s*\d+)+/, m => { if (reps) return m; reps = m.split(/[,、/]/).map(Number); return ' '; });
-  // 沒寫單位的數字：先當重量，再當次數
-  t = t.replace(/[\d.]+/g, m => { if (w === null && !pl) w = +m; else if (!reps) reps = [+m]; return ' '; });
-  if (reps && reps.length === 1 && sets > 1) reps = Array(sets).fill(reps[0]);
-  const phrase = t.replace(/[,.。:：;；\-–~()（）\[\]「」]/g, ' ').replace(/\s+/g, ' ').trim();
+  let t = line.replace(/＋/g, '+').replace(/[０-９．]/g, c => String.fromCharCode(c.charCodeAt(0) - 65248)).replace(/[－—–]/g, '-');
+  let u = '', side = 0, cue = false;
+  t = t.replace(/[（(][^（()）]*\d[^（()）]*[）)]/g, ' ');
+  t = t.replace(/\d+\s*(?:下|次|組|reps?)|[x×*]\s*\d+/gi, ' ').replace(/最後一?組?|吃力|很重|好重|很累|力竭|困難|很輕鬆|輕鬆|很輕/g, ' ');
+  t = t.replace(/(?:各\s*)?(?:兩邊|每邊|兩側|雙邊|左右)(?:\s*各)?(?:\s*[加掛])?/g, () => { side = 2; cue = true; return ' '; });
+  t = t.replace(/(?:只掛一邊|只有一邊|單邊|單側)(?:\s*[加掛])?/g, () => { side = side || 1; cue = true; return ' '; });
+  t = t.replace(/(kg|公斤|lb|磅)/gi, m => { u = qtUnit(m); return ' '; });
+  t = t.replace(/([\d.]+)\s*(?:的)?(?:槓片|片)/g, (_, n) => { cue = true; return ' ' + n + ' '; });
+  t = t.replace(/[掛加]\s*(?=[\d.])/g, () => { cue = true; return ' '; });
+  const groups = [];
+  t = t.replace(/\d+(?:\.\d+)?(?:\s*\+\s*\d+(?:\.\d+)?)*/g, m => { groups.push(m.split('+').map(Number)); return ' '; });
+  const phrase = t.replace(/[-~→到、，,.。:：;；「」]/g, ' ').replace(/[（(]\s*[）)]/g, ' ').replace(/\s+/g, ' ').trim();
   const cands = qtMatch(phrase);
-  return {raw: line.trim(), phrase, w, u, pl, side, reps: (reps || []).filter(r => r > 0), feelAll, feelLast, cands, id: cands[0] ? cands[0].id : null};
+  return {raw: line.trim(), phrase, u, side, cue, groups, cands, id: cands[0] ? cands[0].id : null};
 }
-// 依選定的動作算出實際要記的重量（掛槓片的機器用它的設定算總重；沒寫重量就沿用那天之前最近一次）
+// 依選定的動作算出每一段重量（掛槓片的機器用它的設定；文字寫了兩邊／單邊就照文字）
 function qtResolve(it) {
   const e = it.id && ex(it.id); if (!e) return {err: '找不到這個動作，點「從動作庫選」'};
-  if (!it.reps.length) return {err: '找不到次數，例如「8下」「60x8」「5,5,4」'};
-  const u = it.u || unitOf(it.id), L = loadOf(it.id);
-  let w = it.w, pl = null, sd = 0, base = 0, note = '';
-  if (it.pl) {
-    // 文字有寫兩邊／單邊就照文字；沒寫就照這個動作的掛片設定；都沒有就把槓片加總
-    const sum = it.pl.reduce((a, b) => a + b, 0);
-    sd = it.side || (L ? L.sd : 0); base = L ? toU(L.base || 0, u) : 0;
-    if (sd) { pl = it.pl; w = base + sum * sd; } else { w = sum; note = '（槓片加總）'; }
-  }
-  if (w === null) {
-    if (e.equip === '徒手') w = 0;
-    else { const ls = lastSession(it.id, detailCtx.date); if (!ls) return {err: '沒寫重量，也沒有之前的紀錄可以沿用'}; w = +num(toU(ls.sets[0].w, uOf(ls.sets[0]))); note = '（沿用上次的重量）'; }
-  }
-  return {u, w, pl, sd, base, note};
+  const u = unitOf(it.id), L = loadOf(it.id), conv = v => it.u && it.u !== u ? +num(toU(fromU(v, it.u), u)) : v;
+  const ws = it.groups.map(g => {
+    const sum = g.reduce((a, b) => a + b, 0);
+    if (g.length > 1 || it.cue) {
+      const sd = it.side || (L ? L.sd : 0), base = L ? toU(L.base || 0, u) : 0;
+      if (!sd) return {w: conv(sum), desc: `${g.map(num).join('+')} ＝ ${num(conv(sum))} ${u}（槓片加總）`};
+      const w = conv(base + sum * sd), same = !it.u || it.u === u;
+      return {w, pl: same ? g : null, sd, desc: `${sd === 2 ? '每邊' : '單邊'} ${g.map(num).join('+')}${sd === 2 ? ' × 2 邊' : ''}${base ? ` ＋ 機器 ${num(base)}` : ''} ＝ ${num(w)} ${u}`};
+    }
+    return {w: conv(sum), desc: `${num(conv(sum))} ${u}`};
+  });
+  return {ws};
 }
 function qtHTML() {
   // 點日期後先選補記方式：打字，或從動作庫挑動作再逐組輸入
@@ -2590,24 +2586,24 @@ function qtHTML() {
     <button class="btn" data-act="dayPick">從動作庫選擇</button></div>`;
   if (!QT.open) return menu;
   const items = QT.items || [];
-  const ok = items.map(qtResolve).filter((r, i) => !r.err).length;
   const rows = items.map((it, i) => {
     const r = qtResolve(it), e = it.id && ex(it.id);
-    const feel = it.feelAll !== 'j' ? `，${FEELS[it.feelAll]}` : it.feelLast ? '，最後一組吃力' : '';
     const others = it.cands.filter(c => c.id !== it.id).slice(0, 2);
     return `<div class="qt-row">${e ? thumbHTML(e, 'noop') : '<span class="thumb nob"></span>'}<div style="flex:1;min-width:0">
       <b>${e ? esc(e.name) : '？'}</b>
-      ${r.err ? `<span class="err">${r.err}</span>` : `<span class="v">${num(r.w)} ${r.u} × ${it.reps.join(', ')}${feel}${r.note}</span>
-        ${r.pl ? `<span class="raw">${r.sd === 2 ? '每邊' : '單邊'} ${r.pl.map(num).join('+')}${r.sd === 2 ? ' × 2 邊' : ''}${r.base ? ` ＋ 槓子／機器 ${num(r.base)}` : ''} ＝ ${num(r.w)} ${r.u}</span>` : ''}`}
+      ${r.err ? `<span class="err">${r.err}</span>` : `<span class="v">${r.ws.length > 1 ? `區間 ${r.ws.map(x => num(x.w)).join(' ～ ')} ${unitOf(it.id)}` : r.ws.length ? r.ws[0].desc : '沒寫重量，先帶入那天之前最近一次'}</span>
+      ${r.ws.length > 1 && r.ws.some(x => x.pl || /槓片/.test(x.desc)) ? `<span class="raw">${r.ws.map(x => esc(x.desc)).join(' ～ ')}</span>` : ''}`}
       <span class="raw">你寫的：${esc(it.raw)}</span>
       <div class="qt-cand">${others.map(c => `<button data-act="qtPick" data-i="${i}" data-id="${esc(c.id)}">${esc(ex(c.id).name)}？</button>`).join('')}
         <button data-act="qtLib" data-i="${i}">從動作庫選…</button></div></div></div>`;
   }).join('');
+  const ok = items.filter(it => !qtResolve(it).err).length;
   return menu + `<div class="card qt"><div class="qt-h"><b>打字補記</b><span>一行一個動作</span></div>
-    <textarea id="qt-in" placeholder="臥推 60kg 8下 3組&#10;坐著往前推的機器 掛20+10 10下 4組 最後吃力&#10;深蹲 80 5,5,4">${esc(QT.text)}</textarea>
+    <textarea id="qt-in" placeholder="槓鈴胸推 兩邊各加4.5+2.3 - 4.5+4.5&#10;機械三頭上拉 10-15&#10;槓片胸推 11.3槓片各兩邊">${esc(QT.text)}</textarea>
     <button class="btn mt" data-act="qtParse">輸出</button>
     ${items.length ? `<div class="mt">${rows}</div>
-      ${ok ? `<button class="btn primary big mt" data-act="qtAdd">加入 ${items.reduce((a, it) => a + (qtResolve(it).err ? 0 : it.reps.length), 0)} 組</button>` : ''}` : ''}</div>`;
+      ${ok ? `<button class="btn primary big mt" data-act="qtAdd">加入 ${ok} 個動作</button>
+        <div class="small muted mt" style="text-align:center">重量會先填好，次數到下面每個動作自己填</div>` : ''}` : ''}</div>`;
 }
 // 補記一組的輸入區：跟訓練頁同一套（槓片、單位、加減、感受）
 function dayInputHTML(id, date, n) {
@@ -2615,6 +2611,9 @@ function dayInputHTML(id, date, n) {
   const v = parseFloat(d.w);
   return `<div class="day-in">
     ${ls ? `<div class="small muted" style="margin-bottom:10px">那天之前最近一次 ${fmtDate(ls.date)}：${setsText(ls.sets)}</div>` : ''}
+    ${d.opts && d.opts.length > 1 ? `<div class="small muted">這次的重量區間，點一個帶入，中間的重量用加減調</div><div class="qt-cand" style="margin:6px 0 10px">${d.opts.map((o, i) =>
+      `<button class="${i === d.cur && String(d.w) === String(d.plw) ? 'on' : ''}" data-act="dayW" data-id="${eid}" data-i="${i}">${num(o.w)} ${u}</button>`).join('')}</div>` : ''}
+    ${d.desc && String(d.w) === String(d.plw) ? `<div class="small muted" style="margin-bottom:10px">${esc(d.desc)}</div>` : ''}
     ${L ? plPickHTML(id, d) : ''}
     <div class="row">
       <div><div class="lbl"><span>${L ? '總重' : '重量'}</span><span class="unit">
@@ -3230,9 +3229,12 @@ const H = {
     const ts = date === dstr() ? Date.now() : (same.length ? same[same.length - 1].ts : parseD(date).getTime() + 18 * 36e5) + 6e4;
     const log = {id: uid(), exId: id, date, w: fromU(Math.max(0, w), u), u, r, feel: d.feel, ts};
     if (L && d.pl.length) Object.assign(log, {pl: [...d.pl], sd: L.sd});
+    else if (d.sd && d.pl && d.pl.length && String(d.w) === String(d.plw)) Object.assign(log, {pl: [...d.pl], sd: d.sd});
     S.logs.push(log);
     save(); renderDetail(); render(); toast('已補記一組');
   },
+  // 文字寫了重量變化（例如 10-15）：點哪個重量就用哪個
+  dayW: (id, b) => { const d = dayDraft(id), o = d.opts[+b.dataset.i]; Object.assign(d, {w: o.w, pl: [...o.pl], sd: o.sd, desc: o.desc, plw: o.w, cur: +b.dataset.i}); renderDetail(); },
   qtOpen: () => { QT.open = !QT.open; renderDetail(); if (QT.open) setTimeout(() => $('#qt-in') && $('#qt-in').focus(), 50); },
   qtParse: () => {
     QT.text = $('#qt-in').value;
@@ -3240,26 +3242,24 @@ const H = {
     if (!lines.length) return toast('先打上要補記的內容');
     QT.items = lines.map(qtParse); renderDetail();
   },
-  qtPick: (id, b) => { QT.items[+b.dataset.i].id = id; renderDetail(); },
+  qtPick: (id, b) => { const it = QT.items[+b.dataset.i]; it.id = id; it.picked = true; renderDetail(); },
   qtLib: (_, b) => {
     const it = QT.items[+b.dataset.i];
-    openSheet('pick', `「${it.phrase || it.raw}」是哪個動作？`, [], sel => { if (sel.length) it.id = sel[sel.length - 1]; renderDetail(); });
+    openSheet('pick', `「${it.phrase || it.raw}」是哪個動作？`, [], sel => { if (sel.length) { it.id = sel[sel.length - 1]; it.picked = true; } renderDetail(); });
   },
   qtAdd: () => {
     const date = detailCtx.date; let n = 0;
-    const same = dayLogs(date);
-    let ts = date === dstr() ? Date.now() : (same.length ? same[same.length - 1].ts : parseD(date).getTime() + 18 * 36e5);
     for (const it of QT.items) {
       const r = qtResolve(it); if (r.err) continue;
-      it.reps.forEach((rep, k) => {
-        const feel = k === it.reps.length - 1 && it.feelLast ? it.feelLast : it.feelAll;
-        const log = {id: uid(), exId: it.id, date, w: fromU(Math.max(0, r.w), r.u), u: r.u, r: rep, feel, ts: ts += 6e4};
-        if (r.pl) Object.assign(log, {pl: [...r.pl], sd: r.sd});
-        S.logs.push(log); n++;
-      });
-      if (it.phrase) S.alias[it.phrase.replace(/\s+/g, '')] = it.id;
+      const k = date + '|' + it.id, q = r.ws.map(x => ({w: String(Math.round(x.w * 1000) / 1000), pl: x.pl ? [...x.pl] : [], sd: x.sd || 0, desc: x.desc}));
+      if (q.length) { const f = q[0]; bdraft[k] = {w: f.w, r: '', feel: 'j', pl: f.pl, sd: f.sd, desc: f.desc, plw: f.w, opts: q, cur: 0}; }
+      else delete bdraft[k];
+      dayExtra = [...new Set([...dayExtra, it.id])];
+      // 只有自己換過動作才記住這個說法；自動對到的不記，對錯了也不會被鎖住
+      if (it.phrase && it.picked) S.alias[qtKey(it.phrase)] = it.id;
+      n++;
     }
-    QT = {open: false, text: '', items: null}; save(); renderDetail(); render(); toast(`已補記 ${n} 組`);
+    QT = {open: false, text: '', items: null}; save(); renderDetail(); toast(`已加入 ${n} 個動作，次數請在下面填`);
   },
   dayDel: async logId => {
     if (!await ask('刪除這一組？')) return;
@@ -3728,6 +3728,8 @@ $('#nx-muscle').innerHTML = '<option value="">（不指定）</option>' + Object
 open.add('s:unit'); open.add('s:rest'); open.add('s:aid'); open.add('s:backup');
 ensureToday();
 if (S.today.exIds.length) open.add(S.today.exIds.find(id => !todaySets(id).length) || S.today.exIds[0]);
+// 舊版打字補記一按「加入」就記住說法，對錯的也會被鎖住：清掉一次，之後只記自己換過的
+if (S.settings.aliasV !== 2) { S.alias = {}; S.settings.aliasV = 2; save(); }
 // 已經有紀錄的人不用看歡迎畫面
 if (!S.settings.onboarded && S.logs.length) { S.settings.onboarded = true; save(); }
 render();
