@@ -101,6 +101,10 @@ nav button.on{background:var(--acc);color:var(--acc-ink);font-weight:700}
 .last .lk{margin-left:auto;color:var(--acc);font-size:12px;letter-spacing:0;padding:6px 0 6px 10px}
 .ch-del{margin-right:10px}
 .card.dragging{position:relative;z-index:5;transform:scale(1.02);box-shadow:0 12px 32px rgba(0,0,0,.6);border-color:var(--acc-mid);transition:none}
+/* 長按不要選取文字、跳出 Google 搜尋或圖片選單（像 App，不像網頁）；輸入框照常可以選取、複製、貼上 */
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+img{-webkit-user-drag:none}
 body.drag-on{user-select:none;-webkit-user-select:none}
 .ch-row{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 .last b{font:500 16px var(--fd)}
@@ -672,7 +676,6 @@ V 把下拉|繩索|V-Bar_Pulldown|lat|bi,mb
 反握滑輪下拉|繩索|Underhand_Cable_Pulldowns|lat,bi|mb
 單臂滑輪下拉|繩索|One_Arm_Lat_Pulldown|lat|bi
 直臂下拉|繩索|Straight-Arm_Pulldown|lat|tri
-繩索直臂下拉|繩索|Rope_Straight-Arm_Pulldown|lat|
 槓鈴划船|槓鈴|Bent_Over_Barbell_Row|lat,mb|bi,dre,lb
 反手槓鈴划船|槓鈴|Reverse_Grip_Bent-Over_Rows|lat,mb|bi
 T 槓划船|槓鈴|T-Bar_Row_with_Handle|mb,lat|bi,dre
@@ -857,6 +860,8 @@ V 字起坐|徒手|Jackknife_Sit-Up|abs|
 藥球砸地|其他|Overhead_Slam|lat,abs|dfr
 `;
 const bid = name => 'b:' + name;
+// 動作庫裡重複、已經併掉的動作：舊 id → 保留的 id（讀資料時把紀錄、範本、設定搬過去）
+const MERGED = {'b:繩索直臂下拉': 'b:直臂下拉'};
 const BUILTIN = (() => {
   let part = '', i = 0; const out = [];
   for (const line of RAW.trim().split('\n')) {
@@ -1904,7 +1909,7 @@ function normalize(s) {
   // 第一階段的資料把內建動作也存進 exercises，只取自訂的
   const custom = Array.isArray(s.custom) ? s.custom
     : Array.isArray(s.exercises) ? s.exercises.filter(e => String(e.id).startsWith('c:')) : [];
-  return {
+  return mergeIds({
     v: 2, custom,
     hidden: Array.isArray(s.hidden) ? s.hidden : [],
     logs: Array.isArray(s.logs) ? s.logs : [],
@@ -1917,7 +1922,18 @@ function normalize(s) {
     templates: Array.isArray(s.templates) ? s.templates : d.templates,
     settings: {...d.settings, ...(s.settings || {})},
     today: s.today && s.today.date ? s.today : d.today,
-  };
+  });
+}
+// 把併掉的動作 id 換成保留的那個
+function mergeIds(s) {
+  const to = id => MERGED[id] || id, sw = arr => [...new Set(arr.map(to))];
+  s.logs.forEach(l => { l.exId = to(l.exId); });
+  s.templates.forEach(t => { t.exIds = sw(t.exIds); });
+  s.today.exIds = sw(s.today.exIds || []);
+  s.hidden = s.hidden.filter(id => !MERGED[id]);
+  for (const k of ['units', 'notes', 'ranges', 'load']) for (const a in MERGED) if (s[k][a] != null) { if (s[k][MERGED[a]] == null) s[k][MERGED[a]] = s[k][a]; delete s[k][a]; }
+  for (const k in s.alias) s.alias[k] = to(s.alias[k]);
+  return s;
 }
 // 預覽視窗（data: 網址）或無痕模式可能不能存資料，只提示一次
 let STORE_OK = true;
@@ -3595,7 +3611,8 @@ document.addEventListener('pointermove', e => {
 });
 // 拖曳中不讓頁面跟著捲
 document.addEventListener('touchmove', e => { if (DRAG && DRAG.on) e.preventDefault(); }, {passive: false});
-document.addEventListener('contextmenu', e => { if (e.target.closest('#v-train .ch-row')) e.preventDefault(); });
+// 長按選單只留給輸入框（複製、貼上）
+document.addEventListener('contextmenu', e => { if (!e.target.closest('input, textarea, [contenteditable]')) e.preventDefault(); });
 const endDrag = () => {
   const st = DRAG; DRAG = null; if (!st) return;
   clearTimeout(st.t); if (!st.on) return;
