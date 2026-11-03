@@ -280,8 +280,11 @@ body.drag-on{user-select:none;-webkit-user-select:none}
 /* ---------- 動作詳情 ---------- */
 .media{position:relative;aspect-ratio:4/3;border-radius:22px;overflow:hidden;background:#fff;margin-bottom:16px}
 .media img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
-.media img.b{animation:frames 2.4s steps(1) infinite}
-@keyframes frames{0%{opacity:0}50%{opacity:1}}
+/* 起始、結束兩張照片來回淡入淡出，兩端各停一下，看起來像在做動作 */
+.media img.b{animation:frames 3.2s ease-in-out infinite}
+@keyframes frames{0%,22%{opacity:0}50%,72%{opacity:1}100%{opacity:0}}
+.media .mmini{position:absolute;right:10px;top:10px;width:100px;padding:6px 6px 4px;border-radius:12px;background:rgba(10,10,11,.9)}
+.media .mmini svg{width:100%;height:auto;display:block}
 .media .lab{position:absolute;left:12px;bottom:12px;font:600 11px var(--fd);letter-spacing:.14em;text-transform:uppercase;background:rgba(10,10,11,.75);color:#fff;padding:5px 10px;border-radius:99px}
 .media.none{background:var(--card);display:grid;place-items:center;color:var(--muted);font-size:14px;aspect-ratio:auto;height:120px}
 .dt{font:700 30px/1.1 var(--fd);letter-spacing:-.03em;margin:0 0 6px}
@@ -444,7 +447,16 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 #toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translate(-50%,-24px);z-index:40;background:var(--acc);color:var(--acc-ink);
   padding:11px 20px;border-radius:99px;font-weight:600;font-size:15px;opacity:0;pointer-events:none;transition:.3s cubic-bezier(.2,.9,.3,1);max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translate(-50%,0)}
+#toast img{height:30px;vertical-align:middle;margin:-6px 8px -4px -8px}
 .empty{text-align:center;padding:30px 16px;color:var(--muted)}
+/* 墨豹靜態小圖：空白狀態、提示卡、快破紀錄 */
+.empty .pic{display:block;margin:0 auto 8px;pointer-events:none}
+.hint.peek{position:relative;margin-top:62px}
+.hint.peek .pic{position:absolute;right:16px;bottom:calc(100% - 14px);width:76px;pointer-events:none}
+.near{display:flex;align-items:center;gap:10px;margin:14px 0 2px;padding:10px 12px;border-radius:var(--r2);border:1px solid var(--line);font-size:14px}
+.near span{flex:1}
+.near b{color:var(--acc)}
+.near img{width:84px;margin:-14px -4px -10px 0;pointer-events:none}
 /* ---------- 開場畫面 ---------- */
 #welcome{position:fixed;inset:0;z-index:150;background:var(--bg);display:flex;flex-direction:column;
   padding:calc(env(safe-area-inset-top) + 16px) 20px calc(env(safe-area-inset-bottom) + 24px);overflow-y:auto}
@@ -886,6 +898,14 @@ const imgUrl = (db, n = 0) => `${DB_BASE}exercises/${db}/${n}.jpg`;
 const DB_MUSCLE = {abdominals:['abs'], abductors:['abd'], adductors:['add'], biceps:['bi'], calves:['calf'], chest:['ch'],
   forearms:['fa'], glutes:['glu'], hamstrings:['ham'], lats:['lat'], 'lower back':['lb'], 'middle back':['mb'], neck:['neck'],
   quadriceps:['quad'], shoulders:['dfr','dsi'], traps:['trap'], triceps:['tri']};
+// 圖庫的 shoulders 不分前、中、後束，照動作名稱判斷，否則反向飛鳥這類後束動作會被標成前束
+function deltOf(name) {
+  const n = name.toLowerCase();
+  if (/upright|scaption|lateral raise|side lateral|laterals?\b|deltoid raise|iron cross|crucifix|halo|circles?/.test(n) && !/bent[- ]over|rear/.test(n)) return ['dsi'];
+  if (/rear|reverse.*fl|back fl|face pull|pull apart|external rotation|bent[- ]over|\brows?\b|pulldown|pull-?ups?|\bchin|pullover|shrug/.test(n)) return ['dre'];
+  if (/front|raise|press|push|jerk|dip|bench|fly|flye|crossover|throw|slam|clean|snatch|thruster|jammer|get-up|log lift|bell/.test(n)) return ['dfr'];
+  return ['dfr', 'dsi'];
+}
 const DB_EQUIP = {barbell:'槓鈴', dumbbell:'啞鈴', machine:'器械', cable:'繩索', 'body only':'徒手', kettlebells:'壺鈴',
   bands:'彈力帶', 'e-z curl bar':'槓鈴'};
 const DB_CAT = {strength:'肌力', stretching:'伸展', plyometrics:'增強式', powerlifting:'健力', 'olympic weightlifting':'舉重', strongman:'大力士', cardio:'有氧'};
@@ -1777,8 +1797,9 @@ function loadDB() {
   if (DBP) return DBP;
   DBP = fetch(DB_BASE + 'dist/exercises.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(list => {
     DB = list.map(x => {
-      const pm = [...new Set(x.primaryMuscles.flatMap(m => DB_MUSCLE[m] || []))];
-      const sm = [...new Set(x.secondaryMuscles.flatMap(m => DB_MUSCLE[m] || []))].filter(m => !pm.includes(m));
+      const mus = m => m === 'shoulders' ? deltOf(x.name) : DB_MUSCLE[m] || [];
+      const pm = [...new Set(x.primaryMuscles.flatMap(mus))];
+      const sm = [...new Set(x.secondaryMuscles.flatMap(mus))].filter(m => !pm.includes(m));
       return {db: x.id, name: DB_ZH.get(x.id) || x.name, en: x.name, pm, sm, equip: DB_EQUIP[x.equipment] || '其他', part: PART_OF[pm[0]] || '全身',
         cat: DB_CAT[x.category] || x.category, steps: x.instructions || [], imgs: x.images || [],
         rank: COMMON_DB.has(x.id) ? 0 : CAT_RANK[x.category] ?? 2};
@@ -1837,8 +1858,8 @@ const askText = (title, value = '') => dialog(title, {input: value});
 const note = msg => dialog(msg, {cancel: '', ok: '好'});
 
 let toastT;
-function toast(msg, ms = 2200) {
-  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+function toast(msg, ms = 2200, pic = '') {
+  const t = $('#toast'); t.innerHTML = (pic ? `<img src="mascot/s-${pic}.png" alt="">` : '') + esc(msg); t.classList.add('on');
   clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), ms);
 }
 
@@ -2329,7 +2350,7 @@ function exListHTML({q, part, eq, sel, manage}) {
   const u = usage();
   q = q.trim().toLowerCase();
   const list = EXS.filter(e => (!part || e.part === part) && (!eq || e.equip === eq) && match(e, q));
-  if (!list.length) return `<div class="empty">找不到動作<br><span class="small">可以到動作庫的「完整動作資料庫」找找看，或新增自訂動作</span></div>`;
+  if (!list.length) return `<div class="empty"><img class="pic" src="mascot/s-b2.png" alt="" width="84">找不到動作<br><span class="small">可以到動作庫的「完整動作資料庫」找找看，或新增自訂動作</span></div>`;
   const used = list.filter(e => u[e.id]).sort((a, b) => u[b.id] - u[a.id] || a.order - b.order);
   const rest = list.filter(e => !u[e.id]).sort((a, b) => a.order - b.order);
   const row = e => `<div class="ex-row ${sel.includes(e.id) ? 'sel' : ''}">${thumbHTML(e)}
@@ -2388,7 +2409,7 @@ function renderSheet() {
   $('#sh-list').innerHTML = `<div class="grp"><span>${shPart || '全部'}</span><span>${list.length}</span></div>` +
     (shown.length ? `<div class="exlist">${shown.map(x => `<div class="ex-row ${have.has(x.db) ? 'sel' : ''}">${thumbHTML(x, 'dbDetail', x.db)}
       <button class="ex-main" data-act="dbDetail" data-id="${esc(x.db)}"><span style="flex:1;min-width:0"><span class="nm">${esc(x.name)}</span><br>
-      <span class="meta">${esc(x.en)}</span><br><span class="meta">${muscleText(x) || '—'} · ${x.equip} · ${x.cat}${used[x.db] ? ` · ${used[x.db]} 組` : ''}</span></span><span class="chk">${svgChk}</span></button></div>`).join('')}</div>` : '<div class="empty">找不到動作</div>') +
+      <span class="meta">${esc(x.en)}</span><br><span class="meta">${muscleText(x) || '—'} · ${x.equip} · ${x.cat}${used[x.db] ? ` · ${used[x.db]} 組` : ''}</span></span><span class="chk">${svgChk}</span></button></div>`).join('')}</div>` : '<div class="empty"><img class="pic" src="mascot/s-b2.png" alt="" width="84">找不到動作</div>') +
     (list.length > shown.length ? `<p class="small muted" style="text-align:center">還有 ${list.length - shown.length} 個，請用搜尋縮小範圍</p>` : '');
 }
 
@@ -2418,7 +2439,7 @@ function renderExDetail(c) {
   if (!e) return;
   const info = e.db ? DBMAP.get(e.db) : null;
   const media = e.db
-    ? `<div class="media"><img src="${imgUrl(e.db, 0)}" alt=""><img class="b" src="${imgUrl(e.db, 1)}" alt=""><span class="lab">START ⇄ END</span></div>`
+    ? `<div class="media"><img src="${imgUrl(e.db, 0)}" alt=""><img class="b" src="${imgUrl(e.db, 1)}" alt="">${e.pm.length ? `<div class="mmini">${bodySVG(e.pm, e.sm, {labels: false})}</div>` : ''}<span class="lab">START ⇄ END</span></div>`
     : `<div class="media none">這個動作沒有圖片</div>`;
   const chips = [...e.pm.map(m => `<span class="mtag p">${MUSCLES[m]}</span>`), ...e.sm.map(m => `<span class="mtag">${MUSCLES[m]}</span>`)].join('');
   let action = '';
@@ -2458,7 +2479,7 @@ async function cloudBackup(manual) {
   const c = S.settings.cloud;
   if (!c || !c.url || CLOUD_BUSY) return;
   if (!navigator.onLine) { c.pending = true; save(); if (manual) toast('沒有網路，連上後會自動補備份'); return; }
-  CLOUD_BUSY = true; if (manual) toast('備份到雲端中…');
+  CLOUD_BUSY = true; if (manual) toast('備份到雲端中…', 20000, 'd1');
   const body = JSON.stringify({key: c.key, name: `健身紀錄-${dstr()}.json`, data: JSON.stringify(backupData())});
   try {
     let r;
@@ -2519,7 +2540,7 @@ function doneHTML(logs) {
   return `<div class="hero">${window.Mascot ? '<div class="done-vis" data-m="done"></div>' : ''}<h2>Workout<br><em>done.</em></h2><p>今天完成 ${n} 個動作、${logs.length} 組${pr ? `，破了 ${pr} 項個人紀錄` : ''}。<br>紀錄都已經存好了，好好休息。</p>
     <button class="btn primary big" data-act="summary">查看今天的總結</button>
     <button class="btn big mt" data-act="resume">繼續訓練</button></div>
-    ${S.settings.cloud || !tipOn('cloud') ? tipHTML('backfill', '漏記的日子：點「訓練歷史」打開月曆，點那天就能補記，也可以直接打字補記。') : tipHTML('cloud', '紀錄只存在這支手機裡。開啟 Google 雲端自動備份，換手機也不怕不見。', '<button data-act="cloudTipGo">去設定</button>')}`;
+    ${S.settings.cloud || !tipOn('cloud') ? tipHTML('backfill', '漏記的日子：點「訓練歷史」打開月曆，點那天就能補記，也可以直接打字補記。', '', false) : tipHTML('cloud', '紀錄只存在這支手機裡。開啟 Google 雲端自動備份，換手機也不怕不見。', '<button data-act="cloudTipGo">去設定</button>', false)}`;
 }
 function daySummaryHTML(date, edit) {
   const logs = dayLogs(date), u = S.settings.unit, by = {};
@@ -2541,7 +2562,7 @@ function daySummaryHTML(date, edit) {
       ${edit ? dayInputHTML(id, date, s.length) : ''}
     </div>`;
   }).join('');
-  if (!ids.length) h += '<div class="card"><div class="empty">這天沒有訓練紀錄</div></div>';
+  if (!ids.length) h += '<div class="card"><div class="empty" style="padding:22px 16px 24px"><img class="pic" src="mascot/s-c2.png" alt="" width="150">這天沒有訓練紀錄</div></div>';
 
   return h;
 }
@@ -2744,13 +2765,18 @@ function progressHTML(e) {
       <div class="tiles"><div><span>最佳</span><b>${num1(best)}<small>${u}</small></b></div>
         <div><span>最近一次</span><b>${num1(lastV)}<small>${u}</small></b></div>
         <div><span>總變化</span><b>${diff > 0 ? '▲ ' : diff < 0 ? '▼ ' : ''}${num1(Math.abs(diff))}<small>${u}</small></b></div></div>
-      ${lineChart(pts, u, 'ex')}
+      ${lineChart(pts, u, 'ex')}${nearHTML(best, lastV, u)}
     </div>
     <div class="card ${open.has('dt:hist') ? 'open' : ''}" data-key="dt:hist"><button class="card-h" data-act="toggle"><span class="t">最近紀錄</span>${svgChev}</button>
       <div class="card-b"><ul class="hist">${all.slice(-8).reverse().map(p =>
         `<li><span class="dd">${fmtDate(p.d)}${gs.length > 1 && gymOf(p.d) ? `<br><small class="muted">${esc(gymOf(p.d))}</small>` : ''}</span><span class="vv">${setsText(p.sets)}</span></li>`).join('')}</ul></div></div>`;
 }
 
+// 最近一次離最佳只差一點（90% 以上）時，墨豹伏低準備撲
+function nearHTML(best, last, u) {
+  if (!(last < best && last >= best * .9)) return '';
+  return `<div class="near"><span>再 <b>${num1(best - last)} ${u}</b> 就追平最佳紀錄</span><img src="mascot/s-d2.png" alt=""></div>`;
+}
 const CH = {};
 const shortD = s => { const d = parseD(s); return `${d.getMonth() + 1}/${d.getDate()}`; };
 function lineChart(pts, unit, key) {
@@ -3646,8 +3672,9 @@ function renderWelcome() {
 }
 // 提示只出現一次，按 ✕ 或照著做就不再出現
 const tipOn = k => !S.settings.tips[k];
-const tipHTML = (k, text, btn = '') => tipOn(k)
-  ? `<div class="hint">${svgTrend}<span>${text}</span>${btn}<button class="x-tip" data-act="tipOff" data-id="${k}" aria-label="不再顯示">${svgX}</button></div>` : '';
+// peek：C3 墨豹從提示卡上緣探頭；同一頁已經有動畫墨豹時不要（例如訓練完成）
+const tipHTML = (k, text, btn = '', peek = true) => tipOn(k)
+  ? `<div class="hint${peek ? ' peek' : ''}">${peek ? '<img class="pic" src="mascot/s-c3.png" alt="">' : ''}${svgTrend}<span>${text}</span>${btn}<button class="x-tip" data-act="tipOff" data-id="${k}" aria-label="不再顯示">${svgX}</button></div>` : '';
 const tipDone = k => { if (tipOn(k)) { S.settings.tips[k] = 1; save(); } };
 
 // 長按動作標題拖曳排序：按住不動 0.45 秒開始，期間移動超過 8px 當作捲動
@@ -3827,6 +3854,15 @@ if (S.today.exIds.length) open.add(S.today.exIds.find(id => !todaySets(id).lengt
 if (!S.settings.tipsV2) { if (S.logs.length) for (const k of ['card', 'timer', 'progress', 'backfill']) S.settings.tips[k] = 1; S.settings.tipsV2 = 1; save(); }
 // 舊版打字補記一按「加入」就記住說法，對錯的也會被鎖住：清掉一次，之後只記自己換過的
 if (S.settings.aliasV !== 2) { S.alias = {}; S.settings.aliasV = 2; save(); }
+// 之前從完整資料庫加入的動作，肩膀一律被標成前束＋中束：同時有這兩個的，改用動作名稱判斷是哪一束
+if (!S.settings.deltV && S.custom.some(c => c.db)) loadDB().then(() => {
+  for (const c of S.custom) {
+    const d = c.db && DBMAP.get(c.db); if (!d) continue;
+    const fix = a => a.includes('dfr') && a.includes('dsi') ? [...new Set(a.flatMap(m => m === 'dfr' || m === 'dsi' ? deltOf(d.en) : [m]))] : a;
+    c.pm = fix(c.pm); c.sm = fix(c.sm).filter(m => !c.pm.includes(m));
+  }
+  S.settings.deltV = 1; save(); render();
+}).catch(() => {});
 // 已經有紀錄的人不用看歡迎畫面
 if (!S.settings.onboarded && S.logs.length) { S.settings.onboarded = true; save(); }
 render();
