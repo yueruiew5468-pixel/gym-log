@@ -502,10 +502,12 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 .pt-stage{position:relative;aspect-ratio:1}
 .pt-stage.wide{aspect-ratio:1340/1080}
 .pt-stage canvas{position:absolute;top:0;left:0;width:100%;height:100%}
-.pt-stage.wide .pt-fx,.pt-stage.wide .pt-gl{left:10.4478%;width:80.597%}
+.pt-stage .pt-static{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.pt-stage.wide .pt-fx,.pt-stage.wide .pt-gl,.pt-stage.wide .pt-static{left:10.4478%;width:80.597%}
 .wl-head{display:flex;align-items:flex-end;gap:4px}
 .wl-head h2{flex:0 1 auto;min-width:0;font-size:clamp(28px,8.4vw,46px);word-break:keep-all}
-.wl-m{width:min(132px,33vw,20vh);flex:none;margin:0 0 4px -6px}
+/* 圖片左邊約 12% 是透明的：margin 讓「看得到的墨豹」跟文字固定隔約 18px */
+.wl-m{width:min(132px,33vw,20vh);flex:none;margin:0 0 4px calc(18px - min(132px,33vw,20vh) * .12)}
 /* 今天還沒開始：墨豹坐著待機；訓練完成：墨豹趴下休息 */
 .ready-top{display:flex;align-items:center;gap:6px;margin-bottom:20px}
 .ready-top>div:first-child{flex:1;min-width:0}
@@ -627,7 +629,7 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 <input type="file" id="import-file" accept="application/json,.json" hidden>
 <div id="toast"></div>
 
-<script src="mascot/mascot.js?v=5"></script>
+<script src="mascot/mascot.js?v=6"></script>
 <script>
 'use strict';
 
@@ -1835,9 +1837,9 @@ const askText = (title, value = '') => dialog(title, {input: value});
 const note = msg => dialog(msg, {cancel: '', ok: '好'});
 
 let toastT;
-function toast(msg) {
+function toast(msg, ms = 2200) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('on');
-  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2200);
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), ms);
 }
 
 /* ================= 肌群圖 ================= */
@@ -2088,8 +2090,9 @@ function renderTrain() {
       <div><b>${ids.length}</b><span>動作</span></div>
       <div><b>${todayLogs.length}</b><span>完成組數</span></div>
       <div><b>${vol >= 10000 ? num1(vol / 1000) + '<small>k</small>' : Math.round(vol)}</b><span>總量 ${u}</span></div></div>`;
-    h += ids.map(cardHTML).join('');
-    h += `${ids.length > 1 ? tipHTML('drag', '長按動作名稱可以拖曳排序；點動作的圖片可以看說明與進度。') : ''}
+    const tip = trainTipHTML(ids); plateTipUsed = !!tip;   // 上面已經有提示，卡片裡的掛槓片提示下次再出現
+    h += tip + ids.map(cardHTML).join('');
+    h += `
       <button class="btn big mt" data-act="pickToday">＋ 加入動作</button>
       <div class="row mt"><button class="btn ghost sm" data-act="saveTpl">存成範本</button>
       <button class="btn ghost sm" data-act="clearToday">清空清單</button></div>
@@ -2107,6 +2110,14 @@ function renderTrain() {
   $('#v-train').innerHTML = h;
   flashId = null;
   trainMascot();
+}
+// 新手提示：用到的時候才出現，訓練頁一次只出現一個（先教怎麼記、再教排序、最後教看進步）
+function trainTipHTML(ids) {
+  if (tipOn('card')) return tipHTML('card', '點動作卡片展開，填好重量和次數就能記錄這一組；點動作的圖片可以看動作說明。');
+  if (ids.length > 1 && tipOn('drag')) return tipHTML('drag', '長按動作名稱可以拖曳，調整今天的順序。');
+  const rich = ids.find(id => new Set(S.logs.filter(l => l.exId === id).map(l => l.date)).size >= 3);
+  if (rich && tipOn('progress')) return tipHTML('progress', `「${esc(ex(rich).name)}」已經練 3 次了，點它的圖片可以看進步曲線。`);
+  return '';
 }
 // 訓練頁的墨豹：頁面重繪時把同一隻搬到新位置，不重開、不重播；切到別的分頁只暫停（銷毀再重建會閃白）
 let TRM = null, lieNext = false;
@@ -2508,7 +2519,7 @@ function doneHTML(logs) {
   return `<div class="hero">${window.Mascot ? '<div class="done-vis" data-m="done"></div>' : ''}<h2>Workout<br><em>done.</em></h2><p>今天完成 ${n} 個動作、${logs.length} 組${pr ? `，破了 ${pr} 項個人紀錄` : ''}。<br>紀錄都已經存好了，好好休息。</p>
     <button class="btn primary big" data-act="summary">查看今天的總結</button>
     <button class="btn big mt" data-act="resume">繼續訓練</button></div>
-    ${S.settings.cloud ? '' : tipHTML('cloud', '紀錄只存在這支手機裡。開啟 Google 雲端自動備份，換手機也不怕不見。', '<button data-act="cloudTipGo">去設定</button>')}`;
+    ${S.settings.cloud || !tipOn('cloud') ? tipHTML('backfill', '漏記的日子：點「訓練歷史」打開月曆，點那天就能補記，也可以直接打字補記。') : tipHTML('cloud', '紀錄只存在這支手機裡。開啟 Google 雲端自動備份，換手機也不怕不見。', '<button data-act="cloudTipGo">去設定</button>')}`;
 }
 function daySummaryHTML(date, edit) {
   const logs = dayLogs(date), u = S.settings.unit, by = {};
@@ -3426,10 +3437,13 @@ const H = {
     const prior = S.logs.filter(l => l.exId === id), e1 = x => x.w * (1 + x.r / 30);
     const pr = !prior.length || log.w <= 0 ? '' : log.w > Math.max(...prior.map(x => x.w)) + 1e-9 ? '重量 PR'
       : e1(log) > Math.max(...prior.map(e1)) + 1e-9 ? '1RM PR' : '';
-    S.logs.push(log); flashId = log.id; fixGym(log.date);
+    S.logs.push(log); flashId = log.id; fixGym(log.date); tipDone('card');
     save(); open.add(id); renderTrain();
     if (navigator.vibrate) navigator.vibrate(30);
-    if (S.settings.autoRest) { const r = restFor(d.feel); startTimer(r.sec, r.note); } else if (!pr) toast('已記錄');
+    if (S.settings.autoRest) {
+      const r = restFor(d.feel); startTimer(r.sec, r.note);
+      if (tipOn('timer') && !pr) { tipDone('timer'); setTimeout(() => toast('休息計時開始了，點下面的時間可以放大成全螢幕', 4000), 400); }
+    } else if (!pr) toast('已記錄');
     if (pr) showPR(e.name, pr, `${wTxt(log.w, u)} × ${r}`);
   },
   delSet: async logId => {
@@ -3491,7 +3505,7 @@ const H = {
   openDB: () => openSheet('db', '完整動作資料庫', [], null),
 
   /* 詳情 */
-  detail: id => openDetail({kind: 'ex', id}),
+  detail: id => { tipDone('progress'); openDetail({kind: 'ex', id}); },
   dbDetail: db => openDetail({kind: 'db', id: db}),
   closeDetail: () => { const was = detailCtx; $('#detail').classList.remove('on'); detailCtx = null; if (was && was.kind === 'plate' && tab === 'train') renderTrain(); },
   dtToday: id => {
@@ -3809,6 +3823,8 @@ $('#nx-muscle').innerHTML = '<option value="">（不指定）</option>' + Object
 open.add('s:unit'); open.add('s:rest'); open.add('s:aid'); open.add('s:backup');
 ensureToday();
 if (S.today.exIds.length) open.add(S.today.exIds.find(id => !todaySets(id).length) || S.today.exIds[0]);
+// 新手提示是給新使用者的：已經有紀錄的人直接當作看過
+if (!S.settings.tipsV2) { if (S.logs.length) for (const k of ['card', 'timer', 'progress', 'backfill']) S.settings.tips[k] = 1; S.settings.tipsV2 = 1; save(); }
 // 舊版打字補記一按「加入」就記住說法，對錯的也會被鎖住：清掉一次，之後只記自己換過的
 if (S.settings.aliasV !== 2) { S.alias = {}; S.settings.aliasV = 2; save(); }
 // 已經有紀錄的人不用看歡迎畫面

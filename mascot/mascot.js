@@ -191,6 +191,7 @@
 
   function create(canvas, fxCanvas) {
     const gl = canvas.getContext('webgl', { premultipliedAlpha: true, alpha: true, antialias: false });
+    if (!gl) throw new Error('沒有 WebGL');
     const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw gl.getShaderInfoLog(s); return s; };
     const prog = gl.createProgram();
     gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
@@ -333,7 +334,8 @@
           if (last) t += Math.min(0.05, (now - last) / 1000) * api.speed;
           if (api.seek != null) t = api.seek;
           last = now;
-          draw(im);
+          // 畫不出來（例如直接開檔案時瀏覽器不讓 WebGL 讀圖片）：停下來交給外面改顯示靜態圖
+          try { draw(im); } catch (e) { cancelAnimationFrame(raf); if (api.onError) api.onError(e); ok(); return; }
           if (first) { first = false; ok(); }
           const n = Math.floor(t / r.T);
           if (r.loop && n !== loopN) { loopN = n; if (api.onLoop) api.onLoop(n); }
@@ -394,7 +396,20 @@
     el.classList.add('pt-stage'); el.classList.toggle('wide', wide);
     el.innerHTML = '<canvas class="pt-fx"></canvas><canvas class="pt-gl"></canvas><canvas class="pt-clip"></canvas>';
     const [fxc, glc, cc] = el.querySelectorAll('canvas');
-    const eng = P.create(glc, fxc), cg = cc.getContext('2d');
+    const cg = cc.getContext('2d');
+    // 墨豹動不起來時（舊手機沒有 WebGL、直接開檔案）改顯示一張靜態圖，不會整塊空白
+    const img = document.createElement('img'); img.className = 'pt-static'; img.alt = ''; img.hidden = true; el.append(img);
+    let failed = false, pose = 'idle';
+    const still = name => {
+      failed = true; job++; cancelAnimationFrame(raf);
+      img.src = BASE + (name === 'rest' ? 'rest.webp' : name === 'pr' ? 'pr.webp' : 'idle.webp');
+      img.style.transform = name === 'rest' ? `translateY(${(REST_IN.dy / 1254 * 100).toFixed(2)}%)` : '';
+      img.hidden = false; [fxc, glc, cc].forEach(c => { c.style.display = 'none'; });
+    };
+    let eng = null;
+    try { eng = P.create(glc, fxc); eng.onError = () => still(pose); } catch (e) { eng = null; }
+    // 每個動作先記下姿勢；動不起來就直接顯示那個姿勢的靜態圖
+    const go = (p, fn) => { pose = p; if (!eng || failed) { still(p); return Promise.resolve(); } return Promise.resolve().then(fn).catch(() => { if (!dead) still(pose); }); };
     let raf = 0, dead = false, job = 0;
     const fitClip = () => {
       const dpr = Math.min(devicePixelRatio || 1, 2), w = Math.round(cc.clientWidth * dpr) || 1, h = Math.round(cc.clientHeight * dpr) || 1;
@@ -435,7 +450,8 @@
     });
     const api = {
       // 坐著待機；lick=true 時每四輪有一輪換成舔掌（影片），每三輪打一次哈欠（即時動畫裡）
-      async idle({lick = false} = {}) {
+      idle({lick = false} = {}) { return go('idle', () => this._idle(lick)); },
+      async _idle(lick) {
         job++; eng.onLoop = null; glc.style.visibility = 'visible';
         await eng.play('idle');
         if (!lick || reduce()) return;
@@ -450,9 +466,10 @@
         };
       },
       // 破紀錄：蓄力 → 怒吼＋綠光 → 冷笑停住
-      pr() { job++; eng.onLoop = null; glc.style.visibility = 'visible'; return eng.play('pr'); },
+      pr() { return go('pr', () => { job++; eng.onLoop = null; glc.style.visibility = 'visible'; return eng.play('pr'); }); },
       // 坐下 → 趴下，接著趴著呼吸
-      async lieDown() {
+      lieDown() { return go('rest', () => this._lieDown()); },
+      async _lieDown() {
         job++; eng.onLoop = null;
         if (reduce()) return eng.play('rest', {dy: REST_IN.dy, t0: REST_IN.t0});
         // 影片播完要接趴姿：趴姿的圖要先載好，不然接手時底下還是坐姿，會閃一下
@@ -465,11 +482,12 @@
           end: () => { eng.seek = null; }});
       },
       // 坐著不動（停在原圖姿勢），等一下要接趴下時用，切過去才不會跳
-      sit() { job++; eng.onLoop = null; glc.style.visibility = 'visible'; const p = eng.play('idle'); eng.seek = 0; return p; },
+      sit() { return go('idle', () => { job++; eng.onLoop = null; glc.style.visibility = 'visible'; const p = eng.play('idle'); eng.seek = 0; return p; }); },
       // 直接趴著呼吸（不播趴下過程）
-      rest() { job++; eng.onLoop = null; glc.style.visibility = 'visible'; return eng.play('rest', {dy: REST_IN.dy, t0: REST_IN.t0}); },
+      rest() { return go('rest', () => { job++; eng.onLoop = null; glc.style.visibility = 'visible'; return eng.play('rest', {dy: REST_IN.dy, t0: REST_IN.t0}); }); },
       // 趴下影片倒著播 = 坐起來，接回待機
-      async standUp() {
+      standUp() { return go('idle', () => this._standUp()); },
+      async _standUp() {
         job++; eng.onLoop = null;
         if (reduce()) return eng.play('idle');
         let m; try { [m] = await Promise.all([loadClip('lie'), P.load(P.RIG.idle.img)]); } catch (e) { return eng.play('idle'); }
@@ -478,10 +496,10 @@
           near: () => { eng.play('idle'); eng.seek = 0; },
           end: () => { eng.seek = null; }});
       },
-      pause: () => eng.pause(),
-      resume: () => eng.resume(),
+      pause: () => eng && eng.pause(),
+      resume: () => eng && !failed && eng.resume(),
       preload: name => loadClip(name).catch(() => {}),
-      destroy() { dead = true; job++; cancelAnimationFrame(raf); eng.stop(); el.innerHTML = ''; el.classList.remove('pt-stage', 'wide'); },
+      destroy() { dead = true; job++; cancelAnimationFrame(raf); if (eng) eng.stop(); el.innerHTML = ''; el.classList.remove('pt-stage', 'wide'); },
     };
     return api;
   }
