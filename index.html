@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" translate="no" class="notranslate">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="color-scheme" content="dark">
+<meta name="google" content="notranslate">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -104,6 +105,10 @@ nav button.on{background:var(--acc);color:var(--acc-ink);font-weight:700}
 /* 長按不要選取文字、跳出 Google 搜尋或圖片選單（像 App，不像網頁）；輸入框照常可以選取、複製、貼上 */
 body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+/* 圖片、連結長按不跳 Google 搜圖／Lens：圖片不接收觸控，點擊交給外層按鈕 */
+img,svg,canvas{-webkit-user-drag:none;user-drag:none;-webkit-touch-callout:none}
+img{pointer-events:none}
+a{-webkit-touch-callout:none}
 img{-webkit-user-drag:none}
 body.drag-on{user-select:none;-webkit-user-select:none}
 .ch-row{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
@@ -3703,8 +3708,9 @@ document.addEventListener('pointermove', e => {
 });
 // 拖曳中不讓頁面跟著捲
 document.addEventListener('touchmove', e => { if (DRAG && DRAG.on) e.preventDefault(); }, {passive: false});
-// 長按選單只留給輸入框（複製、貼上）
-document.addEventListener('contextmenu', e => { if (!e.target.closest('input, textarea, [contenteditable]')) e.preventDefault(); });
+// 長按選單、選取文字、拖曳圖片只留給輸入框（複製、貼上），其他地方長按不會跳出 Google 搜尋或 Lens
+const inField = e => e.target.closest && e.target.closest('input, textarea, [contenteditable]');
+for (const ev of ['contextmenu', 'selectstart', 'dragstart']) document.addEventListener(ev, e => { if (!inField(e)) e.preventDefault(); });
 const endDrag = () => {
   const st = DRAG; DRAG = null; if (!st) return;
   clearTimeout(st.t); if (!st.on) return;
