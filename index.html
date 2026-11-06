@@ -582,85 +582,188 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 <body>
 
 <div id="welcome" hidden></div>
-<script type="text/plain" id="gs-code">// 健身紀錄 → Google 雲端自動備份（每個人用自己的 Google 帳號部署，資料只存在自己的雲端硬碟）
-// 整段複製，貼到 script.google.com 新專案（取代原本的內容）→ 存檔 → 部署成「網頁應用程式」。
+<script type="text/plain" id="gs-manifest">{
+  "timeZone": "Asia/Taipei",
+  "dependencies": {},
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/script.external_request"
+  ],
+  "webapp": {
+    "executeAs": "USER_DEPLOYING",
+    "access": "ANYONE_ANONYMOUS"
+  }
+}
+</script>
+<script type="text/plain" id="gs-code">// 健身紀錄 → Google 雲端自動備份（第 5 版：最高安全規格）
+// 每個人用自己的 Google 帳號部署，資料只存在自己的雲端硬碟。
+// 安全設計：
+//   ・只拿得到它自己建立的「健身紀錄備份」資料夾（drive.file 權限），看不到你雲端硬碟裡的其他東西
+//   ・只會新增檔案，永遠不覆蓋、不刪除任何備份（程式裡沒有刪除功能）
+//   ・只收得下 App 產生的健身紀錄 JSON：格式、大小、每天的份數和總量都有上限
+//   ・密碼只在你自己開放的 15 分鐘內給一次；每次備份後自動換新密碼
+//   ・網址外流也沒用：沒有密碼什麼都做不了
+// 整段複製，貼到 script.google.com 專案的「程式碼.gs」（取代原本的內容），並照 App 裡的說明設定 appsscript.json。
 
 const APP_URL = 'https://yueruiew5468-pixel.github.io/gym-log/';
-const KEEP = 30; // 只留最新 30 份，更舊的移到垃圾桶（30 天內還能救回）
+const API = 'https://www.googleapis.com/drive/v3/files';
+const MAX_PER_DAY = 5;             // 每天最多幾份
+const MAX_BYTES = 15 * 1024 * 1024; // 每份最大 15 MB（含進度照片）
+const MAX_DAY_BYTES = 40 * 1024 * 1024; // 每天總量最多 40 MB
+const OPEN_MS = 15 * 60 * 1000;    // 開放連線 15 分鐘，給出一次密碼就立刻關閉
 
-// 第一次執行時自動在雲端硬碟建立「健身紀錄備份」資料夾，並產生一組密碼，都存在這個專案裡
+// 呼叫 Google 雲端硬碟（只用 drive.file 權限）
+function api_(method, url, payload, type) {
+  const o = {method: method, headers: {Authorization: 'Bearer ' + ScriptApp.getOAuthToken()}, muteHttpExceptions: true};
+  if (payload != null) { o.payload = payload; o.contentType = type || 'application/json'; }
+  const r = UrlFetchApp.fetch(url, o), code = r.getResponseCode(), text = r.getContentText();
+  if (code >= 300) throw new Error('雲端硬碟回應 ' + code);
+  return text ? JSON.parse(text) : {};
+}
+
+// 第一次執行時在雲端硬碟建立「健身紀錄備份」資料夾（只有你看得到），id 存在這個專案裡
 function folder_() {
   const p = PropertiesService.getScriptProperties();
-  const id = p.getProperty('FOLDER');
-  if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
-  const f = DriveApp.createFolder('健身紀錄備份');
-  p.setProperty('FOLDER', f.getId());
+  const id = p.getProperty('FOLDER2');
+  if (id) {
+    try { const f = api_('get', API + '/' + id + '?fields=id,trashed,webViewLink'); if (!f.trashed) return f; } catch (e) {}
+  }
+  const f = api_('post', API + '?fields=id,webViewLink', JSON.stringify({name: '健身紀錄備份', mimeType: 'application/vnd.google-apps.folder'}));
+  p.setProperty('FOLDER2', f.id);
   return f;
 }
+
+function newKey_() { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, ''); } // 256 位元
 function key_() {
   const p = PropertiesService.getScriptProperties();
   let k = p.getProperty('KEY');
-  if (!k) { k = Utilities.getUuid().replace(/-/g, ''); p.setProperty('KEY', k); }
+  if (!k) { k = newKey_(); p.setProperty('KEY', k); }
   return k;
 }
+// 比對密碼時不提早結束，避免從回應時間猜出密碼
+function same_(a, b) {
+  a = String(a || ''); b = String(b || '');
+  let d = a.length ^ b.length;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) d |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  return d === 0;
+}
 
-// 只有你自己在程式編輯器執行「開放連線」（或第一次的「測試」）後的 1 小時內，手機才拿得到密碼。
-// 平常就算這個網址外流，別人也拿不到密碼，沒辦法寫入或擠掉你的備份。
+// 只有你自己在程式編輯器執行「開放連線」（或第一次的「測試」）後的 15 分鐘內，手機才拿得到密碼，而且只給一次。
 function isOpen_() { return Date.now() < Number(PropertiesService.getScriptProperties().getProperty('OPEN_UNTIL') || 0); }
 function 開放連線() {
-  PropertiesService.getScriptProperties().setProperty('OPEN_UNTIL', String(Date.now() + 3600 * 1000));
-  Logger.log('接下來 1 小時內可以用手機連上 App（掃 QR code 或貼上網址）');
+  PropertiesService.getScriptProperties().setProperty('OPEN_UNTIL', String(Date.now() + OPEN_MS));
+  Logger.log('接下來 15 分鐘內可以用手機連上 App（掃 QR code 或貼上網址），連上一次就會自動關閉');
+}
+function close_() { PropertiesService.getScriptProperties().setProperty('OPEN_UNTIL', '0'); }
+
+// 密碼每次備份都會自動換。懷疑外流又等不到下次備份時，手動執行這個：舊密碼立刻失效，之後執行「開放連線」，手機再連一次
+function 換密碼() {
+  PropertiesService.getScriptProperties().setProperty('KEY', newKey_());
+  Logger.log('已換新密碼。請執行「開放連線」，再用手機重新連上');
+}
+// 看最近有沒有人用錯的密碼來試
+function 查看安全紀錄() {
+  const p = PropertiesService.getScriptProperties();
+  Logger.log('密碼錯誤的嘗試：' + (p.getProperty('BAD_LOG') || '沒有'));
+  Logger.log('今天已備份：' + (p.getProperty('N') || 0) + ' 份，' + Math.round(Number(p.getProperty('BYTES') || 0) / 1024) + ' KB');
+}
+function bad_(why) {
+  const p = PropertiesService.getScriptProperties();
+  const log = (p.getProperty('BAD_LOG') || '').split('\n').filter(Boolean);
+  log.unshift(Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm') + ' ' + why);
+  p.setProperty('BAD_LOG', log.slice(0, 50).join('\n'));
+}
+
+// 確認內容真的是健身紀錄 App 產生的備份
+function valid_(text) {
+  if (typeof text !== 'string' || text.length < 2 || text.length > MAX_BYTES) return '大小不對';
+  let d; try { d = JSON.parse(text); } catch (e) { return '不是 JSON'; }
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return '格式不對';
+  if (!Array.isArray(d.logs) || !Array.isArray(d.custom)) return '不是健身紀錄的備份';
+  const allowed = ['v', 'custom', 'hidden', 'logs', 'units', 'notes', 'ranges', 'load', 'uni', 'alias', 'gym', 'body', 'templates', 'settings', 'today', 'photos'];
+  for (const k in d) if (allowed.indexOf(k) < 0) return '有不認得的欄位';
+  if (d.photos) {
+    if (!Array.isArray(d.photos)) return '照片格式不對';
+    for (const ph of d.photos) if (!ph || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(String(ph.data || ''))) return '照片格式不對';
+  }
+  return '';
 }
 
 // App 傳備份過來（或第一次連線）
 function doPost(e) {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return json_({ok: false, err: '忙碌中，請稍後再試'});
   try {
     const body = JSON.parse(e.postData.contents);
-    if (body.connect) return isOpen_() ? json_({ok: true, key: key_(), folder: folder_().getUrl()})
-      : json_({ok: false, err: '還沒開放連線：到 script.google.com 打開備份專案，函式選「開放連線」按「執行」，1 小時內再連一次'});
-    if (body.key !== key_()) return json_({ok: false, err: '密碼不對'});
-    const name = String(body.name || '').replace(/[^\w一-鿿.-]/g, '');
-    if (!/^健身紀錄-[\d-]+\.json$/.test(name)) return json_({ok: false, err: '檔名不對'});
+    if (body.connect) {
+      if (!isOpen_()) { bad_('連線被拒（沒有開放）'); return json_({ok: false, err: '還沒開放連線：到 script.google.com 打開備份專案，函式選「開放連線」按「執行」，15 分鐘內再連一次'}); }
+      close_(); // 給一次就關
+      return json_({ok: true, key: key_(), folder: folder_().webViewLink});
+    }
+    if (!same_(body.key, key_())) { bad_('密碼錯誤'); return json_({ok: false, err: '密碼不對'}); }
+    const why = valid_(body.data);
+    if (why) { bad_('內容被拒：' + why); return json_({ok: false, err: '備份內容被拒：' + why}); }
+    // 每天的份數和總量上限
+    const tz = Session.getScriptTimeZone(), now = new Date(), today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+    const p = PropertiesService.getScriptProperties(), sameDay = p.getProperty('DAY') === today;
+    const cnt = sameDay ? Number(p.getProperty('N') || 0) : 0, bytes = sameDay ? Number(p.getProperty('BYTES') || 0) : 0;
+    if (cnt >= MAX_PER_DAY) return json_({ok: false, err: '今天已經備份 ' + MAX_PER_DAY + ' 次了，明天再試'});
+    if (bytes + body.data.length > MAX_DAY_BYTES) return json_({ok: false, err: '今天的備份量已達上限，明天再試'});
+    p.setProperties({DAY: today, N: String(cnt + 1), BYTES: String(bytes + body.data.length)});
+    // 檔名由這裡決定（日期＋時間），永遠是新的檔案：不覆蓋、不刪除任何舊備份
+    const name = '健身紀錄-' + Utilities.formatDate(now, tz, 'yyyy-MM-dd-HHmmss') + '.json';
     const folder = folder_();
-    const same = folder.getFilesByName(name);
-    while (same.hasNext()) same.next().setTrashed(true);
-    folder.createFile(name, body.data, 'application/json');
-    const all = [];
-    const it = folder.getFiles();
-    while (it.hasNext()) { const f = it.next(); if (/^健身紀錄-.*\.json$/.test(f.getName())) all.push(f); }
-    all.sort((a, b) => b.getDateCreated() - a.getDateCreated());
-    all.slice(KEEP).forEach(f => f.setTrashed(true));
-    return json_({ok: true, name: name, folder: folder.getUrl()});
+    const b = 'gymlog' + Utilities.getUuid().replace(/-/g, '');
+    const meta = JSON.stringify({name: name, parents: [folder.id], mimeType: 'application/json'});
+    const data = '--' + b + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + meta + '\r\n--' + b
+      + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + body.data + '\r\n--' + b + '--';
+    api_('post', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+      Utilities.newBlob(data).getBytes(), 'multipart/related; boundary=' + b);
+    // 每次備份成功就換一組新密碼交給 App：偷到的舊密碼下一次就失效；
+    // 如果有人搶先用偷來的密碼，你的 App 會出現「密碼不對」，也就知道出事了
+    const next = newKey_();
+    p.setProperty('KEY', next);
+    return json_({ok: true, name: name, folder: folder.webViewLink, nextKey: next});
   } catch (err) {
-    return json_({ok: false, err: String(err)});
+    return json_({ok: false, err: '備份失敗，請稍後再試'});
+  } finally {
+    lock.releaseLock();
   }
 }
 
-// 用瀏覽器打開部署後的網址 → 顯示 QR code，用手機掃描就會連上 App
+// 用瀏覽器打開部署後的網址 → 只有在開放的 15 分鐘內才顯示 QR code
 function doGet() {
-  if (!isOpen_()) return HtmlService.createHtmlOutput('<meta name="viewport" content="width=device-width,initial-scale=1"><body style="font:16px/1.6 sans-serif;background:#0a0a0b;color:#f3f3ee;text-align:center;padding:40px 16px"><h2>目前沒有開放連線</h2><p>請到 script.google.com 打開這個專案，函式選「開放連線」按「執行」，再重新整理這一頁。</p>').setTitle('健身紀錄雲端備份');
-  const link = APP_URL + '#cloud=' + encodeURIComponent(ScriptApp.getService().getUrl() + '|' + key_());
+  const page = (h, t) => HtmlService.createHtmlOutput('<meta name="viewport" content="width=device-width,initial-scale=1"><body style="font:16px/1.6 sans-serif;background:#0a0a0b;color:#f3f3ee;text-align:center;padding:40px 16px"><h2>' + h + '</h2><p>' + t + '</p>').setTitle('健身紀錄雲端備份');
+  if (!isOpen_()) return page('目前沒有開放連線', '請到 script.google.com 打開這個專案，函式選「開放連線」按「執行」，再重新整理這一頁。');
+  let url = '';
+  try { url = ScriptApp.getService().getUrl(); } catch (e) {}
+  if (!url) return page('請改用貼上網址', '把這一頁的網址（結尾是 /exec）傳到手機，在 App「設定 → 資料備份」按「貼上網址」。');
+  close_(); // 顯示一次就關
+  const link = APP_URL + '#cloud=' + encodeURIComponent(url + '|' + key_());
   const html = '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<style>body{font:16px/1.6 -apple-system,"PingFang TC","Noto Sans TC",sans-serif;background:#0a0a0b;color:#f3f3ee;text-align:center;padding:32px 16px}'
     + '#qr{display:inline-block;background:#fff;padding:16px;border-radius:16px;margin:16px 0}a{display:inline-block;background:#d4ff3a;color:#0a0a0b;'
     + 'padding:14px 24px;border-radius:99px;font-weight:700;text-decoration:none;margin-top:8px}p{color:#8b8b92;max-width:420px;margin:8px auto}</style>'
     + '<h2>健身紀錄 · 雲端備份已就緒</h2><p>用手機相機掃描下面的 QR code，會打開健身紀錄 App 並自動連上。</p>'
     + '<div id="qr"></div><br><a href="' + link + '" target="_top">在這台裝置連上 App</a>'
-    + '<p>這個頁面含有你的備份密碼，不要分享給別人。</p>'
-    + '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></scr' + 'ipt>'
+    + '<p>這個 QR code 只會顯示這一次，關掉就沒了。不要截圖或分享給別人。</p>'
+    + '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous"></scr' + 'ipt>'
     + '<script>new QRCode(document.getElementById("qr"), {text: ' + JSON.stringify(link) + ', width: 240, height: 240});</scr' + 'ipt>';
-  return HtmlService.createHtmlOutput(html).setTitle('健身紀錄雲端備份').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  return HtmlService.createHtmlOutput(html).setTitle('健身紀錄雲端備份').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT); // 不准別的網站把這頁嵌進去
 }
 
 function json_(o) {
   return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 }
 
-// 部署前先選這個按「執行」：完成授權、建立備份資料夾，並開放 1 小時連線
+// 部署前先選這個按「執行」：完成授權、建立備份資料夾，並開放 15 分鐘連線
 function 測試() {
+  const f = folder_();
+  Logger.log('備份資料夾：' + f.webViewLink);
+  Logger.log('密碼已建立：' + (key_().length === 64));
   開放連線();
-  Logger.log('資料夾：' + folder_().getName());
-  Logger.log('密碼已建立：' + (key_().length === 32));
 }
 </script>
 <div id="splash" aria-hidden="true">
@@ -2626,17 +2729,20 @@ function renderCloudGuide() {
     <ol class="gd">
     ${step(1, '建立備份程式', `<p>用電腦打開 <a href="https://script.google.com/home/projects/create" target="_blank" rel="noopener">script.google.com</a>，登入你的 Google 帳號，會自動開一個新專案。</p>
       <p>把編輯區原本的內容全部刪掉，貼上備份程式，按上方的「儲存」。</p>
-      <button class="btn sm primary" data-act="gsCopy">複製備份程式</button>`)}
-    ${step(2, '授權', `<p>上方函式選單選「測試」，按「執行」→「審查權限」→ 選你的帳號 →「允許」。這一步也會開放 1 小時，讓手機可以連上。</p>
+      <button class="btn sm primary" data-act="gsCopy">複製備份程式</button>
+      <p style="margin-top:12px">再設定權限，讓程式只能碰它自己建立的檔案：左邊齒輪「專案設定」→ 勾選「在編輯器中顯示『appsscript.json』資訊清單檔案」→ 回到編輯器打開 appsscript.json，全部換成下面這段，按「儲存」。</p>
+      <button class="btn sm" data-act="gsCopy" data-id="manifest">複製權限設定</button>`)}
+    ${step(2, '授權', `<p>上方函式選單選「測試」，按「執行」→「審查權限」→ 選你的帳號 →「允許」。這一步也會開放 15 分鐘，讓手機可以連上（連上一次就自動關閉）。</p>
       <p class="small muted">如果出現「Google 尚未驗證這個應用程式」：按「進階」→「前往（不安全）」。這是你自己的程式，只會存取你自己的雲端。</p>`)}
     ${step(3, '部署', `<p>右上角「部署」→「新增部署作業」→ 齒輪選「網頁應用程式」。</p>
       <p>「執行身分」選<b>我</b>，「誰可以存取」選<b>所有人</b>（App 才送得進來，有密碼保護），按「部署」。</p>
       <p>複製「網頁應用程式」的網址（結尾是 /exec），用電腦瀏覽器打開，會看到一個 QR code。</p>`)}
     ${step(4, '連上手機', `<p>用手機相機掃描 QR code，會打開健身紀錄並自動連上，馬上備份一次。</p>
       <p class="small muted">沒辦法掃描的話，把那個 /exec 網址傳到手機，到「設定 → 資料備份」按「貼上網址」。</p>
-      <p class="small muted">超過 1 小時或換新手機：回到 script.google.com，函式選「開放連線」按「執行」，再連一次。平常沒開放時，就算網址外流，別人也拿不到密碼。</p>`)}
+      <p class="small muted">超過 15 分鐘或換新手機：回到 script.google.com，函式選「開放連線」按「執行」，再連一次。平常沒開放時，就算網址外流，別人也拿不到密碼。</p>`)}
     </ol>
-    <p class="small muted">備份程式在你自己的 Google 帳號裡執行，資料只會存到你的雲端硬碟，其他人（包括 App 作者）都看不到。資料夾裡最多留最新 30 份。</p>`;
+    <p class="small muted">備份程式在你自己的 Google 帳號裡執行，只拿得到它自己建立的「健身紀錄備份」資料夾，看不到你雲端硬碟裡的其他東西。資料只存在你的雲端，其他人（包括 App 作者）都看不到。密碼每次備份都會自動更換。程式只會新增備份，永遠不覆蓋、不刪除舊的備份。</p>
+    <p class="small muted"><b style="color:var(--text)">不要把備份資料夾設成「知道連結的人都能查看」</b>，保持「限制」，只有你自己看得到。</p>`;
 }
 function openPanel(ctx) { detailCtx = ctx; renderDetail(); $('#detail').classList.add('on'); $('#dt-body').scrollTop = 0; }
 
@@ -2679,7 +2785,11 @@ const dayLogs = date => S.logs.filter(l => l.date === date).sort((a, b) => a.ts 
 
 /* ================= 雲端自動備份（Google Apps Script） ================= */
 // 設定只存在這支手機裡（網址和密碼不寫進公開的程式碼）
-const backupData = () => S.settings.photoBackup && PH.length ? {...S, photos: PH} : S;
+// 備份檔裡不放雲端備份的網址和密碼：備份檔就算外流，也拿不到備份程式的鑰匙
+const backupData = () => {
+  const {cloud, ...settings} = S.settings, d = {...S, settings};
+  return S.settings.photoBackup && PH.length ? {...d, photos: PH} : d;
+};
 let CLOUD_BUSY = false;
 async function cloudBackup(manual) {
   const c = S.settings.cloud;
@@ -2691,8 +2801,11 @@ async function cloudBackup(manual) {
     let r;
     try { r = await (await fetch(c.url, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body})).json(); }
     catch (e) { throw new Error('連不上雲端程式，請確認部署時「誰可以存取」選的是「所有人」'); }
+    if (!r.ok && r.err === '密碼不對') throw new Error('密碼不對：密碼可能被換過，或有人用了偷來的密碼。請到 script.google.com 執行「換密碼」和「開放連線」，再重新連一次');
     if (!r.ok) throw new Error(r.err || '雲端回應錯誤');
     Object.assign(c, {last: Date.now(), err: '', pending: false}, cGoogle(r.folder, 'drive.google.com') ? {folder: r.folder} : {});
+    // 備份程式每次都會換一組新密碼，偷到的舊密碼下次就沒用了
+    if (/^\w{16,64}$/.test(r.nextKey || '')) c.key = r.nextKey;
     S.settings.lastExport = dstr(); save();
     if (manual) toast('已備份到雲端');
   } catch (e) {
@@ -3963,9 +4076,9 @@ const H = {
   cloudNow: () => S.settings.cloud ? cloudBackup(true) : showTab('set'),
   cloudOff: async () => { if (!await ask('中斷雲端備份？已經存在雲端的備份不會被刪掉。')) return; S.settings.cloud = null; save(); renderSet(); },
   cloudGuide: () => openPanel({kind: 'cloudGuide'}),
-  gsCopy: async () => {
-    const code = $('#gs-code').textContent.trim();
-    try { await navigator.clipboard.writeText(code); toast('已複製備份程式，貼到 script.google.com'); }
+  gsCopy: async id => {
+    const code = $(id === 'manifest' ? '#gs-manifest' : '#gs-code').textContent.trim();
+    try { await navigator.clipboard.writeText(code); toast(id === 'manifest' ? '已複製權限設定，貼到 appsscript.json' : '已複製備份程式，貼到 script.google.com'); }
     catch (e) { note('複製失敗，請改用電腦打開這個 App，再按一次「複製備份程式」。'); }
   },
   cloudPaste: async () => {
