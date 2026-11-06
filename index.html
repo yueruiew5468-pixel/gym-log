@@ -2,6 +2,8 @@
 <html lang="zh-Hant" translate="no" class="notranslate">
 <head>
 <meta charset="utf-8">
+<!-- 只准連到這幾個網站：就算有惡意程式混進來，也沒辦法把資料送去別的地方 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net blob:; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' data: blob: https://cdn.jsdelivr.net https://tessdata.projectnaptha.com https://script.google.com https://script.googleusercontent.com; img-src 'self' data: blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; media-src 'self' data: blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="color-scheme" content="dark">
@@ -326,6 +328,37 @@ svg.body text{fill:var(--dim);font:500 8px var(--fd);letter-spacing:.2em;text-an
 textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--line2);background:var(--bg);color:var(--text);font:inherit;font-size:16px;padding:10px 12px;outline:none;resize:vertical}
 .rng{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .rng input{width:76px;height:46px;border-radius:12px;border:1px solid var(--line2);background:var(--bg);text-align:center;font:700 18px var(--fd);outline:none}
+/* 設定與備註：一列一項 */
+.opt-list{padding-top:2px}
+.opt-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+.opt-row:first-child{border-top:0}
+.opt-row .k{font-size:14px;color:var(--text);white-space:nowrap}
+.opt-row.sub-row{border-top:0;padding-top:0}
+.opt-row.sub-row .k{color:var(--muted);font-size:13px}
+.opt-row.col{flex-direction:column;align-items:stretch;gap:8px}
+.opt-row .rng{margin:0;gap:6px}
+.opt-row .rng input{width:58px;height:38px;font-size:16px;border-radius:10px}
+/* 資料備份卡片、雲端設定步驟 */
+.bk-stat{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px}
+.bk-stat span{color:var(--muted);font-size:13px}.bk-stat b{font-size:15px}
+.bk-box{border:1px solid var(--line);border-radius:var(--r2);padding:14px;margin:12px 0}
+.bk-box p{margin:6px 0 10px}
+.bk-box .set-row{padding:10px 0;border-bottom:0;border-top:1px solid var(--line)}
+.bk-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.bk-tag{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--card2);color:var(--muted);white-space:nowrap}
+.bk-tag.ok{color:var(--acc);background:var(--acc-soft)}.bk-tag.bad{color:var(--hard)}
+.bk-btns{display:flex;gap:8px;margin-top:4px}.bk-btns .btn{flex:1;margin:0}
+.bk-link{display:block;margin:12px auto 0;font-size:13px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.gd{list-style:none;margin:0 0 16px;padding:0}
+.gd-step{display:flex;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+.gd-step:first-child{border-top:0}
+.gd-n{flex:none;width:26px;height:26px;border-radius:50%;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center;font:700 14px var(--fd)}
+.gd-step>div>b{display:block;margin-bottom:4px}.gd-step p{margin:0 0 8px;font-size:14px;color:#d6d6d1}.gd-step p.muted{color:var(--muted)}
+.gd-step a{color:var(--acc)}
+.opt-hint{margin:-4px 0 8px;font-size:12px;color:var(--muted);text-align:right}
+.sg{display:inline-flex;flex:none;background:var(--bg);border:1px solid var(--line2);border-radius:11px;padding:3px;gap:2px}
+.sg button{height:30px;padding:0 11px;border-radius:8px;font-size:13px;color:var(--muted);white-space:nowrap}
+.sg button.on{background:var(--text);color:var(--bg);font-weight:600}
 
 /* ---------- 本週 ---------- */
 .week{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 12px;margin-bottom:12px}
@@ -426,6 +459,11 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 
 /* ---------- 身體數據 ---------- */
 .bgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bgrid label.got input{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc-mid)}
+.ocr-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:100%;min-height:62px;font-weight:600}
+.ocr-btn svg{width:20px;height:20px;color:var(--acc)}
+.ocr-btn span{font-size:12px;font-weight:400;color:var(--muted)}
+.ocr-hint{margin:12px 0 0}
 .bgrid label{display:block}
 .bgrid input,.dinput{width:100%;height:50px;border-radius:14px;border:1px solid var(--line2);background:var(--bg);padding:0 12px;font:700 18px var(--fd);outline:none}
 .dinput{font:500 16px var(--fb);color-scheme:dark;-webkit-appearance:none}
@@ -544,6 +582,87 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 <body>
 
 <div id="welcome" hidden></div>
+<script type="text/plain" id="gs-code">// 健身紀錄 → Google 雲端自動備份（每個人用自己的 Google 帳號部署，資料只存在自己的雲端硬碟）
+// 整段複製，貼到 script.google.com 新專案（取代原本的內容）→ 存檔 → 部署成「網頁應用程式」。
+
+const APP_URL = 'https://yueruiew5468-pixel.github.io/gym-log/';
+const KEEP = 30; // 只留最新 30 份，更舊的移到垃圾桶（30 天內還能救回）
+
+// 第一次執行時自動在雲端硬碟建立「健身紀錄備份」資料夾，並產生一組密碼，都存在這個專案裡
+function folder_() {
+  const p = PropertiesService.getScriptProperties();
+  const id = p.getProperty('FOLDER');
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
+  const f = DriveApp.createFolder('健身紀錄備份');
+  p.setProperty('FOLDER', f.getId());
+  return f;
+}
+function key_() {
+  const p = PropertiesService.getScriptProperties();
+  let k = p.getProperty('KEY');
+  if (!k) { k = Utilities.getUuid().replace(/-/g, ''); p.setProperty('KEY', k); }
+  return k;
+}
+
+// 只有你自己在程式編輯器執行「開放連線」（或第一次的「測試」）後的 1 小時內，手機才拿得到密碼。
+// 平常就算這個網址外流，別人也拿不到密碼，沒辦法寫入或擠掉你的備份。
+function isOpen_() { return Date.now() < Number(PropertiesService.getScriptProperties().getProperty('OPEN_UNTIL') || 0); }
+function 開放連線() {
+  PropertiesService.getScriptProperties().setProperty('OPEN_UNTIL', String(Date.now() + 3600 * 1000));
+  Logger.log('接下來 1 小時內可以用手機連上 App（掃 QR code 或貼上網址）');
+}
+
+// App 傳備份過來（或第一次連線）
+function doPost(e) {
+  try {
+    const body = JSON.parse(e.postData.contents);
+    if (body.connect) return isOpen_() ? json_({ok: true, key: key_(), folder: folder_().getUrl()})
+      : json_({ok: false, err: '還沒開放連線：到 script.google.com 打開備份專案，函式選「開放連線」按「執行」，1 小時內再連一次'});
+    if (body.key !== key_()) return json_({ok: false, err: '密碼不對'});
+    const name = String(body.name || '').replace(/[^\w一-鿿.-]/g, '');
+    if (!/^健身紀錄-[\d-]+\.json$/.test(name)) return json_({ok: false, err: '檔名不對'});
+    const folder = folder_();
+    const same = folder.getFilesByName(name);
+    while (same.hasNext()) same.next().setTrashed(true);
+    folder.createFile(name, body.data, 'application/json');
+    const all = [];
+    const it = folder.getFiles();
+    while (it.hasNext()) { const f = it.next(); if (/^健身紀錄-.*\.json$/.test(f.getName())) all.push(f); }
+    all.sort((a, b) => b.getDateCreated() - a.getDateCreated());
+    all.slice(KEEP).forEach(f => f.setTrashed(true));
+    return json_({ok: true, name: name, folder: folder.getUrl()});
+  } catch (err) {
+    return json_({ok: false, err: String(err)});
+  }
+}
+
+// 用瀏覽器打開部署後的網址 → 顯示 QR code，用手機掃描就會連上 App
+function doGet() {
+  if (!isOpen_()) return HtmlService.createHtmlOutput('<meta name="viewport" content="width=device-width,initial-scale=1"><body style="font:16px/1.6 sans-serif;background:#0a0a0b;color:#f3f3ee;text-align:center;padding:40px 16px"><h2>目前沒有開放連線</h2><p>請到 script.google.com 打開這個專案，函式選「開放連線」按「執行」，再重新整理這一頁。</p>').setTitle('健身紀錄雲端備份');
+  const link = APP_URL + '#cloud=' + encodeURIComponent(ScriptApp.getService().getUrl() + '|' + key_());
+  const html = '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<style>body{font:16px/1.6 -apple-system,"PingFang TC","Noto Sans TC",sans-serif;background:#0a0a0b;color:#f3f3ee;text-align:center;padding:32px 16px}'
+    + '#qr{display:inline-block;background:#fff;padding:16px;border-radius:16px;margin:16px 0}a{display:inline-block;background:#d4ff3a;color:#0a0a0b;'
+    + 'padding:14px 24px;border-radius:99px;font-weight:700;text-decoration:none;margin-top:8px}p{color:#8b8b92;max-width:420px;margin:8px auto}</style>'
+    + '<h2>健身紀錄 · 雲端備份已就緒</h2><p>用手機相機掃描下面的 QR code，會打開健身紀錄 App 並自動連上。</p>'
+    + '<div id="qr"></div><br><a href="' + link + '" target="_top">在這台裝置連上 App</a>'
+    + '<p>這個頁面含有你的備份密碼，不要分享給別人。</p>'
+    + '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></scr' + 'ipt>'
+    + '<script>new QRCode(document.getElementById("qr"), {text: ' + JSON.stringify(link) + ', width: 240, height: 240});</scr' + 'ipt>';
+  return HtmlService.createHtmlOutput(html).setTitle('健身紀錄雲端備份').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function json_(o) {
+  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// 部署前先選這個按「執行」：完成授權、建立備份資料夾，並開放 1 小時連線
+function 測試() {
+  開放連線();
+  Logger.log('資料夾：' + folder_().getName());
+  Logger.log('密碼已建立：' + (key_().length === 32));
+}
+</script>
 <div id="splash" aria-hidden="true">
   <div class="bgword a">GYM LOG · GYM LOG · GYM LOG · GYM LOG · </div>
   <div class="bgword b">LIFT · LOG · REPEAT · LIFT · LOG · REPEAT · </div>
@@ -695,11 +814,11 @@ const RAW = `
 反手引體向上|徒手|Chin-Up|lat,bi|mb
 負重引體向上|其他|Weighted_Pull_Ups|lat|bi,mb
 彈力帶輔助引體向上|彈力帶|Band_Assisted_Pull-Up|lat|bi
-滑輪下拉|繩索|Wide-Grip_Lat_Pulldown|lat|bi,mb
-窄握滑輪下拉|繩索|Close-Grip_Front_Lat_Pulldown|lat|bi,mb
-V 把下拉|繩索|V-Bar_Pulldown|lat|bi,mb
-反握滑輪下拉|繩索|Underhand_Cable_Pulldowns|lat,bi|mb
-單臂滑輪下拉|繩索|One_Arm_Lat_Pulldown|lat|bi
+滑輪下拉|器械|Wide-Grip_Lat_Pulldown|lat|bi,mb
+窄握滑輪下拉|器械|Close-Grip_Front_Lat_Pulldown|lat|bi,mb
+V 把下拉|器械|V-Bar_Pulldown|lat|bi,mb
+反握滑輪下拉|器械|Underhand_Cable_Pulldowns|lat,bi|mb
+單臂滑輪下拉|器械|One_Arm_Lat_Pulldown|lat|bi
 直臂下拉|繩索|Straight-Arm_Pulldown|lat|tri
 槓鈴划船|槓鈴|Bent_Over_Barbell_Row|lat,mb|bi,dre,lb
 反手槓鈴划船|槓鈴|Reverse_Grip_Bent-Over_Rows|lat,mb|bi
@@ -1926,6 +2045,7 @@ function defaults() {
     notes: {},       // 每個動作的備註
     ranges: {},      // 每個動作的目標次數 {min, max}
     load: {},        // 掛槓片的動作 {sd: 2 兩邊都掛 | 1 只有一邊, base: 槓子或機器本身重量(公斤)}
+    uni: {},         // 有時單手做的動作 {id: 1}；那一組單手做的紀錄會帶 uni: 1
     alias: {},       // 打字補記時自己的說法 → 動作 id（選過一次就記住）
     gym: {},         // 每天在哪間健身房 {日期: 健身房名稱}（同名機器在不同間重量不一樣）
     body: [],        // 身體數據 {date, weight(公斤), fat, chest, waist, hip, arm, thigh, calf}
@@ -1939,24 +2059,62 @@ function defaults() {
     today: {date: dstr(), exIds: []},
   };
 }
+/* ================= 外來資料清洗（防止惡意連結或備份檔塞進程式碼） ================= */
+const cStr = (x, n = 80) => String(x ?? '').replace(/[<>"'`\\&]/g, '').slice(0, n);
+const cNum = x => { const v = +x; return Number.isFinite(v) && v >= 0 && v < 1e6 ? v : null; };
+const cDate = x => /^\d{4}-\d{2}-\d{2}$/.test(x) ? x : null;
+const cExId = x => typeof x === 'string' && /^[bc]:[^<>"'`\\&]{1,80}$/.test(x) ? x : null;
+function cLog(l) {
+  if (!l || typeof l !== 'object') return null;
+  const exId = cExId(l.exId), date = cDate(l.date), w = cNum(l.w), r = cNum(l.r);
+  if (!exId || !date || w == null || r == null) return null;
+  const o = {id: cStr(l.id, 40) || uid(), exId, date, w, u: l.u === 'lb' ? 'lb' : 'kg', r: Math.round(r), feel: FEELS[l.feel] ? l.feel : 'j', ts: cNum(l.ts) || 0};
+  if (Array.isArray(l.pl)) { o.pl = l.pl.map(cNum).filter(x => x != null).slice(0, 20); o.sd = l.sd === 2 ? 2 : 1; }
+  if (l.uni) o.uni = 1;
+  if (l.memo) o.memo = cStr(l.memo, 200);
+  return o;
+}
+function cCustom(c) {
+  if (!c || typeof c !== 'object' || !/^c:[\w-]{1,40}$/.test(c.id)) return null;
+  const mus = a => (Array.isArray(a) ? a : []).filter(m => MUSCLES[m]);
+  return {id: c.id, name: cStr(c.name, 60) || '未命名動作', part: PARTS.includes(c.part) ? c.part : '全身', equip: EQUIPS.includes(c.equip) ? c.equip : '其他',
+    db: /^[\w-]{0,120}$/.test(c.db || '') ? c.db || '' : '', pm: mus(c.pm), sm: mus(c.sm), order: cNum(c.order) || 1000};
+}
+function cBody(b) {
+  if (!b || typeof b !== 'object' || !cDate(b.date)) return null;
+  const o = {date: b.date};
+  for (const k of BODY_KEYS) { const v = cNum(b[k]); if (v != null && v > 0) o[k] = v; }
+  if (b.src) o.src = cStr(b.src, 40);
+  return o;
+}
+// 身體數據的欄位（載入資料時就要用到，所以不能等到下面的 BODY 才定義）
+const BODY_KEYS = ['weight','fat','smm','fatkg','muscle','ffm','bmi','bmr','visceral','water','protein','bone','chest','waist','hip','arm','thigh','calf'];
+const cGym = g => Object.fromEntries(Object.entries(g && typeof g === 'object' ? g : {}).filter(([d]) => cDate(d)).map(([d, n]) => [d, cStr(n, 30)]).filter(([, n]) => n));
+// 只接受 Google 的網址，避免被塞 javascript: 這類連結
+const cGoogle = (u, host) => typeof u === 'string' && new RegExp('^https://' + host.replace(/\./g, '\\.') + '/').test(u) ? u : '';
+
 function normalize(s) {
   const d = defaults();
   // 第一階段的資料把內建動作也存進 exercises，只取自訂的
   const custom = Array.isArray(s.custom) ? s.custom
     : Array.isArray(s.exercises) ? s.exercises.filter(e => String(e.id).startsWith('c:')) : [];
+  const st = {...d.settings, ...(s.settings || {})};
+  st.gyms = (Array.isArray(st.gyms) ? st.gyms : []).map(g => cStr(g, 30)).filter(Boolean);
+  if (st.cloud) st.cloud = cGoogle(st.cloud.url, 'script.google.com') ? {...st.cloud, folder: cGoogle(st.cloud.folder, 'drive.google.com')} : null;
   return mergeIds({
-    v: 2, custom,
-    hidden: Array.isArray(s.hidden) ? s.hidden : [],
-    logs: Array.isArray(s.logs) ? s.logs : [],
+    v: 2, custom: custom.map(cCustom).filter(Boolean),
+    hidden: Array.isArray(s.hidden) ? s.hidden.filter(cExId) : [],
+    logs: Array.isArray(s.logs) ? s.logs.map(cLog).filter(Boolean) : [],
     units: s.units || {},
     notes: s.notes || {},
     ranges: s.ranges || {},
     load: s.load || {},
+    uni: s.uni || {},
     alias: s.alias || {},
-    gym: s.gym || {},
-    body: Array.isArray(s.body) ? s.body : [],
+    gym: cGym(s.gym),
+    body: Array.isArray(s.body) ? s.body.map(cBody).filter(Boolean) : [],
     templates: Array.isArray(s.templates) ? s.templates : d.templates,
-    settings: {...d.settings, ...(s.settings || {})},
+    settings: st,
     today: s.today && s.today.date ? s.today : d.today,
   });
 }
@@ -1973,10 +2131,16 @@ function mergeIds(s) {
 }
 // 預覽視窗（data: 網址）或無痕模式可能不能存資料，只提示一次
 let STORE_OK = true;
+let LOAD_FAIL = '';   // 讀取既有資料失敗時不准存檔，避免蓋掉
 try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); } catch (e) { STORE_OK = false; }
 function load() {
   if (!STORE_OK) return defaults();
-  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && (s.custom || s.exercises)) return normalize(s); } catch (e) {}
+  let raw = null;
+  try { raw = localStorage.getItem(KEY); const s = JSON.parse(raw); if (s && (s.custom || s.exercises)) return normalize(s); }
+  catch (e) {
+    // 讀檔失敗絕不能默默用空白資料蓋掉：原始資料另存一份，並停止寫入，提醒使用者
+    if (raw) { try { localStorage.setItem(KEY + '.rescue', raw); } catch (e2) {} LOAD_FAIL = String(e && e.message || e); }
+  }
   return defaults();
 }
 // 請瀏覽器把資料標記為「持久保存」，不要在空間不足或久未使用時自動清除
@@ -1991,11 +2155,12 @@ async function askPersist(manual) {
 }
 let saveWarned = false;
 function save() {
-  if (!STORE_OK) return;
+  if (!STORE_OK || LOAD_FAIL) return;
   try { localStorage.setItem(KEY, JSON.stringify(S)); }
   catch (e) { if (!saveWarned) { saveWarned = true; note('儲存失敗：' + e.message + '\n可能是空間不足，建議先匯出備份。'); } }
 }
 let S = load();
+if (LOAD_FAIL) setTimeout(() => note('讀取你的紀錄時出錯，為了不蓋掉原本的資料，這次先不會儲存任何東西。\n原始資料已另外保留。請先不要清除瀏覽器資料，並回報這個問題。\n（' + LOAD_FAIL + '）'), 800);
 
 let EXMAP = new Map(), EXS = [];
 function refreshEx() {
@@ -2027,11 +2192,15 @@ const memoHTML = s => s.memo ? `<em class="memo">${esc(s.memo)}</em>` : '';
 const loadOf = id => S.load[id] && S.load[id].sd ? S.load[id] : null;
 const plSum = pl => pl.reduce((a, b) => a + b, 0);
 const plTxt = s => s.pl && s.pl.length ? `${s.sd === 1 ? '只掛一邊' : '每邊'} ${s.pl.map(num).join('+')}` : '';
-const plHTML = s => s.pl && s.pl.length ? `<em class="pl-t">${plTxt(s)}</em>` : '';
+const plHTML = s => (s.uni ? '<em class="pl-t">單手</em>' : '') + (s.pl && s.pl.length ? `<em class="pl-t">${plTxt(s)}</em>` : '');
+// 有時單手做的動作：輸入區多一排「雙手／單手」
+const uniOn = id => !!S.uni[id];
+const uniSegHTML = (id, d) => uniOn(id) ? `<div class="seg">${[[0, '雙手'], [1, '單手']].map(([v, t]) =>
+  `<button class="${(d.uni ? 1 : 0) === v ? 'on' : ''}" data-act="uniSet" data-id="${esc(id)}" data-v="${v}">${t}</button>`).join('')}</div>` : '';
 function setsText(sets) {
   const g = [];
   for (const s of sets) {
-    const last = g[g.length - 1], p = plTxt(s);
+    const last = g[g.length - 1], p = [s.uni ? '單手' : '', plTxt(s)].filter(Boolean).join('、');
     if (last && last.w === s.w && last.u === uOf(s) && last.p === p) last.r.push(s.r); else g.push({w: s.w, u: uOf(s), p, r: [s.r]});
   }
   return g.map(x => `${wTxt(x.w, x.u)}${x.p ? `（${x.p}）` : ''} × ${x.r.join(', ')}`).join(' · ');
@@ -2053,7 +2222,7 @@ function getDraft(id) {
   if (!draft[id]) {
     const u = unitOf(id), t = todaySets(id), ls = lastSession(id);
     const ref = t.length ? t[t.length - 1] : ls ? ls.sets[0] : null;
-    draft[id] = {w: ref ? num(toU(ref.w, u)) : '', r: ref ? String(ref.r) : '', feel: 'j',
+    draft[id] = {w: ref ? num(toU(ref.w, u)) : '', r: ref ? String(ref.r) : '', feel: 'j', uni: uniOn(id) ? (ref ? ref.uni || 0 : 1) : 0,
       pl: ref && ref.pl && uOf(ref) === u ? [...ref.pl] : []};
     if (loadOf(id)) syncPl(id);
   }
@@ -2201,7 +2370,7 @@ function cardHTML(id) {
           <input type="number" inputmode="numeric" step="1" min="0" data-draft="r" data-id="${eid}" value="${esc(d.r)}" placeholder="0">
           <button data-act="stepR" data-id="${eid}" data-d="1">＋</button></div></div>
       </div>
-      <div class="seg">${Object.entries(FEELS).map(([k, v]) =>
+      ${uniSegHTML(id, d)}<div class="seg">${Object.entries(FEELS).map(([k, v]) =>
         `<button class="${d.feel === k ? 'on' : ''}" data-act="feel" data-id="${eid}" data-v="${k}">${v}</button>`).join('')}</div>
       <button class="btn primary big" data-act="addSet" data-id="${eid}">完成第 ${sets.length + 1} 組</button>
       ${setupHTML(id)}
@@ -2243,6 +2412,7 @@ function updateConv(id, src) {
 /* ================= 本週、加重提醒、暖身、備註 ================= */
 const svgPen = '<svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"/></svg>';
 const svgTrend = '<svg class="i" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>';
+const svgCam = '<svg class="i" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
 
 function weekHTML() {
   const now = new Date(), dow = (now.getDay() + 6) % 7;
@@ -2325,27 +2495,28 @@ function updateWarm(id) {
 function setupHTML(id) {
   const key = 'n:' + id, r = S.ranges[id] || {}, n = S.notes[id] || '', eid = esc(id);
   const L = loadOf(id), u = unitOf(id);
-  const sum = [L ? (L.sd === 2 ? '槓片兩邊' : '槓片一邊') : '', r.max ? `目標 ${r.min || '?'}–${r.max} 下` : '', n.trim() ? '有備註' : ''].filter(Boolean).join(' · ');
+  const sum = [L ? (L.sd === 2 ? '兩邊槓片' : '單邊槓片') : '', uniOn(id) ? '單手' : '', r.max ? `${r.min || '?'}–${r.max} 下` : '', n.trim() ? '有備註' : ''].filter(Boolean).join(' · ');
+  // 一列一項：左邊名稱、右邊選項，說明只在需要時出現一行
+  const seg = (act, cur, list) => `<div class="sg">${list.map(([v, t]) =>
+    `<button class="${cur === v ? 'on' : ''}" data-act="${act}" data-id="${eid}" data-v="${v}">${t}</button>`).join('')}</div>`;
   return `<div class="sub mt ${open.has(key) ? 'open' : ''}" data-key="${esc(key)}"><button class="sub-h" data-act="toggle">
     <span class="t">設定與備註 <span>${sum ? '· ' + sum : ''}</span></span>${svgChev}</button>
-    <div class="sub-b">
-      <div class="flbl">重量怎麼記</div>
-      <div class="chips wrap sm">${[[0, '直接輸入總重'], [2, '槓片・兩邊都掛'], [1, '槓片・只有一邊']].map(([v, t]) =>
-        `<button class="${(L ? L.sd : 0) === v ? 'on' : ''}" data-act="loadMode" data-id="${eid}" data-v="${v}">${t}</button>`).join('')}</div>
-      ${L ? `<div class="rng"><span class="muted">槓子／機器本身</span><input type="number" inputmode="decimal" step="any" data-base="${eid}" value="${L.base ? num(toU(L.base, u)) : ''}" placeholder="0"><span class="muted">${u}</span></div>
-      <p class="small muted" style="margin:0 0 12px">${L.sd === 2 ? '輸入一邊掛的槓片，總重自動 ×2。' : '只有一個地方可以掛，掛多少就是多少。'}</p>` : '<p class="small muted" style="margin:0 0 12px">掛槓片的機器選「槓片」，就能點槓片輸入、保留每邊的組合。</p>'}
-      <div class="flbl">目標次數範圍</div>
-      <div class="rng"><input type="number" inputmode="numeric" data-range="min" data-id="${eid}" value="${r.min || ''}" placeholder="8"><span class="muted">到</span>
-        <input type="number" inputmode="numeric" data-range="max" data-id="${eid}" value="${r.max || ''}" placeholder="12"><span class="muted">下</span></div>
-      <p class="small muted" style="margin:0 0 12px">所有組都做到上限時，會提醒你下次加重。</p>
-      <div class="flbl">備註</div>
-      <textarea data-note="${eid}" placeholder="座椅高度、握距、站距、器械設定…">${esc(n)}</textarea>
+    <div class="sub-b opt-list">
+      <div class="opt-row"><span class="k">記重方式</span>${seg('loadMode', L ? L.sd : 0, [[0, '總重'], [2, '兩邊槓片'], [1, '單邊槓片']])}</div>
+      ${L ? `<div class="opt-row sub-row"><span class="k">槓子／機器重</span><span class="rng"><input type="number" inputmode="decimal" step="any" data-base="${eid}" value="${L.base ? num(toU(L.base, u)) : ''}" placeholder="0"><span class="muted">${u}</span></span></div>
+      <p class="opt-hint">${L.sd === 2 ? '點一邊掛的槓片，總重自動 ×2。' : '掛多少就是多少。'}</p>` : ''}
+      <div class="opt-row"><span class="k">使用方式</span>${seg('uniMode', uniOn(id) ? 1 : 0, [[0, '雙手'], [1, '單手']])}</div>
+      ${uniOn(id) ? '<p class="opt-hint">記錄時每組可以切換雙手或單手，進度分開看。</p>' : ''}
+      <div class="opt-row"><span class="k">目標次數</span><span class="rng"><input type="number" inputmode="numeric" data-range="min" data-id="${eid}" value="${r.min || ''}" placeholder="8"><span class="muted">–</span>
+        <input type="number" inputmode="numeric" data-range="max" data-id="${eid}" value="${r.max || ''}" placeholder="12"><span class="muted">下</span></span></div>
+      <p class="opt-hint">每組都做到上限時，會提醒下次加重。</p>
+      <div class="opt-row col"><span class="k">備註</span><textarea data-note="${eid}" placeholder="座椅高度、握距、站距、器械設定…">${esc(n)}</textarea></div>
     </div></div>`;
 }
 
 /* ================= 動作清單 ================= */
 function chipsHTML(list, cur, act, allLabel = '全部') {
-  return ['', ...list].map(p => `<button class="${cur === p ? 'on' : ''}" data-act="${act}" data-id="${p}">${p || allLabel}</button>`).join('');
+  return ['', ...list].map(p => `<button class="${cur === p ? 'on' : ''}" data-act="${act}" data-id="${esc(p)}">${p ? esc(p) : allLabel}</button>`).join('');
 }
 function match(e, q) {
   return !q || e.name.toLowerCase().includes(q) || e.equip.includes(q) || e.part.includes(q)
@@ -2435,7 +2606,29 @@ function renderDetail() {
   if (c.kind === 'history') return renderHistory();
   if (c.kind === 'day') return renderDay(c);
   if (c.kind === 'summary') return renderSummary();
+  if (c.kind === 'cloudGuide') return renderCloudGuide();
   renderExDetail(c);
+}
+// 雲端備份設定步驟：每個人用自己的 Google 帳號，資料只存在自己的雲端硬碟
+function renderCloudGuide() {
+  $('#detail .hd b').textContent = '設定雲端備份';
+  const step = (n, t, body) => `<li class="gd-step"><span class="gd-n">${n}</span><div><b>${t}</b>${body}</div></li>`;
+  $('#dt-body').innerHTML = `<p class="muted" style="margin:0 0 16px">每個月自動把紀錄存一份到<b style="color:var(--text)">你自己的</b> Google 雲端硬碟，換手機也不怕。
+    只要設定一次，大約 5 分鐘。前三步建議用<b style="color:var(--text)">電腦</b>做。</p>
+    <ol class="gd">
+    ${step(1, '建立備份程式', `<p>用電腦打開 <a href="https://script.google.com/home/projects/create" target="_blank" rel="noopener">script.google.com</a>，登入你的 Google 帳號，會自動開一個新專案。</p>
+      <p>把編輯區原本的內容全部刪掉，貼上備份程式，按上方的「儲存」。</p>
+      <button class="btn sm primary" data-act="gsCopy">複製備份程式</button>`)}
+    ${step(2, '授權', `<p>上方函式選單選「測試」，按「執行」→「審查權限」→ 選你的帳號 →「允許」。這一步也會開放 1 小時，讓手機可以連上。</p>
+      <p class="small muted">如果出現「Google 尚未驗證這個應用程式」：按「進階」→「前往（不安全）」。這是你自己的程式，只會存取你自己的雲端。</p>`)}
+    ${step(3, '部署', `<p>右上角「部署」→「新增部署作業」→ 齒輪選「網頁應用程式」。</p>
+      <p>「執行身分」選<b>我</b>，「誰可以存取」選<b>所有人</b>（App 才送得進來，有密碼保護），按「部署」。</p>
+      <p>複製「網頁應用程式」的網址（結尾是 /exec），用電腦瀏覽器打開，會看到一個 QR code。</p>`)}
+    ${step(4, '連上手機', `<p>用手機相機掃描 QR code，會打開健身紀錄並自動連上，馬上備份一次。</p>
+      <p class="small muted">沒辦法掃描的話，把那個 /exec 網址傳到手機，到「設定 → 資料備份」按「貼上網址」。</p>
+      <p class="small muted">超過 1 小時或換新手機：回到 script.google.com，函式選「開放連線」按「執行」，再連一次。平常沒開放時，就算網址外流，別人也拿不到密碼。</p>`)}
+    </ol>
+    <p class="small muted">備份程式在你自己的 Google 帳號裡執行，資料只會存到你的雲端硬碟，其他人（包括 App 作者）都看不到。資料夾裡最多留最新 30 份。</p>`;
 }
 function openPanel(ctx) { detailCtx = ctx; renderDetail(); $('#detail').classList.add('on'); $('#dt-body').scrollTop = 0; }
 
@@ -2491,7 +2684,7 @@ async function cloudBackup(manual) {
     try { r = await (await fetch(c.url, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body})).json(); }
     catch (e) { throw new Error('連不上雲端程式，請確認部署時「誰可以存取」選的是「所有人」'); }
     if (!r.ok) throw new Error(r.err || '雲端回應錯誤');
-    Object.assign(c, {last: Date.now(), err: '', pending: false}, r.folder ? {folder: r.folder} : {});
+    Object.assign(c, {last: Date.now(), err: '', pending: false}, cGoogle(r.folder, 'drive.google.com') ? {folder: r.folder} : {});
     S.settings.lastExport = dstr(); save();
     if (manual) toast('已備份到雲端');
   } catch (e) {
@@ -2514,9 +2707,17 @@ function cloudFromHash() {
   const m = location.hash.match(/^#cloud=(.+)$/); if (!m) return;
   history.replaceState(null, '', location.pathname + location.search);
   const [url, key] = decodeURIComponent(m[1]).split('|');
-  if (!/^https:\/\/script\.google\.com\//.test(url) || !key) return note('雲端備份連結不正確，請重新掃描。');
-  S.settings.cloud = {url, key}; save();
-  note('已連上 Google 雲端備份！\n之後每個月會自動存一份到你的雲端資料夾。現在先備份一次。').then(() => cloudBackup(true));
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url) || !/^\w{16,64}$/.test(key || '')) return note('雲端備份連結不正確，請重新掃描。');
+  // 別人也做得出這種連結：一定要問過才連，否則紀錄會被送到別人的雲端
+  const old = S.settings.cloud && S.settings.cloud.url;
+  if (old === url) return note('這個雲端備份已經連上了。');
+  const msg = (old ? '⚠️ 你已經連著另一個雲端備份，這會把它換掉。\n' : '') +
+    '要把紀錄自動備份到這個 Google 程式嗎？\n只有在你剛剛自己設定、自己掃描 QR code 時才按確定；別人傳來的連結請按取消。';
+  ask(msg).then(yes => {
+    if (!yes) return;
+    S.settings.cloud = {url, key}; save();
+    note('已連上 Google 雲端備份！\n之後每個月會自動存一份到你的雲端資料夾。現在先備份一次。').then(() => cloudBackup(true));
+  });
 }
 function backupHTML() {
   if (!S.logs.length || !STORE_OK) return '';
@@ -2707,7 +2908,7 @@ function dayInputHTML(id, date, n) {
         <input type="number" inputmode="numeric" step="1" min="0" data-draft="r" data-id="${eid}" value="${esc(d.r)}" placeholder="0">
         <button data-act="stepR" data-id="${eid}" data-d="1">＋</button></div></div>
     </div>
-    <div class="seg">${Object.entries(FEELS).map(([k, x]) =>
+    ${uniSegHTML(id, d)}<div class="seg">${Object.entries(FEELS).map(([k, x]) =>
       `<button class="${d.feel === k ? 'on' : ''}" data-act="feel" data-id="${eid}" data-v="${k}">${x}</button>`).join('')}</div>
     <button class="btn primary big" data-act="dayAdd" data-id="${eid}">補記第 ${n + 1} 組</button></div>`;
 }
@@ -2739,11 +2940,11 @@ function renderHistory() {
 }
 
 /* ================= 進度折線圖 ================= */
-let pMetric = 'max', pGym = '';
+let pMetric = 'max', pGym = '', pUni = 0;
 const METRICS = {max: '最大重量', e1rm: '預估 1RM', vol: '單次總量'};
-function exSeries(id, metric, gym = '') {
+function exSeries(id, metric, gym = '', uni = null) {
   const by = {};
-  for (const l of S.logs) if (l.exId === id && (!gym || gymOf(l.date) === gym)) (by[l.date] ||= []).push(l);
+  for (const l of S.logs) if (l.exId === id && (!gym || gymOf(l.date) === gym) && (uni == null || !l.uni === !uni)) (by[l.date] ||= []).push(l);
   return Object.keys(by).sort().map(d => {
     const s = by[d].sort((a, b) => a.ts - b.ts);
     const y = metric === 'max' ? Math.max(...s.map(x => x.w))
@@ -2757,7 +2958,11 @@ function progressHTML(e) {
   // 這個動作在兩間以上都做過才顯示健身房篩選
   const gs = [...new Set(S.logs.filter(l => l.exId === id).map(l => gymOf(l.date)).filter(Boolean))];
   if (pGym && !gs.includes(pGym)) pGym = '';
-  const all = exSeries(id, pMetric, gs.length > 1 ? pGym : '');
+  // 同時有雙手和單手的紀錄才分開看（重量不能直接比）
+  const mine = S.logs.filter(l => l.exId === id), both = mine.some(l => l.uni) && mine.some(l => !l.uni);
+  const all = exSeries(id, pMetric, gs.length > 1 ? pGym : '', both ? pUni : null);
+  const uniChips = both ? `<div class="chips" style="margin:0 -16px 4px;padding-bottom:12px">${[[0, '雙手'], [1, '單手']].map(([v, t]) =>
+    `<button class="${pUni === v ? 'on' : ''}" data-act="pUni" data-id="${v}">${t}</button>`).join('')}</div>` : '';
   const gymChips = gs.length > 1 ? `<div class="chips" style="margin:0 -16px 4px;padding-bottom:12px"><button class="${pGym ? '' : 'on'}" data-act="pGym" data-id="">全部</button>${gs.map(g =>
     `<button class="${pGym === g ? 'on' : ''}" data-act="pGym" data-id="${esc(g)}">${esc(g)}</button>`).join('')}</div>` : '';
   if (!all.length) return `<div class="grp"><span>進度</span></div><div class="card"><div class="empty">記錄這個動作後，就會在這裡看到進步曲線</div></div>`;
@@ -2765,7 +2970,7 @@ function progressHTML(e) {
   const best = Math.max(...pts.map(p => p.y)), lastV = pts[pts.length - 1].y, diff = lastV - pts[0].y;
   return `<div class="grp"><span>進度</span><span>${all.length} 次訓練</span></div>
     <div class="card" style="padding:16px">
-      ${gymChips}<div class="chips" style="margin:0 -16px 4px;padding-bottom:12px">${Object.entries(METRICS).map(([k, v]) =>
+      ${gymChips}${uniChips}<div class="chips" style="margin:0 -16px 4px;padding-bottom:12px">${Object.entries(METRICS).map(([k, v]) =>
         `<button class="${pMetric === k ? 'on' : ''}" data-act="pMetric" data-id="${k}">${v}</button>`).join('')}</div>
       <div class="tiles"><div><span>最佳</span><b>${num1(best)}<small>${u}</small></b></div>
         <div><span>最近一次</span><b>${num1(lastV)}<small>${u}</small></b></div>
@@ -2829,12 +3034,18 @@ function chartPointer(ev) {
 }
 
 /* ================= 身體數據 ================= */
-const BODY = [['weight','體重'],['fat','體脂率'],['chest','胸圍'],['waist','腰圍'],['hip','臀圍'],['arm','手臂圍'],['thigh','大腿圍'],['calf','小腿圍']];
-const bUnit = k => k === 'weight' ? S.settings.unit : k === 'fat' ? '%' : 'cm';
-const bVal = (k, v) => k === 'weight' ? toU(v, S.settings.unit) : v;
+// 體組成（體脂計、InBody、Tanita 等）和圍度。重量類跟著使用者的單位，其他照原本單位
+const BODY_MAIN = [['weight','體重'],['fat','體脂率'],['smm','骨骼肌'],['fatkg','體脂肪']];
+const BODY_MORE = [['muscle','肌肉量'],['ffm','除脂肪量'],['bmi','BMI'],['bmr','基礎代謝'],['visceral','內臟脂肪'],['water','體水分'],['protein','蛋白質'],['bone','骨量']];
+const BODY_CIRC = [['chest','胸圍'],['waist','腰圍'],['hip','臀圍'],['arm','手臂圍'],['thigh','大腿圍'],['calf','小腿圍']];
+const BODY = [...BODY_MAIN, ...BODY_MORE, ...BODY_CIRC];
+const B_KG = new Set(['weight','smm','fatkg','muscle','ffm','water','protein','bone']);
+const bUnit = k => B_KG.has(k) ? S.settings.unit : k === 'fat' ? '%' : k === 'bmr' ? 'kcal' : k === 'bmi' || k === 'visceral' ? '' : 'cm';
+const bVal = (k, v) => B_KG.has(k) ? toU(v, S.settings.unit) : v;
 const POSES = {front: '正面', side: '側面', back: '背面'};
-let bodyDate = dstr(), bodyMetric = 'weight';
+let bodyDate = dstr(), bodyMetric = 'weight', bodySrc = '';
 let PH = [];   // 進度照片 {k, date, pose, data}
+let bodyFill = null;   // 從照片讀到、還沒儲存的數值 {date, src, v: {欄位: 數值}}
 
 function renderBody() {
   const list = [...S.body].sort((a, b) => a.date.localeCompare(b.date));
@@ -2845,29 +3056,47 @@ function renderBody() {
     return `<div><span>${label}</span><b>${num1(bVal(k, x.v))}<small>${bUnit(k)}</small></b>${d ? `<span>${d > 0 ? '▲' : '▼'} ${num1(Math.abs(d))}</span>` : ''}</div>`;
   };
   const cur = S.body.find(e => e.date === bodyDate) || {};
+  const fill = bodyFill && bodyFill.date === bodyDate ? bodyFill : null;
   const ph = Object.fromEntries(PH.filter(p => p.date === bodyDate).map(p => [p.pose, p]));
   const has = BODY.filter(([k]) => list.some(e => e[k] != null));
   if (has.length && !has.some(([k]) => k === bodyMetric)) bodyMetric = has[0][0];
-  const series = list.filter(e => e[bodyMetric] != null).map(e => ({d: e.date, y: bVal(bodyMetric, e[bodyMetric])}));
+  // 不同機器量出來的數字不能直接比：用過兩台以上就可以分開看
+  const srcs = [...new Set(list.map(e => e.src).filter(Boolean))];
+  if (bodySrc && !srcs.includes(bodySrc)) bodySrc = '';
+  const series = list.filter(e => e[bodyMetric] != null && (!bodySrc || e.src === bodySrc)).map(e => ({d: e.date, y: bVal(bodyMetric, e[bodyMetric])}));
   const pdates = [...new Set(PH.map(p => p.date))].sort().reverse();
+  const field = ([k, label]) => {
+    const v = fill && fill.v[k] != null ? fill.v[k] : cur[k];
+    return `<label class="${fill && fill.v[k] != null ? 'got' : ''}"><div class="flbl">${label}${bUnit(k) ? `（${bUnit(k)}）` : ''}</div>
+      <input type="number" inputmode="decimal" step="any" id="bf-${k}" value="${v != null ? num1(bVal(k, v)) : ''}" placeholder="${latest(k) ? num1(bVal(k, latest(k).v)) : ''}"></label>`;
+  };
+  const filled = list => list.some(([k]) => cur[k] != null || (fill && fill.v[k] != null));
+  const fold = (key, title, flds) => `<div class="sub mt ${open.has(key) || filled(flds) ? 'open' : ''}" data-key="${key}"><button class="sub-h" data-act="toggle"><span class="t">${title}</span>${svgChev}</button>
+    <div class="sub-b"><div class="bgrid">${flds.map(field).join('')}</div></div></div>`;
 
-  let h = `<div class="tiles">${tile('weight', '體重')}${tile('waist', '腰圍')}${tile('arm', '手臂圍')}</div>`;
+  let h = `<div class="tiles">${tile('weight', '體重')}${list.some(e => e.fat != null) ? tile('fat', '體脂率') : tile('waist', '腰圍')}${list.some(e => e.smm != null) ? tile('smm', '骨骼肌') : tile('arm', '手臂圍')}</div>`;
   h += `<div class="card ${closed.has('b:form') ? '' : 'open'}" data-key="b:form"><button class="card-h" data-act="toggle"><span class="t">記錄身體數據</span>${svgChev}</button><div class="card-b">
-    <div class="flbl">日期</div><input type="date" class="dinput" id="bd-date" value="${bodyDate}" max="${dstr()}">
-    <div class="bgrid mt">${BODY.map(([k, label]) => `<label><div class="flbl">${label}（${bUnit(k)}）</div>
-      <input type="number" inputmode="decimal" step="any" id="bf-${k}" value="${cur[k] != null ? num1(bVal(k, cur[k])) : ''}" placeholder="${latest(k) ? num1(bVal(k, latest(k).v)) : ''}"></label>`).join('')}</div>
+    <label class="btn ocr-btn">${svgCam}從照片讀取<span>體脂計報告、InBody、App 截圖</span><input type="file" accept="image/*" data-ocr="1" hidden></label>
+    ${fill ? `<div class="hint ocr-hint"><span>從照片讀到 ${Object.keys(fill.v).length} 項，已填進下面的綠框。請對照照片確認，有錯直接改，再按儲存。</span></div>` : ''}
+    <div class="bgrid mt"><label><div class="flbl">日期</div><input type="date" class="dinput" id="bd-date" value="${bodyDate}" max="${dstr()}"></label>
+      <label><div class="flbl">量測機器（選填）</div><input class="dinput" id="bd-src" list="bd-srcs" value="${esc(fill ? fill.src : cur.src || '')}" placeholder="例如 健身房 Tanita"></label></div>
+    <datalist id="bd-srcs">${srcs.map(x => `<option value="${esc(x)}">`).join('')}</datalist>
+    <div class="bgrid mt">${BODY_MAIN.map(field).join('')}</div>
+    ${fold('b:more', '更多體組成', BODY_MORE)}${fold('b:circ', '圍度', BODY_CIRC)}
     <button class="btn primary big mt" data-act="bodySave">${cur.date ? '更新這天的數據' : '儲存'}</button>
+    ${fill ? '<button class="btn big mt" data-act="bodyFillOff">不要這次讀到的數字</button>' : ''}
     <div class="grp"><span>進度照片 · ${fmtDate(bodyDate)}</span></div>
     <div class="poses">${Object.entries(POSES).map(([k, v]) => ph[k]
       ? `<button class="pose" data-act="photoView" data-id="${ph[k].k}"><img src="${ph[k].data}" alt="${v}"><span class="pl2">${v}</span></button>`
       : `<label class="pose">＋<br>${v}<input type="file" accept="image/*" data-photo="${k}" data-date="${bodyDate}"></label>`).join('')}</div>
-    <p class="small muted" style="margin-bottom:0">照片只存在這支手機的瀏覽器裡，不會上傳到任何地方。</p>
+    <p class="small muted" style="margin-bottom:0">照片和讀到的數字只存在這支手機裡，不會上傳到任何地方。</p>
   </div></div>`;
 
   h += '<div class="grp"><span>趨勢</span></div>';
   h += has.length
-    ? `<div class="card" style="padding:16px"><div class="chips" style="margin:0 -16px 4px;padding-bottom:12px">${has.map(([k, l]) =>
-        `<button class="${bodyMetric === k ? 'on' : ''}" data-act="bMetric" data-id="${k}">${l}</button>`).join('')}</div>${lineChart(series, bUnit(bodyMetric), 'body')}</div>`
+    ? `<div class="card" style="padding:16px">${srcs.length > 1 ? `<div class="chips" style="margin:0 -16px 4px;padding-bottom:12px">${chipsHTML(srcs, bodySrc, 'bSrc', '全部機器')}</div>` : ''}
+      <div class="chips" style="margin:0 -16px 4px;padding-bottom:12px">${has.map(([k, l]) =>
+        `<button class="${bodyMetric === k ? 'on' : ''}" data-act="bMetric" data-id="${k}">${l}</button>`).join('')}</div>${series.length ? lineChart(series, bUnit(bodyMetric), 'body') : '<div class="empty">這台機器沒有量這一項</div>'}</div>`
     : '<div class="card"><div class="empty">儲存第一筆身體數據後，這裡會顯示變化曲線</div></div>';
 
   if (pdates.length) {
@@ -2879,10 +3108,97 @@ function renderBody() {
     if (pdates.length > 1) h += '<button class="btn big mt" data-act="compare">前後對比</button>';
   }
   if (list.length) h += `<div class="card mt2 ${open.has('b:hist') ? 'open' : ''}" data-key="b:hist"><button class="card-h" data-act="toggle"><span class="t">歷史紀錄</span><span class="r">${list.length} 筆</span>${svgChev}</button>
-    <div class="card-b"><ul class="hist">${[...list].reverse().map(e => `<li><span class="dd">${fmtDate(e.date)}</span>
+    <div class="card-b"><ul class="hist">${[...list].reverse().map(e => `<li><span class="dd">${fmtDate(e.date)}${e.src ? `<br><small class="muted">${esc(e.src)}</small>` : ''}</span>
       <span class="vv">${BODY.filter(([k]) => e[k] != null).map(([k, l]) => `${l} ${num1(bVal(k, e[k]))}${bUnit(k)}`).join(' · ')}</span>
       <button class="x" data-act="bodyDel" data-id="${e.date}" aria-label="刪除">${svgX}</button></li>`).join('')}</ul></div></div>`;
   $('#v-body').innerHTML = h;
+}
+
+/* 從照片讀體組成：在手機上用 Tesseract.js 辨識文字，照片不會離開這支手機。
+   不認版面，只找項目名稱，抓它後面第一個合理的數字；讀到的先填進表單，使用者確認後才儲存 */
+const OCR_KEYS = [
+  ['fat', /體脂(?:肪)?率|體脂肪百分比|體脂百分比|body\s*fat\s*%|\bPBF\b|fat\s*%/i, 2, 70],
+  ['fatkg', /體脂肪(?:量|重)?(?!率|百|指)|脂肪重|body\s*fat\s*mass|fat\s*mass/i, 1, 150],
+  ['smm', /[骨吃滑]?骼肌(?:肉)?(?:重|量)?|\bSMM\b|skeletal\s*muscle(?!\s*(?:mass\s*)?index)/i, 8, 80],
+  ['ffm', /除脂(?:肪)?(?:量|重)|去脂(?:體重|肪量)|fat\s*free\s*mass|\bFFM\b|lean\s*body\s*mass/i, 20, 140],
+  ['muscle', /(?<!骨骼)肌肉(?:量|重)|muscle\s*mass/i, 15, 130],
+  ['bmr', /基礎代謝(?:率|量)?|\bBMR\b/i, 600, 5000],
+  ['visceral', /內[臟臉藏髒]脂肪(?:指數|等級|程度)|visceral\s*fat(?:\s*level)?/i, 1, 60],
+  ['water', /身?體水分|total\s*body\s*water|\bTBW\b/i, 10, 90],
+  ['protein', /蛋白質|protein/i, 2, 40],
+  ['bone', /(?:推定)?骨(?:量|骼量|礦物質)|礦物質|bone\s*mass|mineral/i, .5, 8],
+  ['bmi', /\bBMI\b|身體質量指數/i, 10, 60],
+  ['weight', /體\s*重(?!控制|不足|指)|weight(?!\s*control)/i, 25, 300],
+];
+const OCR_SRC = [[/inbody/i, 'InBody'], [/tanita|百利達/i, 'Tanita'], [/accuniq/i, 'ACCUNIQ'], [/omron|歐姆龍/i, 'Omron'], [/garmin/i, 'Garmin'],
+  [/xiaomi|小米|mi\s*fit|zepp/i, '小米'], [/huawei|華為/i, '華為'], [/withings/i, 'Withings'], [/renpho/i, 'Renpho'], [/picooc|有品/i, 'PICOOC']];
+function parseBody(text) {
+  // 辨識常把中文字拆開（「體 脂肪 率」），先把中文字之間的空白拿掉
+  const v = {}, lines = text.split('\n').map(l => l.replace(/[，,](?=\d)/g, '.').replace(/\s+/g, ' ')
+    .replace(/(?<=[\u4e00-\u9fff])\s+(?=[\u4e00-\u9fff])/g, '').trim()).filter(Boolean);
+  for (const [k, re, lo, hi] of OCR_KEYS) {
+    for (let i = 0; i < lines.length && v[k] == null; i++) {
+      const m = lines[i].match(re); if (!m) continue;
+      // 同一行標籤後面的數字；沒有就看下一行。跳過連續遞增的刻度（例如 50 70 85 100…），優先有小數點的
+      const tail = lines[i].slice(m.index + m[0].length) + ' ' + (lines[i + 1] || '');
+      const nums = [...tail.matchAll(/\d+(?:\.\d+)?/g)].map(x => x[0]).slice(0, 12);
+      const scale = nums.length >= 4 && nums.slice(0, 4).every((x, j) => !j || +x > +nums[j - 1]) && !nums.slice(0, 4).some(x => x.includes('.'));
+      const fit = x => +x >= lo && +x <= hi || (!x.includes('.') && +x / 10 >= lo && +x / 10 <= hi);
+      const pick = scale ? nums.find(x => x.includes('.') && fit(x)) : nums.find(fit);
+      if (pick != null) v[k] = +pick > hi ? +pick / 10 : +pick;
+    }
+  }
+  // 小數點常被漏掉（13.8 讀成 138）：體脂率和體重以外的公斤數，超出範圍或比體重還重，就試著除以 10；還是不合理就留空讓人自己填
+  // 公斤類要跟體重對得上（例如骨骼肌大約是體重的 30–60%）；沒讀到體重就無從檢查，寧可留空
+  const RATIO = {smm: [.25, .65], muscle: [.55, .97], ffm: [.55, .98], fatkg: [.02, .6], water: [.35, .78], protein: [.08, .3], bone: [.02, .09]};
+  for (const k in RATIO) {
+    if (v[k] == null) continue;
+    const ok = x => v.weight && x >= v.weight * RATIO[k][0] && x <= v.weight * RATIO[k][1];
+    if (!ok(v[k]) && Number.isInteger(v[k]) && ok(v[k] / 10)) v[k] /= 10;
+    if (!ok(v[k])) delete v[k];
+  }
+  // 體脂肪重 ≈ 體重 × 體脂率，差太多就不採用
+  if (v.fatkg != null && v.fat != null && v.weight && Math.abs(v.fatkg - v.weight * v.fat / 100) > 1.5) delete v.fatkg;
+  if (v.bmi != null && (v.bmi < 12 || v.bmi > 50)) delete v.bmi;
+  // 日期：2025/08/21、2025-08-21、2025.08.11
+  const dm = text.match(/(20\d\d)[\/\-.年]\s*(\d{1,2})[\/\-.月]\s*(\d{1,2})/);
+  const date = dm ? `${dm[1]}-${dm[2].padStart(2, '0')}-${dm[3].padStart(2, '0')}` : '';
+  const hit = OCR_SRC.map(([re, n]) => [n, (text.match(new RegExp(re.source, 'gi')) || []).length]).filter(x => x[1]).sort((a, b) => b[1] - a[1]);
+  const src = hit.length ? hit[0][0] : '';
+  return {v, date, src};
+}
+let OCRP = null;
+const ocrLib = () => OCRP ||= new Promise((res, rej) => {
+  const sc = document.createElement('script');
+  sc.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+  // 檔案內容被改過就拒絕執行
+  sc.integrity = 'sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F'; sc.crossOrigin = 'anonymous';
+  sc.onload = () => res(window.Tesseract); sc.onerror = () => { OCRP = null; rej(new Error('辨識程式載入失敗，請確認網路')); };
+  document.head.append(sc);
+});
+// 辨識前先放大、轉灰階、拉高對比，數字和小數點會清楚很多
+async function ocrPrep(file) {
+  const bm = await createImageBitmap(file), k = Math.min(2, 3200 / Math.max(bm.width, bm.height));
+  const c = document.createElement('canvas'); c.width = bm.width * k; c.height = bm.height * k;
+  const x = c.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(bm, 0, 0, c.width, c.height);
+  const d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+  for (let i = 0; i < p.length; i += 4) { const g = .3 * p[i] + .59 * p[i + 1] + .11 * p[i + 2]; p[i] = p[i + 1] = p[i + 2] = g > 170 ? 255 : g < 110 ? 0 : (g - 110) * 4.25; }
+  x.putImageData(d, 0, 0);
+  return new Promise(r => c.toBlob(r, 'image/png'));
+}
+async function ocrBody(file) {
+  toast('讀取照片中…第一次要下載辨識資料，大約 10 到 30 秒', 60000);
+  try {
+    const T = await ocrLib();
+    const {data} = await T.recognize(await ocrPrep(file), 'chi_tra+eng');
+    const r = parseBody(data.text);
+    if (!Object.keys(r.v).length) { toast('讀不到數字，請拍清楚一點，或直接手動輸入', 4000); return; }
+    // 重量類存成公斤
+    if (S.settings.unit === 'lb') for (const k of Object.keys(r.v)) if (B_KG.has(k)) r.v[k] = fromU(r.v[k], 'kg');
+    if (r.date && r.date <= dstr()) bodyDate = r.date;
+    bodyFill = {date: bodyDate, src: r.src, v: r.v};
+    closed.delete('b:form'); render(); toast(`讀到 ${Object.keys(r.v).length} 項，請確認後儲存`, 3000);
+  } catch (err) { toast('讀取失敗：' + (err.message || err), 4000); }
 }
 
 /* 照片存在 IndexedDB（容量比 localStorage 大很多） */
@@ -3071,25 +3387,30 @@ function renderSet() {
       <div class="qt-cand">${st.gyms.map(g => `<button data-act="gymDel" data-id="${esc(g)}">${esc(g)} ✕</button>`).join('')}
         <button data-act="gymAdd">＋ 新增健身房</button></div>`) +
     card('s:backup', '資料備份', `
-      <p class="small muted" style="margin-top:0">共 ${S.logs.length} 組紀錄、${days} 個訓練日、${S.body.length} 筆身體數據、${PH.length} 張照片、${S.custom.length} 個自訂動作、${S.templates.length} 個範本。<br>
-      上次備份：${st.lastExport ? fmtDate(st.lastExport) + ' · ' + daysAgo(st.lastExport) : '從未備份'}</p>
-      <div class="flbl">Google 雲端自動備份</div>
-      ${st.cloud ? `<p class="small" style="margin:4px 0 0">${st.cloud.err ? `<span style="color:var(--hard)">上次失敗：${esc(st.cloud.err)}</span>`
-          : st.cloud.last ? `<span style="color:var(--acc)">✓ 已連上</span> · 上次 ${fmtDate(dstr(new Date(st.cloud.last)))} ${hhmm(st.cloud.last)}` : '<span style="color:var(--acc)">✓ 已連上</span> · 還沒備份過'}</p>
-        ${sw('cloudAuto', '每個月自動備份一次到雲端')}
-        <div class="row mt"><button class="btn sm primary" data-act="cloudNow">立即備份到雲端</button>${st.cloud.folder ? `<a class="btn sm" href="${esc(st.cloud.folder)}" target="_blank" rel="noopener">打開雲端資料夾</a>` : ''}</div>
-        <button class="btn ghost sm mt" data-act="cloudOff">中斷雲端連線</button>`
-      : `<p class="small muted" style="margin:4px 0 0">還沒連上。照設定說明在 Google 建好備份程式後，用手機掃描它顯示的 QR code 就會自動連上。</p>
-        <button class="btn sm mt" data-act="cloudPaste">貼上 Google 程式網址</button>`}
-      ${sw('photoBackup', '備份包含進度照片')}
-      <button class="btn mt" data-act="export">匯出備份檔案</button>
-      <p class="small muted">手機上會跳出分享選單：選「儲存到檔案」→ iCloud Drive，或選 Google 雲端硬碟。超過 30 天沒備份，首頁會提醒你。</p>
+      <div class="bk-stat"><span>上次備份</span><b>${st.lastExport ? fmtDate(st.lastExport) + ' · ' + daysAgo(st.lastExport) : '從未備份'}</b></div>
+      <p class="small muted" style="margin:0 0 4px">共 ${S.logs.length} 組紀錄 · ${days} 個訓練日 · ${S.body.length} 筆身體數據 · ${PH.length} 張照片 · ${S.custom.length} 個自訂動作 · ${S.templates.length} 個範本</p>
+      <div class="bk-box">
+        <div class="bk-h"><b>Google 雲端自動備份</b>${st.cloud ? (st.cloud.err ? '<span class="bk-tag bad">上次失敗</span>' : '<span class="bk-tag ok">✓ 已連上</span>') : '<span class="bk-tag">未設定</span>'}</div>
+        ${st.cloud ? `<p class="small muted">${st.cloud.err ? `<span style="color:var(--hard)">${esc(st.cloud.err)}</span>`
+            : st.cloud.last ? `上次 ${fmtDate(dstr(new Date(st.cloud.last)))} ${hhmm(st.cloud.last)}` : '還沒備份過'}</p>
+          ${sw('cloudAuto', '每個月自動備份')}
+          <div class="bk-btns"><button class="btn sm primary" data-act="cloudNow">立即備份</button>${st.cloud.folder ? `<a class="btn sm" href="${esc(st.cloud.folder)}" target="_blank" rel="noopener">打開雲端資料夾</a>` : ''}</div>
+          <button class="bk-link" data-act="cloudOff">中斷雲端連線</button>`
+        : `<p class="small muted">每個月自動存一份到你自己的 Google 雲端硬碟。設定一次，大約 5 分鐘。</p>
+          <button class="btn sm primary" data-act="cloudGuide">開始設定</button>
+          <button class="bk-link" data-act="cloudPaste">已經有程式網址？貼上網址</button>`}
+      </div>
+      <div class="bk-box">
+        <div class="bk-h"><b>手動備份</b></div>
+        <p class="small muted">存成一個檔案，可以放到 iCloud 雲碟、Google 雲端硬碟或傳給自己。超過 30 天沒備份，首頁會提醒你。</p>
+        ${sw('photoBackup', '備份包含進度照片')}
+        <div class="bk-btns"><button class="btn sm" data-act="export">匯出備份檔</button><button class="btn sm" data-act="import">匯入備份檔</button></div>
+      </div>
       <div class="set-row"><span>資料保護<br><span class="small muted">請瀏覽器不要自動清除紀錄</span></span>
         <span class="small" style="text-align:right">${PERSIST === true ? '<span style="color:var(--acc)">✓ 已開啟</span>'
           : PERSIST === false ? '<span class="muted">尚未開啟</span>' : '<span class="muted">不支援</span>'}</span></div>
       ${PERSIST === false ? '<button class="btn sm" data-act="persist">再申請一次</button><p class="small muted">iPhone 要先「加入主畫面」，再從主畫面圖示打開，才比較容易開啟。</p>' : ''}
-      <button class="btn mt" data-act="import">匯入 JSON 備份</button>
-      <p class="small muted">資料只存在這個瀏覽器裡。清除瀏覽器資料就會消失，建議定期匯出。</p>`) +
+      <p class="small muted" style="margin-bottom:0">紀錄只存在這個瀏覽器裡，清除瀏覽器資料就會消失，記得備份。</p>`) +
     card('s:adv', '進階', `
       <button class="btn ghost" data-act="restoreBuiltin">還原被刪除的內建動作</button>
       <button class="btn danger mt" data-act="wipe">清除所有資料</button>
@@ -3323,6 +3644,7 @@ const H = {
     const log = {id: uid(), exId: id, date, w: fromU(Math.max(0, w), u), u, r, feel: d.feel, ts};
     if (L && d.pl.length) Object.assign(log, {pl: [...d.pl], sd: L.sd});
     else if (d.sd && d.pl && d.pl.length && String(d.w) === String(d.plw)) Object.assign(log, {pl: [...d.pl], sd: d.sd});
+    if (uniOn(id) && d.uni) log.uni = 1;
     S.logs.push(log); fixGym(date);
     save(); renderDetail(); render(); toast('已補記一組');
   },
@@ -3377,6 +3699,7 @@ const H = {
   applyHint: (id, b) => { getDraft(id).w = b.dataset.w; renderTrain(); toast(`已改成 ${b.dataset.w} ${unitOf(id)}`); },
   pMetric: k => { pMetric = k; renderDetail(); },
   pGym: g => { pGym = g || ''; renderDetail(); },
+  pUni: v => { pUni = +v; renderDetail(); },
   plate: id => openPlate(id),
   pUnit: u => {
     if (P.u === u) return;
@@ -3400,14 +3723,17 @@ const H = {
   },
   pPreset: i => { myPlates(P.u); S.settings.plates[P.u] = PRESETS[P.u][+i].v.map(p => ({p, on: true})); save(); renderPlate(); toast('已換成' + PRESETS[P.u][+i].name); },
   bMetric: k => { bodyMetric = k; renderBody(); },
+  bSrc: x => { bodySrc = x || ''; renderBody(); },
+  bodyFillOff: () => { bodyFill = null; renderBody(); },
   bodySave: async () => {
     const e = {date: bodyDate}; let any = false;
     for (const [k] of BODY) {
       const v = parseFloat($('#bf-' + k).value);
-      if (v > 0) { e[k] = k === 'weight' ? fromU(v, S.settings.unit) : v; any = true; }
+      if (v > 0) { e[k] = B_KG.has(k) ? fromU(v, S.settings.unit) : v; any = true; }
     }
     if (!any) return toast('至少填一個數值');
-    S.body = S.body.filter(x => x.date !== bodyDate); S.body.push(e); save(); render(); toast('已儲存身體數據');
+    const src = $('#bd-src').value.trim(); if (src) e.src = src;
+    S.body = S.body.filter(x => x.date !== bodyDate); S.body.push(e); bodyFill = null; save(); render(); toast('已儲存身體數據');
   },
   bodyDel: async d => {
     if (!await ask(`刪除 ${fmtDate(d)} 的身體數據？`)) return;
@@ -3452,6 +3778,15 @@ const H = {
     const d = draftOf(id, b); d.r = String(Math.max(0, (parseInt(d.r) || 0) + +b.dataset.d));
     b.parentNode.querySelector('input').value = d.r;
   },
+  uniSet: (id, b) => {
+    draftOf(id, b).uni = +b.dataset.v;
+    b.parentNode.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  },
+  uniMode: (id, b) => {
+    if (+b.dataset.v) S.uni[id] = 1; else delete S.uni[id];
+    const d = getDraft(id); d.uni = uniOn(id) ? 1 : 0;
+    save(); open.add('n:' + id); renderTrain();
+  },
   feel: (id, b) => {
     draftOf(id, b).feel = b.dataset.v;
     b.parentNode.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
@@ -3465,7 +3800,9 @@ const H = {
     if (L && !d.pl.length && !L.base) return toast('先點要掛的槓片');
     const log = {id: uid(), exId: id, date: dstr(), w: fromU(Math.max(0, w), u), u, r, feel: d.feel, ts: Date.now()};
     if (L && d.pl.length) Object.assign(log, {pl: [...d.pl], sd: L.sd});
-    const prior = S.logs.filter(l => l.exId === id), e1 = x => x.w * (1 + x.r / 30);
+    if (uniOn(id) && d.uni) log.uni = 1;
+    // 破紀錄只跟同樣是單手（或雙手）的組比
+    const prior = S.logs.filter(l => l.exId === id && !l.uni === !log.uni), e1 = x => x.w * (1 + x.r / 30);
     const pr = !prior.length || log.w <= 0 ? '' : log.w > Math.max(...prior.map(x => x.w)) + 1e-9 ? '重量 PR'
       : e1(log) > Math.max(...prior.map(e1)) + 1e-9 ? '1RM PR' : '';
     S.logs.push(log); flashId = log.id; fixGym(log.date); tipDone('card');
@@ -3617,6 +3954,12 @@ const H = {
   import: () => $('#import-file').click(),
   cloudNow: () => S.settings.cloud ? cloudBackup(true) : showTab('set'),
   cloudOff: async () => { if (!await ask('中斷雲端備份？已經存在雲端的備份不會被刪掉。')) return; S.settings.cloud = null; save(); renderSet(); },
+  cloudGuide: () => openPanel({kind: 'cloudGuide'}),
+  gsCopy: async () => {
+    const code = $('#gs-code').textContent.trim();
+    try { await navigator.clipboard.writeText(code); toast('已複製備份程式，貼到 script.google.com'); }
+    catch (e) { note('複製失敗，請改用電腦打開這個 App，再按一次「複製備份程式」。'); }
+  },
   cloudPaste: async () => {
     const v = (await askText('貼上 Google 備份程式的網址（結尾是 /exec）', '') || '').trim(); if (!v) return;
     const i = v.indexOf('#cloud=');
@@ -3627,8 +3970,9 @@ const H = {
     toast('連線中…');
     try {
       const r = await (await fetch(url, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({connect: true})})).json();
+      if (!r.ok && r.err) throw new Error(r.err);
       if (!r.ok || !r.key) throw new Error('Google 程式還是舊版：請貼上新的程式碼，再「管理部署作業」→ 編輯 → 版本選「新版本」→ 部署');
-      S.settings.cloud = {url, key: r.key, folder: r.folder || ''}; save();
+      S.settings.cloud = {url, key: String(r.key), folder: cGoogle(r.folder, 'drive.google.com')}; save();
       await note('已連上 Google 雲端備份！\n之後每個月會自動存一份到你的雲端資料夾。現在先備份一次。');
       cloudBackup(true);
     } catch (e) { note('連線失敗：' + (e.message === 'Failed to fetch' ? '連不上，請確認部署時「誰可以存取」是「所有人」' : e.message)); }
@@ -3749,7 +4093,8 @@ document.addEventListener('change', e => {
     L.base = fromU(Math.max(0, parseFloat(t.value) || 0), unitOf(id)); syncPl(id); save(); renderTrain(); return;
   }
   if (t.dataset.set) { S.settings[t.dataset.set] = t.checked; save(); if (t.dataset.set === 'notify' && t.checked) askNotify(); }
-  else if (t.id === 'bd-date') { bodyDate = t.value || dstr(); renderBody(); }
+  else if (t.id === 'bd-date') { if (bodyFill) bodyFill.date = t.value || dstr(); bodyDate = t.value || dstr(); renderBody(); }
+  else if (t.dataset.ocr && t.files[0]) { ocrBody(t.files[0]); t.value = ''; }
   else if (t.dataset.photo && t.files[0]) { addPhoto(t.dataset.date || bodyDate, t.dataset.photo, t.files[0]); t.value = ''; }
   else if (t.dataset.cmp) { detailCtx[t.dataset.cmp] = t.value; renderDetail(); }
 });
@@ -3776,34 +4121,46 @@ async function importData(data) {
   // 合併檔：只加進新的動作和紀錄，不動到現有資料
   if (data.merge) {
     const haveEx = new Set(S.custom.map(x => x.id)), haveLog = new Set(S.logs.map(x => x.id));
-    const nc = (data.custom || []).filter(x => !haveEx.has(x.id)), nl = data.logs.filter(x => !haveLog.has(x.id));
-    // 合併重複的動作：自訂 → 內建，或自訂 → 另一個自訂
-    const remap = Object.entries(data.remap || {}).filter(([a, b]) => a !== b && (BUILTIN.some(e => e.id === b) || haveEx.has(b)) && (haveEx.has(a) || nc.some(x => x.id === a)));
+    const nc = (data.custom || []).map(cCustom).filter(x => x && !haveEx.has(x.id)), nl = data.logs.map(cLog).filter(x => x && !haveLog.has(x.id));
+    // 合併重複的動作：自訂 → 內建、自訂 → 另一個自訂，或把記錯在內建動作的紀錄搬到自訂（內建動作本身留在動作庫）
+    const isB = id => BUILTIN.some(e => e.id === id);
+    const remap = Object.entries(data.remap || {}).filter(([a, b]) => a !== b && (isB(b) || haveEx.has(b) || nc.some(x => x.id === b)) && (haveEx.has(a) || nc.some(x => x.id === a) || isB(a)));
     // 刪掉從沒記過的自訂動作（有紀錄的不刪）
     const delEx = (data.delEx || []).filter(id => haveEx.has(id) && !S.logs.some(l => l.exId === id));
-    const gymSet = Object.entries(data.gym || {}).filter(([d, g]) => S.gym[d] !== g);
-    const relink = Object.entries(data.relink || {}).filter(([a]) => haveEx.has(a) || nc.some(x => x.id === a));
+    const gymSet = Object.entries(cGym(data.gym)).filter(([d, g]) => S.gym[d] !== g);
+    // 身體數據：只加那天還沒有的（已經有的不覆蓋）
+    const nb = (Array.isArray(data.body) ? data.body : []).map(cBody).filter(b => b && !S.body.some(x => x.date === b.date));
+    // 改自訂動作的資料：只准改這幾個欄位，而且一樣要清洗
+    const relink = Object.entries(data.relink || {}).filter(([a]) => haveEx.has(a) || nc.some(x => x.id === a))
+      .map(([a, p]) => { const c = S.custom.find(x => x.id === a) || nc.find(x => x.id === a);
+        const keep = Object.fromEntries(Object.entries(p || {}).filter(([k]) => ['name', 'part', 'equip', 'db', 'pm', 'sm'].includes(k)));
+        return [a, cCustom({...c, ...keep})]; }).filter(([, c]) => c);
     // 修正檔：改既有紀錄的重量/槓片、刪掉紀錄、設定動作的掛片方式
     const pt = data.patch || {};
-    const fix = Object.entries(pt.logs || {}).filter(([id]) => haveLog.has(id));
+    const fix = Object.entries(pt.logs || {}).filter(([id]) => haveLog.has(id))
+      .map(([id, p]) => [id, cLog({...S.logs.find(l => l.id === id), ...(p || {})})]).filter(([, l]) => l);
     const del = (pt.del || []).filter(id => haveLog.has(id));
-    const load = Object.entries(pt.load || {}).filter(([id]) => ex(id) || nc.some(x => x.id === id));
+    const load = Object.entries(pt.load || {}).filter(([id]) => ex(id) || nc.some(x => x.id === id))
+      .map(([id, v]) => [id, {sd: v && v.sd === 2 ? 2 : 1, base: cNum(v && v.base) || 0}]);
     const parts = [];
     if (nl.length || nc.length) parts.push(`加入 ${nl.length} 組紀錄${nc.length ? `、${nc.length} 個動作` : ''}`);
-    if (remap.length) parts.push(`合併 ${remap.length} 個重複的動作（紀錄會搬到保留的那個）`);
-    if (relink.length) parts.push(`把 ${relink.length} 個動作連上動作圖`);
+    if (remap.length) parts.push(`整理 ${remap.length} 個動作（紀錄搬到正確的那個）`);
+    if (relink.length) parts.push(`更新 ${relink.length} 個動作的資料（器材、動作圖等）`);
     if (delEx.length) parts.push(`刪除 ${delEx.length} 個沒記過的動作`);
     if (gymSet.length) parts.push(`標記 ${gymSet.length} 天在哪間健身房`);
-    if (fix.length) parts.push(`更新 ${fix.length} 組的槓片重量`);
+    if (nb.length) parts.push(`加入 ${nb.length} 筆身體數據`);
+    const moved = fix.filter(([, p]) => p.exId).length;
+    if (moved) parts.push(`把 ${moved} 組紀錄移到正確的動作`);
+    if (fix.length > moved) parts.push(`更新 ${fix.length - moved} 組的槓片重量`);
     if (del.length) parts.push(`刪除 ${del.length} 組紀錄`);
     if (load.length) parts.push(`設定 ${load.length} 個動作的掛片方式`);
     if (!parts.length) return note('這份資料裡沒有新的東西，可能已經加入過了。');
     if (!await ask(`${data.title ? data.title + '\n' : ''}要${parts.join('，')}？\n其他現有的紀錄都會保留。`)) return;
-    S.custom.push(...nc); S.logs.push(...nl);
+    S.custom.push(...nc); S.logs.push(...nl); S.body.push(...nb);
     // 自訂動作其實就是動作庫裡的動作 → 紀錄、備註、範本都搬過去，再刪掉自訂的那個
     for (const [a, b] of remap) {
       S.logs.forEach(l => { if (l.exId === a) l.exId = b; });
-      for (const k of ['notes', 'ranges', 'units', 'load']) if (S[k][a] != null) { if (S[k][b] == null) S[k][b] = S[k][a]; delete S[k][a]; }
+      for (const k of ['notes', 'ranges', 'units', 'load', 'uni']) if (S[k][a] != null) { if (S[k][b] == null) S[k][b] = S[k][a]; delete S[k][a]; }
       const sw = arr => [...new Set(arr.map(x => x === a ? b : x))];
       S.today.exIds = sw(S.today.exIds); S.templates.forEach(t => { t.exIds = sw(t.exIds); });
       S.custom = S.custom.filter(x => x.id !== a);
