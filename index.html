@@ -2609,6 +2609,14 @@ function renderDetail() {
   if (c.kind === 'cloudGuide') return renderCloudGuide();
   renderExDetail(c);
 }
+// 點了橫向按鈕列裡的按鈕、畫面重畫後，把每一列捲回原本的位置（不然會跳回最前面）
+function keepScroll(btn, redraw) {
+  const rows = [...document.querySelectorAll('.chips')].map(r => r.scrollLeft);
+  const y = window.scrollY, dt = $('#dt-body') ? $('#dt-body').scrollTop : 0;
+  redraw();
+  document.querySelectorAll('.chips').forEach((r, i) => { if (rows[i] != null) r.scrollLeft = rows[i]; });
+  window.scrollTo(0, y); if ($('#dt-body')) $('#dt-body').scrollTop = dt;
+}
 // 雲端備份設定步驟：每個人用自己的 Google 帳號，資料只存在自己的雲端硬碟
 function renderCloudGuide() {
   $('#detail .hd b').textContent = '設定雲端備份';
@@ -3075,7 +3083,7 @@ function renderBody() {
     <div class="sub-b"><div class="bgrid">${flds.map(field).join('')}</div></div></div>`;
 
   let h = `<div class="tiles">${tile('weight', '體重')}${list.some(e => e.fat != null) ? tile('fat', '體脂率') : tile('waist', '腰圍')}${list.some(e => e.smm != null) ? tile('smm', '骨骼肌') : tile('arm', '手臂圍')}</div>`;
-  h += `<div class="card ${closed.has('b:form') ? '' : 'open'}" data-key="b:form"><button class="card-h" data-act="toggle"><span class="t">記錄身體數據</span>${svgChev}</button><div class="card-b">
+  h += `<div class="card ${open.has('b:form') ? 'open' : ''}" data-key="b:form"><button class="card-h" data-act="toggle"><span class="t">記錄身體數據</span>${svgChev}</button><div class="card-b">
     <label class="btn ocr-btn">${svgCam}從照片讀取<span>體脂計報告、InBody、App 截圖</span><input type="file" accept="image/*" data-ocr="1" hidden></label>
     ${fill ? `<div class="hint ocr-hint"><span>從照片讀到 ${Object.keys(fill.v).length} 項，已填進下面的綠框。請對照照片確認，有錯直接改，再按儲存。</span></div>` : ''}
     <div class="bgrid mt"><label><div class="flbl">日期</div><input type="date" class="dinput" id="bd-date" value="${bodyDate}" max="${dstr()}"></label>
@@ -3197,7 +3205,7 @@ async function ocrBody(file) {
     if (S.settings.unit === 'lb') for (const k of Object.keys(r.v)) if (B_KG.has(k)) r.v[k] = fromU(r.v[k], 'kg');
     if (r.date && r.date <= dstr()) bodyDate = r.date;
     bodyFill = {date: bodyDate, src: r.src, v: r.v};
-    closed.delete('b:form'); render(); toast(`讀到 ${Object.keys(r.v).length} 項，請確認後儲存`, 3000);
+    open.add('b:form'); render(); toast(`讀到 ${Object.keys(r.v).length} 項，請確認後儲存`, 3000);
   } catch (err) { toast('讀取失敗：' + (err.message || err), 4000); }
 }
 
@@ -3697,9 +3705,9 @@ const H = {
 
   /* 第二階段 */
   applyHint: (id, b) => { getDraft(id).w = b.dataset.w; renderTrain(); toast(`已改成 ${b.dataset.w} ${unitOf(id)}`); },
-  pMetric: k => { pMetric = k; renderDetail(); },
-  pGym: g => { pGym = g || ''; renderDetail(); },
-  pUni: v => { pUni = +v; renderDetail(); },
+  pMetric: (k, b) => keepScroll(b, () => { pMetric = k; renderDetail(); }),
+  pGym: (g, b) => keepScroll(b, () => { pGym = g || ''; renderDetail(); }),
+  pUni: (v, b) => keepScroll(b, () => { pUni = +v; renderDetail(); }),
   plate: id => openPlate(id),
   pUnit: u => {
     if (P.u === u) return;
@@ -3722,8 +3730,8 @@ const H = {
     save(); renderPlate();
   },
   pPreset: i => { myPlates(P.u); S.settings.plates[P.u] = PRESETS[P.u][+i].v.map(p => ({p, on: true})); save(); renderPlate(); toast('已換成' + PRESETS[P.u][+i].name); },
-  bMetric: k => { bodyMetric = k; renderBody(); },
-  bSrc: x => { bodySrc = x || ''; renderBody(); },
+  bMetric: (k, b) => keepScroll(b, () => { bodyMetric = k; renderBody(); }),
+  bSrc: (x, b) => keepScroll(b, () => { bodySrc = x || ''; renderBody(); }),
   bodyFillOff: () => { bodyFill = null; renderBody(); },
   bodySave: async () => {
     const e = {date: bodyDate}; let any = false;
@@ -4210,7 +4218,8 @@ document.addEventListener('visibilitychange', () => {
 $('#nx-part').innerHTML = PARTS.map(p => `<option>${p}</option>`).join('');
 $('#nx-equip').innerHTML = EQUIPS.map(p => `<option>${p}</option>`).join('');
 $('#nx-muscle').innerHTML = '<option value="">（不指定）</option>' + Object.entries(MUSCLES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
-open.add('s:unit'); open.add('s:rest'); open.add('s:aid'); open.add('s:backup');
+// 設定頁只預設打開「重量單位」，其他收起來
+open.add('s:unit');
 ensureToday();
 if (S.today.exIds.length) open.add(S.today.exIds.find(id => !todaySets(id).length) || S.today.exIds[0]);
 // 新手提示是給新使用者的：已經有紀錄的人直接當作看過
