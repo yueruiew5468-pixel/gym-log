@@ -18,7 +18,8 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     // 不用瀏覽器的暫存（GitHub 會叫手機留 10 分鐘），每次都拿網站上最新的
     fetch(e.request, {cache: 'no-store'})
-      .then(r => { const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r; })
+      // 只存正常的回應，錯誤頁不會蓋掉離線用的好版本
+      .then(r => { if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); } return r; })
       .catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
   );
 });

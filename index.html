@@ -2028,12 +2028,14 @@ let DB = null, DBMAP = new Map(), DBP = null;
 function loadDB() {
   if (DBP) return DBP;
   DBP = fetch(DB_BASE + 'dist/exercises.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(list => {
-    DB = list.map(x => {
+    // 這份資料來自外部網站：id 格式不對的整筆不要，文字一律清洗（就算對方被入侵也塞不進程式碼）
+    DB = list.filter(x => x && /^[\w-]{1,120}$/.test(x.id) && typeof x.name === 'string').map(x => {
+      x = {...x, name: cStr(x.name, 120), primaryMuscles: Array.isArray(x.primaryMuscles) ? x.primaryMuscles : [], secondaryMuscles: Array.isArray(x.secondaryMuscles) ? x.secondaryMuscles : []};
       const mus = m => m === 'shoulders' ? deltOf(x.name) : DB_MUSCLE[m] || [];
       const pm = [...new Set(x.primaryMuscles.flatMap(mus))];
       const sm = [...new Set(x.secondaryMuscles.flatMap(mus))].filter(m => !pm.includes(m));
       return {db: x.id, name: DB_ZH.get(x.id) || x.name, en: x.name, pm, sm, equip: DB_EQUIP[x.equipment] || '其他', part: PART_OF[pm[0]] || '全身',
-        cat: DB_CAT[x.category] || x.category, steps: x.instructions || [], imgs: x.images || [],
+        cat: DB_CAT[x.category] || cStr(x.category, 30), steps: (Array.isArray(x.instructions) ? x.instructions : []).map(t => String(t).slice(0, 1000)), imgs: [],
         rank: COMMON_DB.has(x.id) ? 0 : CAT_RANK[x.category] ?? 2};
     });
     // 常見健身房動作在前，伸展、有氧在後
@@ -2197,6 +2199,11 @@ function cBody(b) {
 }
 // 身體數據的欄位（載入資料時就要用到，所以不能等到下面的 BODY 才定義）
 const BODY_KEYS = ['weight','fat','smm','fatkg','muscle','ffm','bmi','bmr','visceral','water','protein','bone','chest','waist','hip','arm','thigh','calf'];
+// 其他欄位：數字、布林、清洗過的短文字；物件的鍵只能是動作 id
+const cDeep = (v, d = 0) => d > 6 ? null : typeof v === 'number' ? (Number.isFinite(v) ? v : 0) : typeof v === 'boolean' ? v
+  : typeof v === 'string' ? cStr(v, 200) : Array.isArray(v) ? v.slice(0, 500).map(x => cDeep(x, d + 1))
+  : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).slice(0, 500).map(([k, x]) => [cStr(k, 60), cDeep(x, d + 1)])) : null;
+const cMap = (o, f) => Object.fromEntries(Object.entries(o && typeof o === 'object' ? o : {}).filter(([k]) => cExId(k)).map(([k, v]) => [k, f(v)]).filter(([, v]) => v != null));
 const cGym = g => Object.fromEntries(Object.entries(g && typeof g === 'object' ? g : {}).filter(([d]) => cDate(d)).map(([d, n]) => [d, cStr(n, 30)]).filter(([, n]) => n));
 // 只接受 Google 的網址，避免被塞 javascript: 這類連結
 const cGoogle = (u, host) => typeof u === 'string' && new RegExp('^https://' + host.replace(/\./g, '\\.') + '/').test(u) ? u : '';
@@ -2206,24 +2213,37 @@ function normalize(s) {
   // 第一階段的資料把內建動作也存進 exercises，只取自訂的
   const custom = Array.isArray(s.custom) ? s.custom
     : Array.isArray(s.exercises) ? s.exercises.filter(e => String(e.id).startsWith('c:')) : [];
-  const st = {...d.settings, ...(s.settings || {})};
+  const {cloud: rawCloud, ...rawSet} = s.settings || {};
+  const st = {...d.settings, ...cDeep(rawSet)}; st.cloud = rawCloud || null;
+  if (!['kg', 'lb'].includes(st.unit)) st.unit = d.settings.unit;
+  // 型態跟預設值不一樣的設定（例如該是數字卻是文字）就用預設值
+  for (const k in d.settings) {
+    const dv = d.settings[k];
+    if (dv !== null && typeof dv !== 'object' && typeof st[k] !== typeof dv) st[k] = dv;
+    else if (dv && typeof dv === 'object' && !Array.isArray(dv)) {
+      if (!st[k] || typeof st[k] !== 'object' || Array.isArray(st[k])) st[k] = dv;
+      else for (const j in dv) if (dv[j] !== null && typeof dv[j] !== 'object' && st[k][j] !== undefined && typeof st[k][j] !== typeof dv[j]) st[k][j] = dv[j];
+    }
+  }
   st.gyms = (Array.isArray(st.gyms) ? st.gyms : []).map(g => cStr(g, 30)).filter(Boolean);
-  if (st.cloud) st.cloud = cGoogle(st.cloud.url, 'script.google.com') ? {...st.cloud, folder: cGoogle(st.cloud.folder, 'drive.google.com')} : null;
+  const cc = st.cloud && typeof st.cloud === 'object' ? st.cloud : null;
+  st.cloud = cc && /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(cc.url) && /^\w{16,128}$/.test(cc.key || '')
+    ? {url: cc.url, key: cc.key, folder: cGoogle(cc.folder, 'drive.google.com'), last: cNum(cc.last) || 0, err: cStr(cc.err, 300), pending: !!cc.pending} : null;
   return mergeIds({
     v: 2, custom: custom.map(cCustom).filter(Boolean),
     hidden: Array.isArray(s.hidden) ? s.hidden.filter(cExId) : [],
     logs: Array.isArray(s.logs) ? s.logs.map(cLog).filter(Boolean) : [],
-    units: s.units || {},
-    notes: s.notes || {},
-    ranges: s.ranges || {},
-    load: s.load || {},
-    uni: s.uni || {},
-    alias: s.alias || {},
+    units: cMap(s.units, v => v === 'lb' ? 'lb' : v === 'kg' ? 'kg' : null),
+    notes: cMap(s.notes, v => String(v ?? '').slice(0, 2000)),
+    ranges: cMap(s.ranges, v => v && typeof v === 'object' ? {min: Math.round(cNum(v.min) || 0), max: Math.round(cNum(v.max) || 0)} : null),
+    load: cMap(s.load, v => v && v.sd ? {sd: v.sd === 2 ? 2 : 1, base: cNum(v.base) || 0} : null),
+    uni: cMap(s.uni, v => v ? 1 : null),
+    alias: Object.fromEntries(Object.entries(s.alias && typeof s.alias === 'object' ? s.alias : {}).map(([k, v]) => [cStr(k, 60), cExId(v)]).filter(([k, v]) => k && v)),
     gym: cGym(s.gym),
     body: Array.isArray(s.body) ? s.body.map(cBody).filter(Boolean) : [],
-    templates: Array.isArray(s.templates) ? s.templates : d.templates,
+    templates: Array.isArray(s.templates) ? s.templates.filter(t => t && typeof t === 'object').map(t => ({id: /^[\w-]{1,40}$/.test(t.id) ? t.id : uid(), name: cStr(t.name, 40) || '範本', exIds: (Array.isArray(t.exIds) ? t.exIds : []).filter(cExId)})) : d.templates,
     settings: st,
-    today: s.today && s.today.date ? s.today : d.today,
+    today: s.today && cDate(s.today.date) ? {date: s.today.date, exIds: (Array.isArray(s.today.exIds) ? s.today.exIds : []).filter(cExId), finished: !!s.today.finished} : d.today,
   });
 }
 // 把併掉的動作 id 換成保留的那個
