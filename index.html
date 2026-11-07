@@ -603,6 +603,8 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 const APP_URL = 'https://yueruiew5468-pixel.github.io/gym-log/';
 const API = 'https://www.googleapis.com/drive/v3/files';
 const MAX_PER_DAY = 5, MAX_BYTES = 15 << 20, MAX_DAY_BYTES = 40 << 20, OPEN_MS = 15 * 60 * 1000;
+const MAX_TOTAL_BYTES = 2 * 1024 * 1024 * 1024, MAX_FILES = 3000; // 累計上限 2 GB、3000 份，滿了要執行「重設累計」
+const MAX_STR = 2000, MAX_KEY = 64, MAX_DEPTH = 8, MAX_NODES = 2000000, MAX_PHOTOS = 300, MAX_PHOTO = 4 << 20;
 const P = () => PropertiesService.getScriptProperties();
 
 function api_(method, url, payload, type) {
@@ -652,18 +654,47 @@ function 開放連線() {
   Logger.log('配對碼：' + code + '（15 分鐘內有效，只能用一次）');
 }
 function 換密碼() { P().setProperty('KEY', rand_()); Logger.log('已換新密碼，請執行「開放連線」後重新連上'); }
+function 重設累計() { P().setProperties({TOTAL: '0', FILES: '0'}); Logger.log('累計已歸零'); }
 function 查看安全紀錄() {
   Logger.log('異常紀錄：\n' + (P().getProperty('BAD_LOG') || '沒有'));
   Logger.log('今天：' + (P().getProperty('N') || 0) + ' 份，' + Math.round(Number(P().getProperty('BYTES') || 0) / 1024) + ' KB');
+  Logger.log('累計：' + (P().getProperty('FILES') || 0) + ' 份，' + Math.round(Number(P().getProperty('TOTAL') || 0) / 1048576) + ' MB');
 }
 
+// 逐一檢查每個值：只能是一般的數字、短文字、陣列、物件；照片要真的是圖片
+const bytes_ = t => Utilities.newBlob(t).getBytes().length;
+function img_(u) {
+  const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+\/]+={0,2})$/.exec(u);
+  if (!m || m[2].length > MAX_PHOTO * 4 / 3) return false;
+  const h = Utilities.base64Decode(m[2].slice(0, 16)).map(x => x & 255);
+  if (m[1] === 'jpeg') return h[0] === 0xFF && h[1] === 0xD8 && h[2] === 0xFF;
+  if (m[1] === 'png') return h[0] === 0x89 && h[1] === 0x50 && h[2] === 0x4E && h[3] === 0x47;
+  return String.fromCharCode.apply(null, h.slice(0, 4)) === 'RIFF' && String.fromCharCode.apply(null, h.slice(8, 12)) === 'WEBP';
+}
 function valid_(text) {
-  if (typeof text !== 'string' || text.length < 2 || text.length > MAX_BYTES) return '大小不對';
+  if (typeof text !== 'string' || text.length < 2 || bytes_(text) > MAX_BYTES) return '大小不對（超過 15MB 可以關掉「備份包含進度照片」）';
   let d; try { d = JSON.parse(text); } catch (e) { return '不是 JSON'; }
   if (!d || typeof d !== 'object' || Array.isArray(d) || !Array.isArray(d.logs) || !Array.isArray(d.custom)) return '格式不對';
   const ok = ['v', 'custom', 'hidden', 'logs', 'units', 'notes', 'ranges', 'load', 'uni', 'alias', 'gym', 'body', 'templates', 'settings', 'today', 'photos'];
   for (const k in d) if (ok.indexOf(k) < 0) return '格式不對';
-  if (d.photos && (!Array.isArray(d.photos) || d.photos.some(x => !x || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(String(x.data || ''))))) return '格式不對';
+  if (d.photos !== undefined) {
+    if (!Array.isArray(d.photos) || d.photos.length > MAX_PHOTOS) return '照片格式不對';
+    for (const x of d.photos) {
+      if (!x || typeof x !== 'object' || Array.isArray(x) || !img_(String(x.data || ''))) return '照片格式不對';
+      for (const k in x) if (['k', 'date', 'pose', 'data'].indexOf(k) < 0 || (k !== 'data' && String(x[k]).length > 40)) return '照片格式不對';
+    }
+  }
+  let nodes = 0;
+  const walk = (v, depth) => {
+    if (++nodes > MAX_NODES || depth > MAX_DEPTH) return false;
+    if (v === null || typeof v === 'boolean') return true;
+    if (typeof v === 'number') return isFinite(v);
+    if (typeof v === 'string') return v.length <= MAX_STR;
+    if (Array.isArray(v)) return v.every(x => walk(x, depth + 1));
+    if (typeof v === 'object') return Object.keys(v).every(k => k.length <= MAX_KEY && walk(v[k], depth + 1));
+    return false;
+  };
+  for (const k in d) if (k !== 'photos' && !walk(d[k], 1)) return '內容不對（太長、太深或不是一般資料）';
   return '';
 }
 
@@ -671,6 +702,7 @@ function doPost(e) {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return json_({ok: false, err: '忙碌中，請稍後再試'});
   try {
+    if (!e || !e.postData || e.postData.length > MAX_BYTES * 1.4 + 4096) { log_('請求太大'); return json_({ok: false, err: '備份太大'}); }
     const body = JSON.parse(e.postData.contents);
     if (body.connect) {
       if (!pairOk_(body.code)) return json_({ok: false, err: '配對碼不對或已過期：到 script.google.com 執行「開放連線」取得新的配對碼'});
@@ -681,11 +713,13 @@ function doPost(e) {
     const why = valid_(body.data);
     if (why) { log_('內容被拒：' + why); return json_({ok: false, err: '備份內容被拒：' + why}); }
     const tz = Session.getScriptTimeZone(), now = new Date(), today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
-    const p = P(), sd = p.getProperty('DAY') === today;
+    const p = P(), sd = p.getProperty('DAY') === today, size = bytes_(body.data);
     const cnt = sd ? Number(p.getProperty('N') || 0) : 0, bytes = sd ? Number(p.getProperty('BYTES') || 0) : 0;
+    const total = Number(p.getProperty('TOTAL') || 0), files = Number(p.getProperty('FILES') || 0);
     if (cnt >= MAX_PER_DAY) return json_({ok: false, err: '今天已經備份 ' + MAX_PER_DAY + ' 次了，明天再試'});
-    if (bytes + body.data.length > MAX_DAY_BYTES) return json_({ok: false, err: '今天的備份量已達上限，明天再試'});
-    p.setProperties({DAY: today, N: String(cnt + 1), BYTES: String(bytes + body.data.length)});
+    if (bytes + size > MAX_DAY_BYTES) return json_({ok: false, err: '今天的備份量已達上限，明天再試'});
+    if (total + size > MAX_TOTAL_BYTES || files >= MAX_FILES) { log_('累計上限'); return json_({ok: false, err: '備份累計已達上限：到 script.google.com 整理舊備份後執行「重設累計」'}); }
+    p.setProperties({DAY: today, N: String(cnt + 1), BYTES: String(bytes + size), TOTAL: String(total + size), FILES: String(files + 1)});
     const name = '健身紀錄-' + Utilities.formatDate(now, tz, 'yyyy-MM-dd-HHmmss') + '.json', folder = folder_();
     const b = 'gl' + rand_();
     const data = '--' + b + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'
