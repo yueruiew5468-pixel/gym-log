@@ -603,6 +603,7 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 const APP_URL = 'https://yueruiew5468-pixel.github.io/gym-log/';
 const API = 'https://www.googleapis.com/drive/v3/files';
 const MAX_PER_DAY = 5, MAX_BYTES = 15 << 20, MAX_DAY_BYTES = 40 << 20, OPEN_MS = 15 * 60 * 1000;
+const MAX_TRIES = 3, LOCK_MS = 30 * 60 * 1000; // 配對碼錯 3 次就關閉，30 分鐘內不能再開放
 const MAX_TOTAL_BYTES = 2 * 1024 * 1024 * 1024, MAX_FILES = 3000; // 累計上限 2 GB、3000 份，滿了要執行「重設累計」
 const MAX_STR = 2000, MAX_KEY = 64, MAX_DEPTH = 8, MAX_NODES = 2000000, MAX_PHOTOS = 300, MAX_PHOTO = 4 << 20;
 const P = () => PropertiesService.getScriptProperties();
@@ -645,10 +646,16 @@ function pairOk_(code) {
   if (same_(String(code || '').trim().toUpperCase(), P().getProperty('PAIR'))) return true;
   const t = Number(P().getProperty('TRIES') || 0) + 1;
   log_('配對碼錯誤');
-  if (t >= 5) close_(); else P().setProperty('TRIES', String(t));
+  if (t >= MAX_TRIES) { close_(); P().setProperty('LOCK_UNTIL', String(Date.now() + LOCK_MS)); log_('配對碼錯 ' + MAX_TRIES + ' 次，鎖定 30 分鐘'); }
+  else P().setProperty('TRIES', String(t));
   return false;
 }
 function 開放連線() {
+  const lock = Number(P().getProperty('LOCK_UNTIL') || 0);
+  if (Date.now() < lock) {
+    Logger.log('配對碼錯太多次，鎖定中，' + Utilities.formatDate(new Date(lock), Session.getScriptTimeZone(), 'HH:mm') + ' 後才能再開放。如果不是你自己輸錯，可能有人在試，建議執行「換密碼」');
+    return;
+  }
   const code = Utilities.getUuid().replace(/-/g, '').slice(0, 8).toUpperCase();
   P().setProperties({OPEN_UNTIL: String(Date.now() + OPEN_MS), PAIR: code, TRIES: '0'});
   Logger.log('配對碼：' + code + '（15 分鐘內有效，只能用一次）');
