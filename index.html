@@ -2172,13 +2172,15 @@ function defaults() {
 /* ================= 外來資料清洗（防止惡意連結或備份檔塞進程式碼） ================= */
 const cStr = (x, n = 80) => String(x ?? '').replace(/[<>"'`\\&]/g, '').slice(0, n);
 const cNum = x => { const v = +x; return Number.isFinite(v) && v >= 0 && v < 1e6 ? v : null; };
+// 時間（毫秒，13 位數）另外檢查：cNum 的上限是 100 萬，拿來檢查時間會把時間全部變成 0（2026-11-09 修過這個錯）
+const cTs = x => { const v = +x; return Number.isFinite(v) && v >= 0 && v < 4e12 ? v : 0; };
 const cDate = x => /^\d{4}-\d{2}-\d{2}$/.test(x) ? x : null;
 const cExId = x => typeof x === 'string' && /^[bc]:[^<>"'`\\&]{1,80}$/.test(x) ? x : null;
 function cLog(l) {
   if (!l || typeof l !== 'object') return null;
   const exId = cExId(l.exId), date = cDate(l.date), w = cNum(l.w), r = cNum(l.r);
   if (!exId || !date || w == null || r == null) return null;
-  const o = {id: cStr(l.id, 40) || uid(), exId, date, w, u: l.u === 'lb' ? 'lb' : 'kg', r: Math.round(r), feel: FEELS[l.feel] ? l.feel : 'j', ts: cNum(l.ts) || 0};
+  const o = {id: cStr(l.id, 40) || uid(), exId, date, w, u: l.u === 'lb' ? 'lb' : 'kg', r: Math.round(r), feel: FEELS[l.feel] ? l.feel : 'j', ts: cTs(l.ts)};
   if (Array.isArray(l.pl)) { o.pl = l.pl.map(cNum).filter(x => x != null).slice(0, 20); o.sd = l.sd === 2 ? 2 : 1; }
   if (l.uni) o.uni = 1;
   if (l.memo) o.memo = cStr(l.memo, 200);
@@ -2208,6 +2210,23 @@ const cGym = g => Object.fromEntries(Object.entries(g && typeof g === 'object' ?
 // 只接受 Google 的網址，避免被塞 javascript: 這類連結
 const cGoogle = (u, host) => typeof u === 'string' && new RegExp('^https://' + host.replace(/\./g, '\\.') + '/').test(u) ? u : '';
 
+// 時間被清成 0 的組（11/6–11/9 的錯誤造成）：同一天裡照原本記錄的先後順序補上大概的時間。
+// 前面有正常時間就接在後面、後面有就排在前面，每組隔 1 分鐘；整天都沒有就從那天晚上 6 點開始
+function repairTs(logs) {
+  const byDay = {};
+  logs.forEach((l, i) => (byDay[l.date] ||= []).push(i));
+  for (const [date, idx] of Object.entries(byDay)) {
+    if (idx.every(i => logs[i].ts > 1e11)) continue;
+    const base = parseD(date).getTime() + 18 * 36e5;
+    idx.forEach((i, k) => {
+      if (logs[i].ts > 1e11) return;
+      let p = k - 1; while (p >= 0 && !(logs[idx[p]].ts > 1e11)) p--;
+      let n = k + 1; while (n < idx.length && !(logs[idx[n]].ts > 1e11)) n++;
+      logs[i].ts = p >= 0 ? logs[idx[p]].ts + (k - p) * 6e4 : n < idx.length ? logs[idx[n]].ts - (n - k) * 6e4 : base + k * 6e4;
+    });
+  }
+  return logs;
+}
 function normalize(s) {
   const d = defaults();
   // 第一階段的資料把內建動作也存進 exercises，只取自訂的
@@ -2228,11 +2247,11 @@ function normalize(s) {
   st.gyms = (Array.isArray(st.gyms) ? st.gyms : []).map(g => cStr(g, 30)).filter(Boolean);
   const cc = st.cloud && typeof st.cloud === 'object' ? st.cloud : null;
   st.cloud = cc && /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(cc.url) && /^\w{16,128}$/.test(cc.key || '')
-    ? {url: cc.url, key: cc.key, folder: cGoogle(cc.folder, 'drive.google.com'), last: cNum(cc.last) || 0, err: cStr(cc.err, 300), pending: !!cc.pending} : null;
+    ? {url: cc.url, key: cc.key, folder: cGoogle(cc.folder, 'drive.google.com'), last: cTs(cc.last), err: cStr(cc.err, 300), pending: !!cc.pending} : null;
   return mergeIds({
     v: 2, custom: custom.map(cCustom).filter(Boolean),
     hidden: Array.isArray(s.hidden) ? s.hidden.filter(cExId) : [],
-    logs: Array.isArray(s.logs) ? s.logs.map(cLog).filter(Boolean) : [],
+    logs: repairTs(Array.isArray(s.logs) ? s.logs.map(cLog).filter(Boolean) : []),
     units: cMap(s.units, v => v === 'lb' ? 'lb' : v === 'kg' ? 'kg' : null),
     notes: cMap(s.notes, v => String(v ?? '').slice(0, 2000)),
     ranges: cMap(s.ranges, v => v && typeof v === 'object' ? {min: Math.round(cNum(v.min) || 0), max: Math.round(cNum(v.max) || 0)} : null),
@@ -2900,7 +2919,9 @@ function daySummaryHTML(date, edit) {
   const ids = [...new Set([...Object.keys(by), ...(edit ? dayExtra : [])])].filter(ex);
   const pr = prsOf(date), prIds = Object.keys(pr).filter(ex);
   const vol = toU(logs.reduce((a, l) => a + l.w * l.r, 0), u);
-  const dur = logs.length > 1 ? logs[logs.length - 1].ts - logs[0].ts : 0;
+  // 只算有正常時間的組；超過 16 小時一定是時間有問題，就不顯示
+  const real = logs.filter(l => l.ts > 1e11), span = real.length > 1 ? real[real.length - 1].ts - real[0].ts : 0;
+  const dur = span > 0 && span < 16 * 36e5 ? span : 0;
   let h = `<div class="tiles"><div><span>時長</span><b>${dur ? fmtDur(dur) : '—'}</b></div><div><span>組數</span><b>${logs.length}</b></div>
     <div><span>總量</span><b>${vol >= 10000 ? num1(vol / 1000) + `<small>k ${u}</small>` : Math.round(vol) + `<small>${u}</small>`}</b></div></div>`;
   if (prIds.length) h += `<div class="hint">${svgTrend}<span>破了 ${prIds.length} 項個人紀錄：${prIds.map(id => esc(ex(id).name)).join('、')}</span></div>`;
@@ -4298,9 +4319,10 @@ async function importData(data) {
     if (delEx.length) parts.push(`刪除 ${delEx.length} 個沒記過的動作`);
     if (gymSet.length) parts.push(`標記 ${gymSet.length} 天在哪間健身房`);
     if (nb.length) parts.push(`加入 ${nb.length} 筆身體數據`);
-    const moved = fix.filter(([, p]) => p.exId).length;
+    const moved = fix.filter(([id]) => pt.logs[id] && pt.logs[id].exId).length;
     if (moved) parts.push(`把 ${moved} 組紀錄移到正確的動作`);
-    if (fix.length > moved) parts.push(`更新 ${fix.length - moved} 組的槓片重量`);
+    const onlyTs = fix.every(([id]) => Object.keys(pt.logs[id] || {}).join() === 'ts');
+    if (fix.length > moved) parts.push(onlyTs ? `恢復 ${fix.length} 組的記錄時間` : `修正 ${fix.length - moved} 組紀錄`);
     if (del.length) parts.push(`刪除 ${del.length} 組紀錄`);
     if (load.length) parts.push(`設定 ${load.length} 個動作的掛片方式`);
     if (!parts.length) return note('這份資料裡沒有新的東西，可能已經加入過了。');
