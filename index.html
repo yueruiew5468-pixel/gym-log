@@ -3666,7 +3666,7 @@ function tplCardHTML(t) {
 }
 function renderTpl() {
   const sc = S.settings.sched, info = schedInfo();
-  let h = tipHTML('menu', '這裡有五套內建菜單，還可以排每週順序、看本週各部位做了幾組。', '<button data-act="guide" data-id="menu">看介紹</button>');
+  let h = tipHTML('menu', '這裡有五套內建菜單，還可以排每週順序、看本週各部位做了幾組。想知道怎麼用，按右上角的「?」。');
   h += `<div class="card" style="padding:14px 16px"><div class="opt-row" style="padding:0 0 10px"><span class="k">每週三天排程</span><div class="sg">${[['', '不排'], ['ppl', '推拉腿'], ['ul', '上下半身']].map(([v, t]) =>
       `<button class="${sc === v ? 'on' : ''}" data-act="sched" data-id="${v}">${t}</button>`).join('')}</div></div>
     <p class="small muted" style="margin:0">${sc === 'ppl' ? '推、拉、腿各一天，照順序輪。' : sc === 'ul' ? '上、下半身輪流：這週上、下、上，下週就是下、上、下。'
@@ -3677,7 +3677,6 @@ function renderTpl() {
   h += `<div class="grp"><span>我的菜單</span><span>${my.length}</span></div>` + (my.length ? my.map(tplCardHTML).join('')
     : '<div class="card"><div class="empty" style="padding:22px 16px">還沒有自己的菜單<br><span class="small">把內建菜單「另存成我的菜單」再修改，或新增一份</span></div></div>');
   h += '<button class="btn big mt" data-act="tplNew">＋ 新增菜單</button>';
-  h += '<button class="bk-link" data-act="guide" data-id="menu">菜單和排程怎麼用？</button>';
   $('#v-tpl').innerHTML = h;
 }
 // 菜單裡的一個動作：改組數、次數，替換或移除
