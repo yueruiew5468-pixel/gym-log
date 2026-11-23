@@ -39,14 +39,15 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .d{font-family:var(--fd);letter-spacing:-.02em}
 
 /* ---------- 頁首 ---------- */
-header{position:sticky;top:0;z-index:5;background:linear-gradient(var(--bg) 78%,transparent);padding:calc(env(safe-area-inset-top) + 18px) 20px 14px}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(env(safe-area-inset-top) + 18px) 20px 12px}
+header::after{content:'';position:absolute;left:0;right:0;top:100%;height:20px;background:linear-gradient(var(--bg),transparent);pointer-events:none}
 header .in{max-width:560px;margin:0 auto;position:relative}
 /* 右上角的「?」：每一頁都有，打開功能介紹裡跟這一頁有關的那段 */
 header .help{position:absolute;right:0;bottom:2px;width:40px;height:40px;border-radius:50%;border:1px solid var(--line2);background:var(--card);color:var(--muted);font:700 17px var(--fd)}
 .eyebrow{font:500 12px/1 var(--fd);letter-spacing:.18em;text-transform:uppercase;color:var(--acc);display:flex;align-items:center;gap:8px}
 .eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--acc);box-shadow:0 0 12px var(--acc)}
 header h1{margin:8px 0 0;font:700 34px/1.05 var(--fd);letter-spacing:-.03em}
-main{padding:0 16px calc(190px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
+main{padding:8px 16px calc(190px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
 .view{display:none}.view.on{display:block;animation:fade .35s ease}
 @keyframes fade{from{opacity:0;transform:translateY(8px)}}
 
@@ -58,13 +59,13 @@ nav button{height:54px;border-radius:20px;font-size:11px;color:var(--muted);disp
 nav button.on{background:var(--acc);color:var(--acc-ink);font-weight:700}
 
 /* ---------- 卡片 ---------- */
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin:0 0 12px;overflow:hidden}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin:0 0 14px;overflow:hidden}
 .card-h{width:100%;display:flex;align-items:center;gap:12px;padding:16px 18px;text-align:left;min-height:66px}
 .card-h .t{flex:1;min-width:0;font-weight:600;font-size:17px}
 .card-h .r{font:500 14px var(--fd);color:var(--muted);white-space:nowrap}
 .chev{width:20px!important;height:20px!important;color:var(--dim);transition:transform .25s}
 .card.open>.card-h .chev,.card.open>.ch-row .chev,.card.open>.tpl-top .chev,.sub.open>.sub-h .chev{transform:rotate(180deg);color:var(--text)}
-.card-b{display:none;padding:0 18px 18px}
+.card-b{display:none;padding:6px 18px 22px}
 .card.open .card-b{display:block;animation:fade .25s ease}
 .ch-row{display:flex;align-items:center}
 .ch-row .card-h{flex:1;min-width:0;padding-left:12px}
@@ -92,16 +93,16 @@ nav button.on{background:var(--acc);color:var(--acc-ink);font-weight:700}
 .btn.sm{min-height:46px;font-size:15px;border-radius:14px}
 
 /* ---------- 訓練 ---------- */
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
 .stats div{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 14px 12px}
 .stats b{display:block;font:700 28px/1 var(--fd);letter-spacing:-.03em}
 .stats b small{font-size:13px;font-weight:500;color:var(--muted);margin-left:2px}
 .stats span{font-size:12px;color:var(--muted);letter-spacing:.04em}
 
-.mtags{display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 12px}
+.mtags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
 .mtag{font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
 .mtag.p{border-color:var(--acc-mid);color:var(--acc);background:var(--acc-soft)}
-.last{border:1px dashed var(--line2);border-radius:var(--r2);padding:10px 14px;font-size:14px;margin-bottom:12px}
+.last{border:1px dashed var(--line2);border-radius:var(--r2);padding:12px 16px;font-size:14px;margin-bottom:16px}
 .last .lt{display:flex;align-items:center;font-size:12px;color:var(--muted);letter-spacing:.04em}
 .last .lk{margin-left:auto;color:var(--acc);font-size:12px;letter-spacing:0;padding:6px 0 6px 10px}
 .ch-del{margin-right:10px}
@@ -120,6 +121,26 @@ body.drag-on{user-select:none;-webkit-user-select:none}
 .sets{list-style:none;padding:0;margin:0 0 14px}
 .sets li{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
 .sets li.new{animation:flash .9s ease}
+.sets li.ed{cursor:pointer;min-height:52px}.sets li.ed.on{background:var(--acc-soft)}
+.sets .ck{flex:none;width:28px;height:28px;border-radius:8px;border:2px solid var(--line2);display:grid;place-items:center;color:var(--bg)}
+.sets li.on .ck{background:var(--acc);border-color:var(--acc)}.sets .ck .i{width:18px;height:18px;stroke:currentColor}
+.sets li.set-ed{display:block;padding:12px 0 14px;cursor:default}
+.selbar{position:sticky;top:0;z-index:2;margin:0 0 12px;padding:12px 14px;border-radius:18px;background:var(--card2);border:1px solid var(--acc-mid);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.selbar-h{display:flex;align-items:center;gap:14px}.selbar-h b{flex:1;font-size:15px}
+.selbar-h button{color:var(--muted);font-size:14px;padding:6px 0}.selbar-h button:first-of-type{color:var(--acc)}
+.selbar-b{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.selbar-b span{flex:1;font-size:13px;color:var(--muted)}
+.selbar-b button{min-width:64px;height:38px;padding:0 14px;border-radius:99px;border:1px solid var(--line2);font:600 15px var(--fd);color:var(--text)}
+.selbar-b button:active{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.del-all{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:6px 0 4px;padding:12px;font-size:14px;color:var(--hard);opacity:.85}
+.del-all .i{width:16px;height:16px;stroke:currentColor}
+.ed-act{display:flex;justify-content:flex-end;gap:8px}.ed-act .btn{width:auto;min-width:96px}
+.set-ed .seg button{min-height:42px}
+.end-opts{padding:2px 16px}
+.end-opts button{display:flex;align-items:center;gap:12px;width:100%;padding:14px 0;text-align:left;border-bottom:1px solid var(--line)}
+.end-opts button:last-child{border-bottom:0}
+.end-opts span{flex:1;min-width:0}.end-opts b{display:block;font-size:16px}.end-opts small{display:block;margin-top:2px;font-size:13px;color:var(--muted)}
+.end-opts .chev{flex:none;color:var(--muted)}
 @keyframes flash{0%{background:var(--acc-soft)}100%{background:transparent}}
 .sets .n{flex:none;width:28px;height:28px;border-radius:50%;border:1px solid var(--line2);color:var(--muted);font:500 13px var(--fd);display:grid;place-items:center}
 .sets .v{flex:1;font:700 19px var(--fd);letter-spacing:-.02em}
@@ -159,7 +180,7 @@ body.drag-on{user-select:none;-webkit-user-select:none}
 .step input{flex:1;min-width:0;width:100%;text-align:center;border:0;background:transparent;font:700 28px var(--fd);letter-spacing:-.03em;height:64px;outline:none;-moz-appearance:textfield}
 .step input::-webkit-outer-spin-button,.step input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .conv{text-align:center;font:500 12px var(--fd);color:var(--muted);margin-top:4px;min-height:18px}
-.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
 .seg button{min-height:50px;border-radius:16px;border:1px solid var(--line2);font-weight:600;color:var(--muted);transition:.15s}
 .seg button.on[data-v=e]{background:var(--easy);border-color:var(--easy);color:#05140d}
 .seg button.on[data-v=j]{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
@@ -184,11 +205,11 @@ body.drag-on{user-select:none;-webkit-user-select:none}
 .chips.wrap{flex-wrap:wrap;overflow:visible;margin:0;padding:0 0 10px}
 .chips.sm button{height:32px;font-size:13px;padding:0 13px}
 .chips button.on{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:600}
-.grp{font:500 12px var(--fd);color:var(--muted);letter-spacing:.16em;text-transform:uppercase;margin:18px 6px 8px;display:flex;justify-content:space-between}
+.grp{font:500 12px var(--fd);color:var(--muted);letter-spacing:.16em;text-transform:uppercase;margin:28px 6px 12px;display:flex;justify-content:space-between}
 .exlist{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .ex-row{display:flex;align-items:center;border-bottom:1px solid var(--line);padding-left:12px}
 .ex-row:last-child{border-bottom:0}
-.ex-main{flex:1;display:flex;align-items:center;gap:12px;padding:10px 12px;min-height:72px;text-align:left;min-width:0}
+.ex-main{flex:1;display:flex;align-items:center;gap:14px;padding:12px 12px;min-height:76px;text-align:left;min-width:0}
 .ex-main .nm{font-weight:600;line-height:1.3}
 .ex-main .meta{font-size:12px;color:var(--muted);line-height:1.4}
 .chk{flex:none;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line2);display:grid;place-items:center;color:transparent;transition:.15s}
@@ -334,7 +355,7 @@ svg.body text{fill:var(--dim);font:500 8px var(--fd);letter-spacing:.2em;text-an
 .steps li{margin-bottom:8px}
 
 /* ---------- 卡片內的小區塊 ---------- */
-.sub{border:1px solid var(--line);border-radius:var(--r2);margin-bottom:12px;overflow:hidden}
+.sub{border:1px solid var(--line);border-radius:var(--r2);margin-bottom:16px;overflow:hidden}
 .sub-h{width:100%;display:flex;align-items:center;gap:8px;padding:12px 14px;text-align:left;font-size:14px;font-weight:600;min-height:48px}
 .sub-h .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sub-h .t span{font-weight:400;color:var(--muted)}
@@ -344,7 +365,7 @@ svg.body text{fill:var(--dim);font:500 8px var(--fd);letter-spacing:.2em;text-an
 .wu li{display:flex;gap:10px;align-items:center;padding:7px 0;font:500 16px var(--fd);border-top:1px solid var(--line)}
 .wu li:first-child{border-top:0}
 .wu .p{color:var(--muted);font-size:12px;width:40px}
-.hint{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r2);background:var(--acc-soft);border:1px solid var(--acc-mid);margin-bottom:12px;font-size:14px}
+.hint{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r2);background:var(--acc-soft);border:1px solid var(--acc-mid);margin-bottom:16px;font-size:14px;line-height:1.5}
 .hint svg{color:var(--acc)}
 .hint span{flex:1}
 .hint button{flex:none;height:38px;padding:0 16px;border-radius:12px;background:var(--acc);color:var(--acc-ink);font-weight:700;font-size:14px}
@@ -418,7 +439,7 @@ textarea{width:100%;min-height:84px;border-radius:12px;border:1px solid var(--li
 .chart.act .lab{opacity:0}
 .chart .tip{position:absolute;transform:translate(-50%,-100%);background:var(--text);color:var(--bg);font:600 12px var(--fd);padding:5px 10px;border-radius:10px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:2}
 .chart.act .tip{opacity:1}
-.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
 .tiles>div{background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:12px}
 .tiles b{display:block;font:700 21px/1.15 var(--fd);letter-spacing:-.02em;margin:2px 0}
 .tiles b small{font-size:11px;color:var(--muted);font-weight:500;margin-left:2px}
@@ -2314,7 +2335,8 @@ function normalize(s) {
     templates: Array.isArray(s.templates) ? s.templates.filter(t => t && typeof t === 'object').map(cTpl) : d.templates,
     settings: st,
     today: s.today && cDate(s.today.date) ? (ids => ({date: s.today.date, exIds: ids, finished: !!s.today.finished,
-      plan: cPlan(s.today.plan, ids), menu: MENUS[s.today.menu] ? s.today.menu : '', menuName: cStr(s.today.menuName, 40)}))((Array.isArray(s.today.exIds) ? s.today.exIds : []).filter(cExId)) : d.today,
+      plan: cPlan(s.today.plan, ids), menu: MENUS[s.today.menu] ? s.today.menu : '', menuName: cStr(s.today.menuName, 40),
+      tplId: /^[\w-]{1,40}$/.test(s.today.tplId) ? s.today.tplId : ''}))((Array.isArray(s.today.exIds) ? s.today.exIds : []).filter(cExId)) : d.today,
   });
 }
 // 把併掉的動作 id 換成保留的那個
@@ -2426,9 +2448,10 @@ function setsText(sets) {
   const g = [];
   for (const s of sets) {
     const last = g[g.length - 1], p = [s.uni ? '單手' : '', plTxt(s)].filter(Boolean).join('、');
-    if (last && last.w === s.w && last.u === uOf(s) && last.p === p) last.r.push(s.r); else g.push({w: s.w, u: uOf(s), p, r: [s.r]});
+    if (last && last.w === s.w && last.p === p) last.r.push(s.r); else g.push({w: s.w, p, r: [s.r]});
   }
-  return g.map(x => `${wTxt(x.w, x.u)}${x.p ? `（${x.p}）` : ''} × ${x.r.join(', ')}`).join(' · ');
+  // 上次紀錄、最近紀錄一律換算成預設單位
+  return g.map(x => `${wTxt(x.w, S.settings.unit)}${x.p ? `（${x.p}）` : ''} × ${x.r.join(', ')}`).join(' · ');
 }
 const stepOf = (e, u) => u === 'lb' ? (e.equip === '徒手' ? 2.5 : 5)
   : e.equip === '啞鈴' ? 2 : e.equip === '壺鈴' ? 4 : e.equip === '徒手' ? 1 : 2.5;
@@ -2855,7 +2878,8 @@ const GUIDE = [
     '點動作卡片展開，填重量和次數，選這組的感覺（輕鬆、剛好、吃力），按「完成第 N 組」。',
     '完成一組會自動開始休息倒數。點倒數的時間可以放大成全螢幕。',
     '長按動作名稱可以拖曳，調整今天的順序。',
-    '練完按「結束訓練」，會看到當天的總結和破了哪些紀錄。']],
+    '練完按「結束訓練」，會看到當天的動作、組數、時長和破了哪些紀錄。',
+    '總結下方可以「存成新菜單」；如果是從菜單開始的，也可以「更新原菜單」，會先列出這次跟原菜單哪裡不同，確認後才改。']],
   ['menu', '訓練菜單', ['「菜單」頁內建五套：推日、拉日、腿日、上半身日、下半身日。按「開始」就把整份帶進今天的訓練。',
     '每個動作都有建議的組數和次數。開始之後，卡片會顯示建議和進度，例如「2/4」。',
     '點開菜單，再點裡面的動作，可以改組數和次數、替換成同部位的其他動作，或從菜單移除。',
@@ -2872,7 +2896,10 @@ const GUIDE = [
     '備註：記座椅高度、握距這類設定，下次打開卡片就看得到。']],
   ['back', '補記漏掉的日子', ['在訓練頁按「訓練歷史」打開月曆，點要補的那一天。',
     '「文字補記」：一行寫一個動作和重量，例如「槓鈴臥推 60」，App 會幫你對到動作，次數再自己填。',
-    '「從動作庫選擇」：挑好動作，像平常一樣一組一組補上。']],
+    '「從動作庫選擇」：挑好動作，像平常一樣一組一組補上。',
+    '記錯了：點那一組就能改重量、次數、感受和單位；右邊的 × 刪除單組，最下面可以刪除整天。',
+    '單位記錯或想統一：按「選取多組，一次轉換單位」，勾好之後選換成 kg 或 lb，數字會自動換算。',
+    '刪除、轉換單位、更新菜單之前，App 都會先自動下載一份備份檔。']],
   ['prog', '看進步', ['點動作的圖片，可以看動作說明、訓練到的肌群和進步曲線。',
     '曲線可以切換最大重量、預估 1RM、單次總量。',
     '在兩間以上的健身房訓練：到「設定 → 健身房」加入名稱，曲線就能分開看。']],
@@ -3058,20 +3085,57 @@ function daySummaryHTML(date, edit) {
     const e = ex(id), s = by[id] || [];
     return `<div class="card" style="padding:14px 16px"><div style="display:flex;align-items:center;gap:12px">${thumbHTML(e, 'noop')}
       <div style="flex:1;min-width:0"><b>${esc(e.name)}</b>${pr[id] ? `<span class="tag" style="color:var(--acc);border-color:var(--acc-mid)">${pr[id]}</span>` : ''}<br><span class="small muted">${s.length} 組</span></div></div>
-      ${s.length ? `<ol class="sets" style="margin:10px 0 0">${s.map((x, i) => `<li><span class="n">${i + 1}</span>
-        <span class="v">${wTxt(x.w, uOf(x))} × ${x.r}<small>${wAlt(x.w, uOf(x))}</small>${plHTML(x)}${memoHTML(x)}</span><span class="feel ${x.feel}">${FEELS[x.feel]}</span>
-        ${edit ? `<button class="x" data-act="dayDel" data-id="${x.id}" aria-label="刪除">${svgX}</button>` : ''}</li>`).join('')}</ol>` : ''}
-      ${edit ? dayInputHTML(id, date, s.length) : ''}
+      ${s.length ? `<ol class="sets" style="margin:10px 0 0">${s.map((x, i) => {
+        const sel = edit && DE.mode === 'sel', on = DE.sel.has(x.id);
+        const li = `<li class="${edit ? 'ed' : ''} ${on ? 'on' : ''}" ${edit ? `data-act="${sel ? 'setSel' : 'setEdit'}" data-id="${x.id}"` : ''}>
+          ${sel ? `<span class="ck">${on ? svgChk : ''}</span>` : `<span class="n">${i + 1}</span>`}
+          <span class="v">${wTxt(x.w, uOf(x))} × ${x.r}<small>${wAlt(x.w, uOf(x))}</small>${plHTML(x)}${memoHTML(x)}</span><span class="feel ${x.feel}">${FEELS[x.feel]}</span>
+          ${edit && !sel ? `<button class="x" data-act="dayDel" data-id="${x.id}" aria-label="刪除">${svgX}</button>` : ''}</li>`;
+        return li + (edit && !sel && DE.id === x.id ? setEditHTML(x) : '');
+      }).join('')}</ol>` : ''}
+      ${edit && DE.mode !== 'sel' && !s.some(x => x.id === DE.id) ? dayInputHTML(id, date, s.length) : ''}
     </div>`;
   }).join('');
   if (!ids.length) h += '<div class="card"><div class="empty" style="padding:22px 16px 24px"><img class="pic" src="mascot/s-c2.png" alt="" width="150">這天沒有訓練紀錄</div></div>';
+  else if (edit && logs.length) h += DE.mode === 'sel' ? '' : `<button class="del-all" data-act="dayDelAll">${svgTrash}刪除這天全部 ${logs.length} 組</button>`;
 
   return h;
 }
 function renderSummary() {
   $('#detail .hd b').textContent = '訓練完成';
   $('#dt-body').innerHTML = `<h2 class="dt" style="font-size:40px">Nice work<span style="color:var(--acc)">.</span></h2>
-    <div class="dsub">${fmtDate(dstr())} 的訓練總結</div>${daySummaryHTML(dstr(), false)}`;
+    <div class="dsub">${fmtDate(dstr())} 的訓練總結</div>${daySummaryHTML(dstr(), false)}
+    <div class="grp"><span>存成菜單</span><span>不存重量</span></div>
+    <div class="card end-opts">
+      ${linkedTpl() ? `<button data-act="endUpd"><span><b>更新原菜單</b><small>把這次的改變套回「${esc(linkedTpl().name)}」</small></span>${svgChev.replace('chev', 'chev r90')}</button>` : ''}
+      <button data-act="saveTpl"><span><b>存成新菜單</b><small>今天的動作、順序和組數</small></span>${svgChev.replace('chev', 'chev r90')}</button></div>
+    <button class="btn primary mt" data-act="closeDetail">只儲存紀錄</button>`;
+}
+// 今天是從哪份菜單開始的（菜單被刪掉就沒有）
+const linkedTpl = () => S.today.date === dstr() && S.today.tplId ? S.templates.find(t => t.id === S.today.tplId) : null;
+// 把今天的訓練整理成菜單：動作和順序照今天的清單，組數用今天實際做的；沒做的動作保留原本的組數
+function todayTplData(base) {
+  const t = dstr(), cnt = {}, reps = {};
+  for (const l of S.logs) if (l.date === t) { cnt[l.exId] = (cnt[l.exId] || 0) + 1; (reps[l.exId] ||= []).push(l.r); }
+  const ids = [...new Set([...S.today.exIds, ...Object.keys(cnt)])].filter(ex), plan = {};
+  for (const id of ids) {
+    const old = base && base.plan && base.plan[id], tp = todayPlan(id), rg = S.ranges[id];
+    const rr = reps[id] && {min: Math.max(1, Math.min(...reps[id])), max: Math.min(50, Math.max(...reps[id]))};
+    const src = old || tp || (rg && rg.min > 0 ? {min: rg.min, max: Math.max(rg.min, rg.max || rg.min)} : rr) || {min: 8, max: 12};
+    const o = {s: Math.min(10, cnt[id] || src.s || (base ? planOf(base, id).s : 3)), min: src.min, max: Math.max(src.min, src.max)};
+    if (old && old.note) o.note = old.note;
+    plan[id] = o;
+  }
+  return {exIds: ids, plan};
+}
+function tplDiff(t, nw) {
+  const name = id => (ex(id) || {}).name || id, out = [];
+  nw.exIds.filter(id => !t.exIds.includes(id)).forEach(id => out.push(`＋ 新增：${name(id)}（${nw.plan[id].s} 組）`));
+  t.exIds.filter(id => !nw.exIds.includes(id)).forEach(id => out.push(`－ 刪除：${name(id)}`));
+  const a = t.exIds.filter(id => nw.exIds.includes(id)), b = nw.exIds.filter(id => t.exIds.includes(id));
+  if (a.join() !== b.join()) out.push('↕ 順序改成：' + b.map(name).join(' → '));
+  b.forEach(id => { const x = planOf(t, id).s, y = nw.plan[id].s; if (x !== y) out.push(`・${name(id)}：${x} 組 → ${y} 組`); });
+  return out;
 }
 /* ================= 打字補記：一行一個動作，App 自己解析，動作用自己的說法比對 ================= */
 let QT = {open: false, text: '', items: null};
@@ -3210,8 +3274,53 @@ function dayInputHTML(id, date, n) {
 }
 function renderDay(c) {
   $('#detail .hd b').textContent = fmtDate(c.date);
-  $('#dt-body').innerHTML = (c.from ? '<button class="wk-more" data-act="history" style="margin-bottom:14px">‹ 回到月曆</button>' : '') + qtHTML() + daySummaryHTML(c.date, true);
+  const n = dayLogs(c.date).length, sel = DE.mode === 'sel';
+  const bar = !n ? '' : sel ? `<div class="selbar"><div class="selbar-h"><b>已選 ${DE.sel.size} 組</b>
+        <button data-act="selAll">${DE.sel.size === n ? '全部取消' : '全選'}</button><button data-act="selMode">取消</button></div>
+      <div class="selbar-b"><span>換算成</span><button data-act="convU" data-id="kg">kg</button><button data-act="convU" data-id="lb">lb</button></div></div>`
+    : `<button class="wk-more" data-act="selMode" style="margin:4px 0 12px">選取多組，一次轉換單位</button>`;
+  $('#dt-body').innerHTML = (c.from && !sel ? '<button class="wk-more" data-act="history" style="margin-bottom:14px">‹ 回到月曆</button>' : '')
+    + (sel ? '' : qtHTML()) + bar + daySummaryHTML(c.date, true)
+    + (n && !sel ? '<p class="small muted" style="text-align:center">點任一組可以修改重量、次數、感受和單位</p>' : '');
 }
+// 補記頁的狀態：mode 'sel' 是選取多組；id 是正在修改的那一組
+let DE = {mode: '', sel: new Set(), id: '', d: null};
+function setEditHTML(x) {
+  const d = DE.d, e = ex(x.exId), st = stepOf(e, d.u);
+  return `<li class="set-ed"><div class="row">
+      <div><div class="lbl"><span>重量</span><span class="unit">
+          <button class="${d.u === 'kg' ? 'on' : ''}" data-act="edU" data-id="kg">kg</button>
+          <button class="${d.u === 'lb' ? 'on' : ''}" data-act="edU" data-id="lb">lb</button></span></div>
+        <div class="step"><button data-act="edStep" data-id="w" data-d="${-st}">−</button>
+        <input type="number" inputmode="decimal" step="any" min="0" data-ed="w" value="${esc(d.w)}">
+        <button data-act="edStep" data-id="w" data-d="${st}">＋</button></div></div>
+      <div><div class="lbl"><span>次數</span></div><div class="step"><button data-act="edStep" data-id="r" data-d="-1">−</button>
+        <input type="number" inputmode="numeric" step="1" min="0" data-ed="r" value="${esc(d.r)}">
+        <button data-act="edStep" data-id="r" data-d="1">＋</button></div></div></div>
+    <div class="small muted" style="margin-top:6px">切換 kg／lb 只改單位、數字不變，用來修正記錯單位。要換算數字，請用上面的「選取多組」。</div>
+    <div class="seg">${Object.entries(FEELS).map(([k, v]) => `<button class="${d.feel === k ? 'on' : ''}" data-act="edFeel" data-id="${k}">${v}</button>`).join('')}</div>
+    <div class="ed-act"><button class="btn sm ghost" data-act="edCancel">取消</button><button class="btn sm primary" data-act="edSave">儲存</button></div></li>`;
+}
+// 刪除、批次轉換單位、更新菜單之前，自動備份一份（不含照片和雲端連線；匯入沒有照片的備份不會動到手機裡的照片）
+// Android 直接下載；iPhone 的主畫面 App 不能直接下載，改跳分享選單
+async function autoBackup() {
+  try {
+    const {cloud, ...settings} = S.settings, t = new Date();
+    const name = `健身紀錄-自動備份-${dstr()}-${pad2(t.getHours())}${pad2(t.getMinutes())}${pad2(t.getSeconds())}.json`;
+    const file = new File([JSON.stringify({...S, settings})], name, {type: 'application/json'});
+    if (/iPhone|iPad/.test(navigator.userAgent) && navigator.canShare && navigator.canShare({files: [file]})) {
+      try { await navigator.share({files: [file], title: name}); } catch (e) { return false; }
+    } else {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(file); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    }
+    S.settings.lastExport = dstr();
+    return true;
+  } catch (e) { return false; }
+}
+async function backupFirst() { return await autoBackup() || await ask('沒有完成自動備份，還要繼續嗎？'); }
 function renderHistory() {
   if (!histM) { const n = new Date(); histM = new Date(n.getFullYear(), n.getMonth(), 1); }
   const y = histM.getFullYear(), m = histM.getMonth(), days = new Date(y, m + 1, 0).getDate(), lead = (histM.getDay() + 6) % 7;
@@ -3250,7 +3359,7 @@ function exSeries(id, metric, gym = '', uni = null) {
   });
 }
 function progressHTML(e) {
-  const id = e.id, u = unitOf(id);
+  const id = e.id, u = S.settings.unit;   // 圖表一律用預設單位
   // 這個動作在兩間以上都做過才顯示健身房篩選
   const gs = [...new Set(S.logs.filter(l => l.exId === id).map(l => gymOf(l.date)).filter(Boolean))];
   if (pGym && !gs.includes(pGym)) pGym = '';
@@ -3714,7 +3823,7 @@ function renderSet() {
       <div class="set-row"><span>預設單位</span><span class="unit lg">
         <button class="${st.unit === 'kg' ? 'on' : ''}" data-act="defUnit" data-v="kg">kg</button>
         <button class="${st.unit === 'lb' ? 'on' : ''}" data-act="defUnit" data-v="lb">lb</button></span></div>
-      <p class="small muted">每個動作也可以在訓練卡片上單獨切換 kg／lb，會記住你的選擇。另一個單位會以小字顯示在旁邊。</p>`) +
+      <p class="small muted">新的紀錄、進度圖和上次紀錄都用這個單位。個別動作在訓練卡片上切換過 kg／lb 的，記錄時照那個動作自己的單位。</p>`) +
     card('s:rest', '休息計時', `
       <div class="set-row"><span>預設休息時間</span><span class="mini-step">
         <button data-act="restAdj" data-d="-15">−15</button><b>${mmss(st.rest)}</b><button data-act="restAdj" data-d="15">+15</button></span></div>
@@ -3976,7 +4085,7 @@ const H = {
   summary: () => openPanel({kind: 'summary'}),
   history: () => openPanel({kind: 'history'}),
   histNav: (_, b) => { histM = new Date(histM.getFullYear(), histM.getMonth() + +b.dataset.d, 1); renderHistory(); },
-  day: d => { const from = !!(detailCtx && detailCtx.kind === 'history'); dayExtra = []; bdraft = {}; QT = {open: false, text: '', items: null}; openPanel({kind: 'day', date: d, from}); },
+  day: d => { const from = !!(detailCtx && detailCtx.kind === 'history'); dayExtra = []; bdraft = {}; DE = {mode: '', sel: new Set(), id: '', d: null}; QT = {open: false, text: '', items: null}; openPanel({kind: 'day', date: d, from}); },
   dayAdd: (id, b) => {
     const d = dayDraft(id), u = unitOf(id), date = detailCtx.date, L = loadOf(id);
     let w = parseFloat(d.w); const r = parseInt(d.r);
@@ -4034,8 +4143,47 @@ const H = {
     QT = {open: false, text: '', items: null}; save(); renderDetail(); toast(`已加入 ${n} 個動作，次數請在下面填`);
   },
   dayDel: async logId => {
-    if (!await ask('刪除這一組？')) return;
-    S.logs = S.logs.filter(l => l.id !== logId); save(); renderDetail(); render();
+    if (!await ask('刪除這一組？\n刪除前會先自動下載一份備份檔。')) return;
+    if (!await backupFirst()) return;
+    S.logs = S.logs.filter(l => l.id !== logId); if (DE.id === logId) DE.id = ''; save(); renderDetail(); render(); toast('已刪除，備份檔已下載');
+  },
+  dayDelAll: async () => {
+    const date = detailCtx.date, n = dayLogs(date).length;
+    if (!await ask(`刪除 ${fmtDate(date)} 的全部 ${n} 組紀錄？\n刪除前會先自動下載一份備份檔。`)) return;
+    if (!await backupFirst()) return;
+    S.logs = S.logs.filter(l => l.date !== date); DE.id = ''; dayExtra = []; save(); renderDetail(); render(); toast('已刪除這天的紀錄，備份檔已下載');
+  },
+  setEdit: id => {
+    if (DE.id === id) { DE.id = ''; return renderDetail(); }
+    const l = S.logs.find(x => x.id === id); if (!l) return;
+    DE.id = id; DE.d = {w: num(toU(l.w, uOf(l))), r: String(l.r), feel: l.feel, u: uOf(l)}; DE.w0 = DE.d.w; renderDetail();
+  },
+  edU: u => { DE.d.u = u; renderDetail(); },
+  edStep: (k, b) => { const d = DE.d, v = (parseFloat(d[k]) || 0) + +b.dataset.d; d[k] = num(Math.max(0, k === 'r' ? Math.round(v) : v)); renderDetail(); },
+  edFeel: k => { DE.d.feel = k; renderDetail(); },
+  edCancel: () => { DE.id = ''; renderDetail(); },
+  edSave: () => {
+    const l = S.logs.find(x => x.id === DE.id), d = DE.d; if (!l) return;
+    const w = parseFloat(d.w), r = parseInt(d.r);
+    if (!(w >= 0) || w >= 1e5) return toast('請輸入重量');
+    if (!(r > 0) || r > 999) return toast('請輸入次數');
+    // 重量或單位有改才重算（只改次數、感受時，原本的重量和槓片都不動）
+    if (String(d.w) !== String(DE.w0) || d.u !== uOf(l)) { l.w = fromU(w, d.u); l.u = d.u; delete l.pl; delete l.sd; }
+    Object.assign(l, {r, feel: d.feel});
+    DE.id = ''; save(); renderDetail(); render(); toast('已修改');
+  },
+  selMode: () => { DE = {mode: DE.mode === 'sel' ? '' : 'sel', sel: new Set(), id: '', d: null}; renderDetail(); },
+  setSel: id => { DE.sel.has(id) ? DE.sel.delete(id) : DE.sel.add(id); renderDetail(); },
+  selAll: () => { const ids = dayLogs(detailCtx.date).map(l => l.id); DE.sel = DE.sel.size === ids.length ? new Set() : new Set(ids); renderDetail(); },
+  convU: async u => {
+    const ls = S.logs.filter(l => DE.sel.has(l.id) && uOf(l) !== u);
+    if (!DE.sel.size) return toast('先點要轉換的組');
+    if (!ls.length) return toast(`選的組本來就是 ${u}`);
+    const f = ls[0], v = Math.round(toU(f.w, u) * 10) / 10;
+    if (!await ask(`把 ${ls.length} 組換成 ${u}，數字跟著換算？\n例如 ${num(toU(f.w, uOf(f)))} ${uOf(f)} → ${num(v)} ${u}（四捨五入到小數一位）\n轉換後這些組的槓片明細會拿掉，總重保留。\n轉換前會先自動下載一份備份檔。`)) return;
+    if (!await backupFirst()) return;
+    for (const l of ls) { const x = Math.round(toU(l.w, u) * 10) / 10; l.w = fromU(x, u); l.u = u; delete l.pl; delete l.sd; }
+    DE = {mode: '', sel: new Set(), id: '', d: null}; save(); renderDetail(); render(); toast(`已把 ${ls.length} 組換成 ${u}`);
   },
   dayPick: () => openSheet('pick', '補記哪些動作', [], sel => { dayExtra = [...new Set([...dayExtra, ...sel])]; renderDetail(); }),
 
@@ -4159,7 +4307,8 @@ const H = {
     if (pr) showPR(e.name, pr, `${wTxt(log.w, u)} × ${r}`);
   },
   delSet: async logId => {
-    if (!await ask('刪除這一組？')) return;
+    if (!await ask('刪除這一組？\n刪除前會先自動下載一份備份檔。')) return;
+    if (!await backupFirst()) return;
     S.logs = S.logs.filter(l => l.id !== logId); save(); renderTrain();
   },
   rmToday: async id => {
@@ -4173,13 +4322,22 @@ const H = {
     if (tab === 'train') renderTrain(); else showTab('train');
   }),
   saveTpl: async () => {
-    const name = (await askText('菜單名稱', S.today.menuName ? S.today.menuName + '（我的）' : '') || '').trim(); if (!name) return;
-    const ids = S.today.exIds.filter(ex);
-    S.templates.push({id: uid(), name, exIds: ids, plan: Object.fromEntries(ids.filter(todayPlan).map(id => [id, {...todayPlan(id)}]))}); save(); toast(`已存成菜單「${name}」`);
+    const d = todayTplData(null);
+    if (!d.exIds.length) return toast('今天還沒有動作');
+    const name = (await askText('新菜單的名稱', S.today.menuName ? S.today.menuName + '（我的）' : '') || '').trim().slice(0, 40); if (!name) return;
+    S.templates.push({id: uid(), name, ...d}); save(); toast(`已存成菜單「${name}」`);
+  },
+  endUpd: async () => {
+    const t = linkedTpl(); if (!t) return toast('找不到原本的菜單');
+    const nw = todayTplData(t), diff = tplDiff(t, nw);
+    if (!diff.length) return toast('跟原菜單一樣，不用更新');
+    if (!await ask(`更新「${t.name}」，這次的改變：\n\n${diff.join('\n')}\n\n只存動作、順序、組數和次數範圍，不存重量。更新前會先自動下載一份備份檔。`)) return;
+    if (!await backupFirst()) return;
+    t.exIds = nw.exIds; t.plan = nw.plan; save(); renderDetail(); render(); toast(`已更新「${t.name}」`);
   },
   clearToday: async () => {
     if (!await ask('清空今天的動作清單？已記錄的組數會保留。')) return;
-    S.today.exIds = []; S.today.plan = {}; S.today.menu = ''; S.today.menuName = ''; save(); renderTrain();
+    S.today.exIds = []; S.today.plan = {}; S.today.menu = ''; S.today.menuName = ''; S.today.tplId = ''; save(); renderTrain();
   },
 
   /* 動作庫 / 選擇面板 */
@@ -4248,7 +4406,7 @@ const H = {
     S.today.exIds = [...ids, ...done]; S.today.finished = false;
     // 把菜單的組數、次數帶進今天的訓練
     S.today.plan = Object.fromEntries(ids.map(id => { const {s, min, max} = planOf(t, id); return [id, {s, min, max}]; }));
-    S.today.menu = t.key || ''; S.today.menuName = t.name; save();
+    S.today.menu = t.key || ''; S.today.menuName = t.name; S.today.tplId = t.id; save();
     for (const k in draft) delete draft[k];
     open.clear(); open.add(ids[0]);
     showTab('train'); toast(`開始「${t.name}」訓練`);
@@ -4474,6 +4632,7 @@ document.addEventListener('click', e => {
 document.addEventListener('input', e => {
   const t = e.target;
   if (t.id === 'qt-in') QT.text = t.value;
+  if (t.dataset.ed && DE.d) DE.d[t.dataset.ed] = t.value;
   if (t.dataset.draft) { draftOf(t.dataset.id, t)[t.dataset.draft] = t.value; if (t.dataset.draft === 'w') updateConv(t.dataset.id, t); }
   else if (t.dataset.note) { S.notes[t.dataset.note] = t.value; save(); }
   else if (t.dataset.range) {
