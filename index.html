@@ -121,10 +121,12 @@ body.drag-on{user-select:none;-webkit-user-select:none}
 .sets{list-style:none;padding:0;margin:0 0 14px}
 .sets li{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
 .sets li.new{animation:flash .9s ease}
-.sets li.ed{cursor:pointer;min-height:52px}.sets li.ed.on{background:var(--acc-soft)}
+.sets li.ed{cursor:pointer;min-height:52px;margin:0 -8px;padding-left:8px;padding-right:8px}.sets li.ed.on{background:var(--acc-soft);border-radius:12px;border-bottom-color:transparent}
+.sets li.ed.cur{background:var(--card2);border-bottom-color:transparent;border-radius:14px 14px 0 0}
 .sets .ck{flex:none;width:28px;height:28px;border-radius:8px;border:2px solid var(--line2);display:grid;place-items:center;color:var(--bg)}
 .sets li.on .ck{background:var(--acc);border-color:var(--acc)}.sets .ck .i{width:18px;height:18px;stroke:currentColor}
-.sets li.set-ed{display:block;padding:12px 0 14px;cursor:default}
+.sets li.set-ed{display:block;margin:0 -8px 8px;padding:6px 12px 14px;cursor:default;background:var(--card2);border-radius:0 0 14px 14px;border-bottom:0}
+.set-ed .ed-note{font-size:12px;color:var(--muted);margin-top:6px}
 .selbar{position:sticky;top:0;z-index:2;margin:0 0 12px;padding:12px 14px;border-radius:18px;background:var(--card2);border:1px solid var(--acc-mid);box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .selbar-h{display:flex;align-items:center;gap:14px}.selbar-h b{flex:1;font-size:15px}
 .selbar-h button{color:var(--muted);font-size:14px;padding:6px 0}.selbar-h button:first-of-type{color:var(--acc)}
@@ -135,7 +137,9 @@ body.drag-on{user-select:none;-webkit-user-select:none}
 .selbar-b b i{font-style:normal;color:var(--acc);margin:0 6px}
 .selbar-b small{font-size:12px;color:var(--muted)}
 .selbar-b button:active{border-color:var(--acc);background:var(--acc-soft)}
+.day-links{display:flex;flex-direction:column;align-items:center;margin:8px 0 4px}.day-links>button{padding:11px 12px;font-size:14px;color:var(--muted)}
 .del-all{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:6px 0 4px;padding:12px;font-size:14px;color:var(--hard);opacity:.85}
+.day-links .del-all{width:auto;margin:0;color:var(--hard)}
 .del-all .i{width:16px;height:16px;stroke:currentColor}
 .ed-act{display:flex;justify-content:flex-end;gap:8px}.ed-act .btn{width:auto;min-width:96px}
 .set-ed .seg button{min-height:42px}
@@ -164,7 +168,7 @@ body.drag-on{user-select:none;-webkit-user-select:none}
 .lbl .lk{color:var(--acc);font-size:12px}
 .step.pl-tot{justify-content:center;height:66px}.step.pl-tot b{font:700 28px var(--fd);letter-spacing:-.03em}
 .memo{display:block;font:400 12px/1.4 var(--fb);color:var(--muted);font-style:normal;letter-spacing:0;margin-top:2px}
-.sets .v small,.alt{font:500 12px var(--fd);color:var(--muted);margin-left:6px;letter-spacing:0}
+.sets .v small,.alt{font:500 12px var(--fd);color:var(--muted);margin-left:6px;letter-spacing:0;white-space:nowrap}
 .feel{font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;border:1px solid}
 .feel.e{color:var(--easy);border-color:rgba(94,230,168,.35)}
 .feel.j{color:var(--just);border-color:var(--acc-mid)}
@@ -178,9 +182,10 @@ body.drag-on{user-select:none;-webkit-user-select:none}
 .unit button{font:600 12px var(--fd);padding:3px 10px;border-radius:99px;color:var(--muted)}
 .unit button.on{background:var(--text);color:var(--bg)}
 .step{display:flex;align-items:center;border:1px solid var(--line2);border-radius:18px;overflow:hidden;background:var(--bg)}
-.step button{flex:none;width:48px;height:64px;font-size:26px;color:var(--acc)}
+.step button{flex:none;width:40px;height:64px;font-size:26px;color:var(--acc)}
 .step button:active{background:var(--acc-soft)}
-.step input{flex:1;min-width:0;width:100%;text-align:center;border:0;background:transparent;font:700 28px var(--fd);letter-spacing:-.03em;height:64px;outline:none;-moz-appearance:textfield}
+.step input{flex:1;min-width:0;width:100%;text-align:center;border:0;background:transparent;font:700 25px var(--fd);letter-spacing:-.03em;height:64px;outline:none;-moz-appearance:textfield}
+.row:has(.step)>:first-child{flex:1.3}
 .step input::-webkit-outer-spin-button,.step input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .conv{text-align:center;font:500 12px var(--fd);color:var(--muted);margin-top:4px;min-height:18px}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
@@ -2855,6 +2860,8 @@ function openDetail(ctx) {
 }
 function renderDetail() {
   const c = detailCtx; if (!c) return;
+  // 訓練完成頁底下已經有「只儲存紀錄」，右上角的「完成」做同一件事，先藏起來
+  $('#detail .hd .btn').style.display = c.kind === 'summary' ? 'none' : '';
   if (c.kind === 'plate') return renderPlate();
   if (c.kind === 'photo') return renderPhoto(c);
   if (c.kind === 'compare') return renderCompare(c);
@@ -2901,7 +2908,7 @@ const GUIDE = [
     '「文字補記」：一行寫一個動作和重量，例如「槓鈴臥推 60」，App 會幫你對到動作，次數再自己填。',
     '「從動作庫選擇」：挑好動作，像平常一樣一組一組補上。',
     '記錯了：點那一組就能改重量、次數、感受和單位；右邊的 × 刪除單組，最下面可以刪除整天。',
-    '單位記錯了（例如 90 磅記成 90 公斤）：按「單位記錯了？選取多組一次改單位」，勾選那些組，選「改成 lb」。數字不變、只換單位，每組旁邊會附上換算成公斤的重量；進度圖和上次紀錄也會跟著用正確的重量。',
+    '單位記錯了（例如 90 磅記成 90 公斤）：按那天最下面的「單位記錯了？選取多組一次改單位」，勾選那些組，選「改成 lb」。數字不變、只換單位，每組旁邊會附上換算成公斤的重量；進度圖和上次紀錄也會跟著用正確的重量。',
     '刪除、轉換單位、更新菜單之前，App 都會先自動下載一份備份檔。']],
   ['prog', '看進步', ['點動作的圖片，可以看動作說明、訓練到的肌群和進步曲線。',
     '曲線可以切換最大重量、預估 1RM、單次總量。',
@@ -3090,7 +3097,7 @@ function daySummaryHTML(date, edit) {
       <div style="flex:1;min-width:0"><b>${esc(e.name)}</b>${pr[id] ? `<span class="tag" style="color:var(--acc);border-color:var(--acc-mid)">${pr[id]}</span>` : ''}<br><span class="small muted">${s.length} 組</span></div></div>
       ${s.length ? `<ol class="sets" style="margin:10px 0 0">${s.map((x, i) => {
         const sel = edit && DE.mode === 'sel', on = DE.sel.has(x.id);
-        const li = `<li class="${edit ? 'ed' : ''} ${on ? 'on' : ''}" ${edit ? `data-act="${sel ? 'setSel' : 'setEdit'}" data-id="${x.id}"` : ''}>
+        const li = `<li class="${edit ? 'ed' : ''} ${on ? 'on' : ''} ${edit && !sel && DE.id === x.id ? 'cur' : ''}" ${edit ? `data-act="${sel ? 'setSel' : 'setEdit'}" data-id="${x.id}"` : ''}>
           ${sel ? `<span class="ck">${on ? svgChk : ''}</span>` : `<span class="n">${i + 1}</span>`}
           <span class="v">${wTxt(x.w, uOf(x))} × ${x.r}<small>${wAlt(x.w, uOf(x))}</small>${plHTML(x)}${memoHTML(x)}</span><span class="feel ${x.feel}">${FEELS[x.feel]}</span>
           ${edit && !sel ? `<button class="x" data-act="dayDel" data-id="${x.id}" aria-label="刪除">${svgX}</button>` : ''}</li>`;
@@ -3100,7 +3107,7 @@ function daySummaryHTML(date, edit) {
     </div>`;
   }).join('');
   if (!ids.length) h += '<div class="card"><div class="empty" style="padding:22px 16px 24px"><img class="pic" src="mascot/s-c2.png" alt="" width="150">這天沒有訓練紀錄</div></div>';
-  else if (edit && logs.length) h += DE.mode === 'sel' ? '' : `<button class="del-all" data-act="dayDelAll">${svgTrash}刪除這天全部 ${logs.length} 組</button>`;
+  else if (edit && logs.length) h += DE.mode === 'sel' ? '' : `<div class="day-links"><button data-act="selMode">單位記錯了？選取多組一次改單位</button><button class="del-all" data-act="dayDelAll">${svgTrash}刪除這天全部 ${logs.length} 組</button></div>`;
 
   return h;
 }
@@ -3284,7 +3291,7 @@ function renderDay(c) {
       <div class="selbar-b">
         <button data-act="convU" data-id="lb"><b>改成 lb</b><small>例如 90 kg → 90 lb</small></button>
         <button data-act="convU" data-id="kg"><b>改成 kg</b><small>例如 90 lb → 90 kg</small></button></div></div>`
-    : `<button class="wk-more" data-act="selMode" style="margin:4px 0 12px">單位記錯了？選取多組一次改單位</button>`;
+    : '';
   $('#dt-body').innerHTML = (c.from && !sel ? '<button class="wk-more" data-act="history" style="margin-bottom:14px">‹ 回到月曆</button>' : '')
     + (sel ? '' : qtHTML()) + bar + daySummaryHTML(c.date, true)
     + (n && !sel ? '<p class="small muted" style="text-align:center">點任一組可以修改重量、次數、感受和單位</p>' : '');
@@ -3303,8 +3310,8 @@ function setEditHTML(x) {
       <div><div class="lbl"><span>次數</span></div><div class="step"><button data-act="edStep" data-id="r" data-d="-1">−</button>
         <input type="number" inputmode="numeric" step="1" min="0" data-ed="r" value="${esc(d.r)}">
         <button data-act="edStep" data-id="r" data-d="1">＋</button></div></div></div>
-    <div class="small muted" style="margin-top:6px">切換 kg／lb 只改單位、數字不變（記錯單位時用）。</div>
-    <div class="seg">${Object.entries(FEELS).map(([k, v]) => `<button class="${d.feel === k ? 'on' : ''}" data-act="edFeel" data-id="${k}">${v}</button>`).join('')}</div>
+    <div class="ed-note">kg／lb 切換只改單位，數字不變</div>
+    <div class="seg">${Object.entries(FEELS).map(([k, v]) => `<button class="${d.feel === k ? 'on' : ''}" data-act="edFeel" data-id="${k}" data-v="${k}">${v}</button>`).join('')}</div>
     <div class="ed-act"><button class="btn sm ghost" data-act="edCancel">取消</button><button class="btn sm primary" data-act="edSave">儲存</button></div></li>`;
 }
 // 刪除、批次轉換單位、更新菜單之前，自動備份一份（不含照片和雲端連線；匯入沒有照片的備份不會動到手機裡的照片）
@@ -4178,7 +4185,7 @@ const H = {
     Object.assign(l, {r, feel: d.feel});
     DE.id = ''; save(); renderDetail(); render(); toast('已修改');
   },
-  selMode: () => { DE = {mode: DE.mode === 'sel' ? '' : 'sel', sel: new Set(), id: '', d: null}; renderDetail(); },
+  selMode: () => { DE = {mode: DE.mode === 'sel' ? '' : 'sel', sel: new Set(), id: '', d: null}; renderDetail(); const b = $('.selbar'); if (b) b.scrollIntoView({block: 'nearest'}); },
   setSel: id => { DE.sel.has(id) ? DE.sel.delete(id) : DE.sel.add(id); renderDetail(); },
   selAll: () => { const ids = dayLogs(detailCtx.date).map(l => l.id); DE.sel = DE.sel.size === ids.length ? new Set() : new Set(ids); renderDetail(); },
   // 修正記錯單位：數字不變、只換單位。例如記成 90 kg、其實是 90 lb → 90 lb（≈ 40.8 kg）
