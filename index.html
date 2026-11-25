@@ -4766,8 +4766,22 @@ async function addFromHash() {
   } catch (err) { note('帶入失敗：' + (err.message || err) + '\n請確認連結完整，或請對方重新產生。'); }
 }
 
+// App 從背景叫回來時不會重新載入，會一直停在舊版。回到前景時比對網站上的 index.html，有新版就重新載入
+// 正在輸入、跳出確認框、休息計時中的時候先不換，等下次回到前景再換
+let PAGE0 = null, pageChk = 0;
+const pageNow = () => fetch('./index.html', {cache: 'no-store'}).then(r => r.ok ? r.text() : null).catch(() => null);
+if (location.protocol === 'https:') pageNow().then(t => { PAGE0 = t; });
+async function checkNewVersion() {
+  if (!PAGE0 || Date.now() - pageChk < 30000) return;
+  pageChk = Date.now();
+  const t = await pageNow();
+  if (!t || t === PAGE0 || !/<\/html>\s*$/.test(t)) return;
+  const busy = DLG || T.end || T.pause || /INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '');
+  if (!busy) location.reload();
+}
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
+  checkNewVersion();
   if (T.end) { tick(); wake(true); closeNotes(); }
   if (S.today.date !== dstr()) { ensureToday(); render(); }
 });
