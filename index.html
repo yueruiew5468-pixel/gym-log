@@ -2901,7 +2901,7 @@ const GUIDE = [
     '「文字補記」：一行寫一個動作和重量，例如「槓鈴臥推 60」，App 會幫你對到動作，次數再自己填。',
     '「從動作庫選擇」：挑好動作，像平常一樣一組一組補上。',
     '記錯了：點那一組就能改重量、次數、感受和單位；右邊的 × 刪除單組，最下面可以刪除整天。',
-    '單位記錯了（例如磅數記成公斤）：按「單位記錯了？選取多組一次換算」，勾選那些組，選「lb → kg」，數字會乘 0.4536 換成公斤；反過來選「kg → lb」。',
+    '單位記錯了（例如 90 磅記成 90 公斤）：按「單位記錯了？選取多組一次改單位」，勾選那些組，選「改成 lb」。數字不變、只換單位，每組旁邊會附上換算成公斤的重量；進度圖和上次紀錄也會跟著用正確的重量。',
     '刪除、轉換單位、更新菜單之前，App 都會先自動下載一份備份檔。']],
   ['prog', '看進步', ['點動作的圖片，可以看動作說明、訓練到的肌群和進步曲線。',
     '曲線可以切換最大重量、預估 1RM、單次總量。',
@@ -3280,11 +3280,11 @@ function renderDay(c) {
   const n = dayLogs(c.date).length, sel = DE.mode === 'sel';
   const bar = !n ? '' : sel ? `<div class="selbar"><div class="selbar-h"><b>已選 ${DE.sel.size} 組</b>
         <button data-act="selAll">${DE.sel.size === n ? '全部取消' : '全選'}</button><button data-act="selMode">取消</button></div>
-      <p class="selbar-p">勾選記錯單位的組，再選它們原本的單位</p>
+      <p class="selbar-p">勾選記錯單位的組，選正確的單位。數字不變，旁邊會附上換算後的重量。</p>
       <div class="selbar-b">
-        <button data-act="convU" data-id="kg"><b>lb<i>→</i>kg</b><small>其實是 lb，換成 kg</small></button>
-        <button data-act="convU" data-id="lb"><b>kg<i>→</i>lb</b><small>其實是 kg，換成 lb</small></button></div></div>`
-    : `<button class="wk-more" data-act="selMode" style="margin:4px 0 12px">單位記錯了？選取多組一次換算</button>`;
+        <button data-act="convU" data-id="lb"><b>改成 lb</b><small>例如 90 kg → 90 lb</small></button>
+        <button data-act="convU" data-id="kg"><b>改成 kg</b><small>例如 90 lb → 90 kg</small></button></div></div>`
+    : `<button class="wk-more" data-act="selMode" style="margin:4px 0 12px">單位記錯了？選取多組一次改單位</button>`;
   $('#dt-body').innerHTML = (c.from && !sel ? '<button class="wk-more" data-act="history" style="margin-bottom:14px">‹ 回到月曆</button>' : '')
     + (sel ? '' : qtHTML()) + bar + daySummaryHTML(c.date, true)
     + (n && !sel ? '<p class="small muted" style="text-align:center">點任一組可以修改重量、次數、感受和單位</p>' : '');
@@ -3303,7 +3303,7 @@ function setEditHTML(x) {
       <div><div class="lbl"><span>次數</span></div><div class="step"><button data-act="edStep" data-id="r" data-d="-1">−</button>
         <input type="number" inputmode="numeric" step="1" min="0" data-ed="r" value="${esc(d.r)}">
         <button data-act="edStep" data-id="r" data-d="1">＋</button></div></div></div>
-    <div class="small muted" style="margin-top:6px">切換 kg／lb 只改單位、數字不變。要把數字換算成另一個單位，請用上面的「單位記錯了？」。</div>
+    <div class="small muted" style="margin-top:6px">切換 kg／lb 只改單位、數字不變（記錯單位時用）。</div>
     <div class="seg">${Object.entries(FEELS).map(([k, v]) => `<button class="${d.feel === k ? 'on' : ''}" data-act="edFeel" data-id="${k}">${v}</button>`).join('')}</div>
     <div class="ed-act"><button class="btn sm ghost" data-act="edCancel">取消</button><button class="btn sm primary" data-act="edSave">儲存</button></div></li>`;
 }
@@ -4181,17 +4181,16 @@ const H = {
   selMode: () => { DE = {mode: DE.mode === 'sel' ? '' : 'sel', sel: new Set(), id: '', d: null}; renderDetail(); },
   setSel: id => { DE.sel.has(id) ? DE.sel.delete(id) : DE.sel.add(id); renderDetail(); },
   selAll: () => { const ids = dayLogs(detailCtx.date).map(l => l.id); DE.sel = DE.sel.size === ids.length ? new Set() : new Set(ids); renderDetail(); },
-  // 修正輸錯單位：把選取的組記下的數字當成另一個單位，換算成 u。例如記成 100 kg、其實是 100 lb → 45.4 kg
+  // 修正記錯單位：數字不變、只換單位。例如記成 90 kg、其實是 90 lb → 90 lb（≈ 40.8 kg）
   convU: async u => {
-    if (!DE.sel.size) return toast('先點要轉換的組');
-    const src = other(u), ls = S.logs.filter(l => DE.sel.has(l.id));
-    const typed = l => Math.round(toU(l.w, uOf(l)) * 100) / 100;
-    const conv = n => Math.round((u === 'kg' ? n * LB : n / LB) * 10) / 10;
-    const f = ls[0];
-    if (!await ask(`把 ${ls.length} 組記下的數字當成 ${src}，換算成 ${u}？\n例如 ${num(typed(f))} → ${num(conv(typed(f)))} ${u}\n（${u === 'kg' ? '× 0.4536' : '÷ 0.4536'}，四捨五入到小數一位）\n掛槓片的明細會拿掉，總重保留。轉換前會先自動下載一份備份檔。`)) return;
+    if (!DE.sel.size) return toast('先點要改的組');
+    const ls = S.logs.filter(l => DE.sel.has(l.id)), todo = ls.filter(l => uOf(l) !== u);
+    if (!todo.length) return toast(`選的組本來就是 ${u}`);
+    const typed = l => Math.round(toU(l.w, uOf(l)) * 100) / 100, f = todo[0];
+    if (!await ask(`把 ${todo.length} 組的單位改成 ${u}？數字不變。\n例如 ${num(typed(f))} ${uOf(f)} → ${num(typed(f))} ${u}（≈ ${wAlt(fromU(typed(f), u), u)}）\n掛槓片的明細會拿掉。改之前會先自動下載一份備份檔。`)) return;
     if (!await backupFirst()) return;
-    for (const l of ls) { const x = conv(typed(l)); l.w = fromU(x, u); l.u = u; delete l.pl; delete l.sd; }
-    DE = {mode: '', sel: new Set(), id: '', d: null}; save(); renderDetail(); render(); toast(`已把 ${ls.length} 組從 ${src} 換算成 ${u}`);
+    for (const l of todo) { l.w = fromU(typed(l), u); l.u = u; delete l.pl; delete l.sd; }
+    DE = {mode: '', sel: new Set(), id: '', d: null}; save(); renderDetail(); render(); toast(`已把 ${todo.length} 組改成 ${u}`);
   },
   dayPick: () => openSheet('pick', '補記哪些動作', [], sel => { dayExtra = [...new Set([...dayExtra, ...sel])]; renderDetail(); }),
 
