@@ -190,6 +190,7 @@ body.drag-on{user-select:none;-webkit-user-select:none}
 .conv{text-align:center;font:500 12px var(--fd);color:var(--muted);margin-top:4px;min-height:18px}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
 .seg button{min-height:50px;border-radius:16px;border:1px solid var(--line2);font-weight:600;color:var(--muted);transition:.15s}
+.feel-seg{margin-bottom:6px}.feel-why{font-size:12px;color:var(--muted);text-align:center;margin:0 0 14px}
 .seg button.on[data-v=e]{background:var(--easy);border-color:var(--easy);color:#05140d}
 .seg button.on[data-v=j]{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
 .seg button.on[data-v=h]{background:var(--hard);border-color:var(--hard);color:#1a0503}
@@ -2628,8 +2629,7 @@ function cardHTML(id) {
           <input type="number" inputmode="numeric" step="1" min="0" data-draft="r" data-id="${eid}" value="${esc(d.r)}" placeholder="0">
           <button data-act="stepR" data-id="${eid}" data-d="1">＋</button></div></div>
       </div>
-      ${uniSegHTML(id, d)}<div class="seg">${Object.entries(FEELS).map(([k, v]) =>
-        `<button class="${d.feel === k ? 'on' : ''}" data-act="feel" data-id="${eid}" data-v="${k}">${v}</button>`).join('')}</div>
+      ${uniSegHTML(id, d)}${feelSegHTML(id, d, dstr())}
       <button class="btn primary big" data-act="addSet" data-id="${eid}">${tp && sets.length >= tp.s ? `再加一組（已完成 ${tp.s} 組）` : `完成第 ${sets.length + 1} 組${tp ? `（共 ${tp.s} 組）` : ''}`}</button>
       ${setupHTML(id)}
     </div></div>`;
@@ -2659,6 +2659,39 @@ function plPickHTML(id, d = getDraft(id)) {
     ${how ? `<div class="pl-how">${how}</div>` : ''}
     <div class="pl-add">${ps.map(p => `<button data-act="plAdd" data-id="${eid}" data-p="${p}">＋${num(p)}</button>`).join('')}</div>
     <button class="pl-edit" data-act="plate" data-id="${eid}">健身房的槓片不一樣？編輯槓片種類 ›</button></div>`;
+}
+// 感受依次數自動判斷（使用者 2026-11-26 決定：每組自己按感受沒意義）
+// 有目標次數範圍（自己設的，或今天菜單的）：超過上限＝輕鬆、在範圍內＝剛好、不到下限＝吃力
+// 沒有範圍：跟之前最近一次同重量的組比，做得比較多＝輕鬆、一樣＝剛好、比較少＝吃力；都沒有就先標剛好
+// 使用者自己點過（d.fm）就照他選的，加完這組後再回到自動
+function autoFeel(id, d, date) {
+  const r = parseInt(d.r), u = unitOf(id), w = fromU(parseFloat(d.w) || 0, u);
+  if (!(r > 0)) return {f: 'j', why: ''};
+  const own = S.ranges[id], rg = own && own.max ? own : date === dstr() ? todayPlan(id) : null;
+  if (rg && rg.max) return {f: r > rg.max ? 'e' : rg.min && r < rg.min ? 'h' : 'j', why: `目標 ${rg.min ? rg.min + '–' : ''}${rg.max} 下`};
+  let prev = null;
+  for (const l of S.logs) if (l.exId === id && Math.abs(l.w - w) < 0.05 && l.date <= date && (!prev || l.date > prev.date || (l.date === prev.date && l.ts > prev.ts))) prev = l;
+  if (!prev) return {f: 'j', why: ''};
+  return {f: r > prev.r ? 'e' : r < prev.r ? 'h' : 'j', why: `上次同重量 ${prev.r} 下`};
+}
+function feelWhy(d, a) {
+  if (d.fm) return '你自己選的';
+  return a.why ? `依${a.why}自動判斷，不對可以點選` : '設了目標次數就會自動判斷';
+}
+function feelSegHTML(id, d, date) {
+  const a = autoFeel(id, d, date); if (!d.fm) d.feel = a.f;
+  const eid = esc(id);
+  return `<div class="seg feel-seg">${Object.entries(FEELS).map(([k, v]) =>
+    `<button class="${d.feel === k ? 'on' : ''}" data-act="feel" data-id="${eid}" data-v="${k}">${v}</button>`).join('')}</div>
+    <div class="feel-why">${feelWhy(d, a)}</div>`;
+}
+// 改了重量或次數就重新判斷（只更新那張卡片的感受按鈕，不重畫整頁）
+function feelSync(id, el) {
+  const card = el && el.closest('.card'), d = draftOf(id, el); if (!card || d.fm) return;
+  const date = inDay(el) ? detailCtx.date : dstr(), a = autoFeel(id, d, date);
+  d.feel = a.f;
+  card.querySelectorAll('.feel-seg button').forEach(x => x.classList.toggle('on', x.dataset.v === a.f));
+  const why = card.querySelector('.feel-why'); if (why) why.textContent = feelWhy(d, a);
 }
 function updateConv(id, src) {
   const day = inDay(src), el = document.querySelector(`${day ? '#detail' : '#v-train'} [data-conv="${CSS.escape(id)}"]`); if (!el) return;
@@ -2885,7 +2918,8 @@ function keepScroll(btn, redraw) {
 // 功能介紹：一段一個主題，點開才展開；c.sec 指定先打開哪一段
 const GUIDE = [
   ['log', '記錄訓練', ['在「訓練」頁按「＋ 加入動作」，或到「菜單」頁選一份菜單按「開始」。',
-    '點動作卡片展開，填重量和次數，選這組的感覺（輕鬆、剛好、吃力），按「完成第 N 組」。',
+    '點動作卡片展開，填重量和次數，按「完成第 N 組」。',
+    '感受會依次數自動判斷：有目標次數時，超過上限是輕鬆、在範圍內是剛好、不到下限是吃力；沒設目標就跟上次同重量的次數比。覺得不對可以自己點。',
     '完成一組會自動開始休息倒數。點倒數的時間可以放大成全螢幕。',
     '長按動作名稱可以拖曳，調整今天的順序。',
     '練完按「結束訓練」，會看到當天的動作、組數、時長和破了哪些紀錄。',
@@ -3278,8 +3312,7 @@ function dayInputHTML(id, date, n) {
         <input type="number" inputmode="numeric" step="1" min="0" data-draft="r" data-id="${eid}" value="${esc(d.r)}" placeholder="0">
         <button data-act="stepR" data-id="${eid}" data-d="1">＋</button></div></div>
     </div>
-    ${uniSegHTML(id, d)}<div class="seg">${Object.entries(FEELS).map(([k, x]) =>
-      `<button class="${d.feel === k ? 'on' : ''}" data-act="feel" data-id="${eid}" data-v="${k}">${x}</button>`).join('')}</div>
+    ${uniSegHTML(id, d)}${feelSegHTML(id, d, date)}
     <button class="btn primary big" data-act="dayAdd" data-id="${eid}">補記第 ${n + 1} 組</button></div>`;
 }
 function renderDay(c) {
@@ -4111,7 +4144,7 @@ const H = {
     if (L && d.pl.length) Object.assign(log, {pl: [...d.pl], sd: L.sd});
     else if (d.sd && d.pl && d.pl.length && String(d.w) === String(d.plw)) Object.assign(log, {pl: [...d.pl], sd: d.sd});
     if (uniOn(id) && d.uni) log.uni = 1;
-    S.logs.push(log); fixGym(date);
+    S.logs.push(log); fixGym(date); d.fm = 0;
     save(); renderDetail(); render(); toast('已補記一組');
   },
   // 文字寫了重量變化（例如 10-15）：點哪個重量就用哪個
@@ -4277,12 +4310,12 @@ const H = {
   plClr: (id, b) => { const d = draftOf(id, b); d.pl = []; syncPl(id, d); redraw(b); },
   stepW: (id, b) => {
     const d = draftOf(id, b); d.w = num(Math.max(0, (parseFloat(d.w) || 0) + +b.dataset.d));
-    b.parentNode.querySelector('input').value = d.w; updateConv(id, b);
+    b.parentNode.querySelector('input').value = d.w; updateConv(id, b); feelSync(id, b);
   },
   // 上面 updateConv 也會更新暖身建議
   stepR: (id, b) => {
     const d = draftOf(id, b); d.r = String(Math.max(0, (parseInt(d.r) || 0) + +b.dataset.d));
-    b.parentNode.querySelector('input').value = d.r;
+    b.parentNode.querySelector('input').value = d.r; feelSync(id, b);
   },
   uniSet: (id, b) => {
     draftOf(id, b).uni = +b.dataset.v;
@@ -4294,8 +4327,9 @@ const H = {
     save(); open.add('n:' + id); renderTrain();
   },
   feel: (id, b) => {
-    draftOf(id, b).feel = b.dataset.v;
+    const d = draftOf(id, b); d.feel = b.dataset.v; d.fm = 1;
     b.parentNode.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    const why = b.closest('.card') && b.closest('.card').querySelector('.feel-why'); if (why) why.textContent = feelWhy(d, {});
   },
   addSet: id => {
     const d = getDraft(id), e = ex(id), u = unitOf(id);
@@ -4311,7 +4345,7 @@ const H = {
     const prior = S.logs.filter(l => l.exId === id && !l.uni === !log.uni), e1 = x => x.w * (1 + x.r / 30);
     const pr = !prior.length || log.w <= 0 ? '' : log.w > Math.max(...prior.map(x => x.w)) + 1e-9 ? '重量 PR'
       : e1(log) > Math.max(...prior.map(e1)) + 1e-9 ? '1RM PR' : '';
-    S.logs.push(log); flashId = log.id; fixGym(log.date); tipDone('card');
+    S.logs.push(log); flashId = log.id; fixGym(log.date); tipDone('card'); d.fm = 0;
     save(); open.add(id); renderTrain();
     if (navigator.vibrate) navigator.vibrate(30);
     if (S.settings.autoRest) {
@@ -4647,7 +4681,7 @@ document.addEventListener('input', e => {
   const t = e.target;
   if (t.id === 'qt-in') QT.text = t.value;
   if (t.dataset.ed && DE.d) DE.d[t.dataset.ed] = t.value;
-  if (t.dataset.draft) { draftOf(t.dataset.id, t)[t.dataset.draft] = t.value; if (t.dataset.draft === 'w') updateConv(t.dataset.id, t); }
+  if (t.dataset.draft) { draftOf(t.dataset.id, t)[t.dataset.draft] = t.value; if (t.dataset.draft === 'w') updateConv(t.dataset.id, t); feelSync(t.dataset.id, t); }
   else if (t.dataset.note) { S.notes[t.dataset.note] = t.value; save(); }
   else if (t.dataset.range) {
     const id = t.dataset.id, r = S.ranges[id] = {...(S.ranges[id] || {})};
