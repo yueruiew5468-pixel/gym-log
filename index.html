@@ -2679,7 +2679,7 @@ function autoFeelW(id, w, r, date, skip) {
   if (!prev) return {f: 'j', why: '', first: 1};
   return {f: r > prev.r ? 'e' : r < prev.r ? 'h' : 'j', why: `上次同重量 ${prev.r} 下`};
 }
-function feelWhy(a) { return a.why ? `依${a.why}` : a.first ? '第一次做這個重量，先標剛好' : '填了次數就會自動判斷'; }
+function feelWhy(a) { return a.why ? `依${a.why}` : ''; }
 function feelSegHTML(id, d, date) {
   const a = autoFeel(id, d, date); d.feel = a.f;
   return `<div class="feel-auto">感受<b data-v="${a.f}">${FEELS[a.f]}</b><span class="feel-why">${feelWhy(a)}</span></div>`;
